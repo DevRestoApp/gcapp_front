@@ -3,6 +3,7 @@
     "main": "expo-router/entry",
     "version": "1.0.0",
     "scripts": {
+        "prepare": "husky install",
         "start": "expo start",
         "reset-project": "node ./scripts/reset-project.js",
         "android": "expo start --android",
@@ -54,10 +55,22 @@
         "eslint-plugin-prettier": "^5.5.4",
         "eslint-plugin-react": "^7.37.5",
         "eslint-plugin-react-hooks": "^5.2.0",
+        "husky": "^8.0.0",
         "jest": "^30.1.1",
+        "lint-staged": "^16.1.5",
         "prettier": "^3.6.2",
         "ts-jest": "^29.4.1",
         "typescript": "~5.8.3"
     },
-    "private": true
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "eslint --fix",
+            "prettier --write",
+            "git add"
+        ],
+        "*.{json,md,css,scss}": [
+            "prettier --write",
+            "git add"
+        ]
+    }
 }
