@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 
 const isMobile = Platform.OS === "ios" || Platform.OS === "android";
 
+// test push git
 export const storage = {
     async setItem(key: string, value: string) {
         if (isMobile) {
