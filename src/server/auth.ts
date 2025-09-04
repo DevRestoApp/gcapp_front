@@ -1,4 +1,5 @@
 import api from "./api";
+import { storage } from "./storage";
 
 export async function register({
     login,
@@ -20,7 +21,9 @@ export async function login({
 }) {
     const res = await api.post("/login", { login, password });
     const { access_token } = res.data;
-    localStorage.setItem("access_token", access_token);
+
+    await storage.setItem("access_token", access_token);
+
     return res.data;
 }
 
