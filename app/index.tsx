@@ -2,7 +2,7 @@ import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 
-import { useAuth } from "../src/contexts/AuthContext";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function Home() {
     const router = useRouter();
