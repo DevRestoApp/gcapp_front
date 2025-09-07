@@ -1,6 +1,6 @@
-import { Stack } from "expo-router";
+import { Stack, Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import { AuthProvider } from "@/src/contexts/AuthContext";
+import { AppProviders } from "@/src/contexts/AppProviders";
 import { storage } from "@/src/server/storage";
 
 export default function Layout() {
@@ -19,14 +19,14 @@ export default function Layout() {
     }
 
     return (
-        <AuthProvider>
-            <Stack>
+        <AppProviders>
+            <Stack screenOptions={{ headerShown: false }}>
                 {isLoggedIn ? (
-                    <Stack.Screen name="index" />
+                    <Redirect href="/index" />
                 ) : (
-                    <Stack.Screen name="auth/index" />
+                    <Redirect href="/auth/index" />
                 )}
             </Stack>
-        </AuthProvider>
+        </AppProviders>
     );
 }

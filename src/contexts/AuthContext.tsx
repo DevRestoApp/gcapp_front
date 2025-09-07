@@ -42,9 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (user: User, token: string) => {
         setUser(user);
         setToken(token);
-        console.log("this used");
         await storage.setItem("access_token", token);
-        console.log(user);
         await storage.setItem("user", JSON.stringify(user));
     };
 
