@@ -31,8 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const load = async () => {
             const savedToken = await storage.getItem("access_token");
             const savedUser = await storage.getItem("user");
-            console.log("savedUser", savedUser);
-            console.log("savedUser", typeof savedUser);
             if (savedToken && savedUser && savedUser !== "undefined") {
                 setToken(savedToken);
                 setUser(JSON.parse(savedUser));

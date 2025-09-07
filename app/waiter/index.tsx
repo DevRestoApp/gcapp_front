@@ -1,6 +1,9 @@
 import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
+//TODO создавать reusable компоненты в папке @src/client/components
+//TODO перенести все стили в @src/client/styles глобальные и локальные
+
 export default function WaiterHome() {
     const router = useRouter();
 
