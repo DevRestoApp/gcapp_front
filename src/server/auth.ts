@@ -29,7 +29,6 @@ export async function login({
 
     await storage.setItem("access_token", access_token);
     await storage.setItem("user", res.data.user ?? "ewkere");
-    console.log();
 
     return res.data;
 }

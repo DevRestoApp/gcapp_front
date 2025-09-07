@@ -15,7 +15,6 @@ export default function RegisterScreen() {
     const handleRegister = async () => {
         try {
             const result = await register({ login, password });
-            console.log(result);
             setMessage("Регистрация успешна: " + JSON.stringify(result));
 
             if (result.success) {

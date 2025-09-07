@@ -9,9 +9,6 @@ export default function Home() {
     const { IIKO_API } = Constants.expoConfig?.extra || {};
     const { user, token, logout } = useAuth();
 
-    console.log("user", user);
-    console.log("token", token);
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>🏢 Добро пожаловать в GCApp</Text>
