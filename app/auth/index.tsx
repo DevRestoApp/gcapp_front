@@ -9,10 +9,12 @@ import {
     Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { login } from "@/src/server/auth";
+import { login as loginRequest } from "@/src/server/auth";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function Login() {
     const router = useRouter();
+    const { login } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -27,9 +29,19 @@ export default function Login() {
         try {
             setLoading(true);
 
-            await login({ login: email, password });
+            const response = await loginRequest({ login: email, password });
 
-            router.replace("/");
+            if (response.success) {
+                const userObj = {
+                    id: response.user_id,
+                    email: email,
+                    role: response.role,
+                };
+                await login(userObj, response.access_token);
+                router.replace("/"); // кидаем на главную
+            } else {
+                Alert.alert("Ошибка", "Неверные данные");
+            }
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
             console.error(err);

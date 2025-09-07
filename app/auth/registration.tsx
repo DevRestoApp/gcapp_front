@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, Text, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+
 import { register } from "@/src/server/auth";
 
 export default function RegisterScreen() {
+    const router = useRouter();
+
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [login, setLogin] = useState("");
@@ -13,6 +17,10 @@ export default function RegisterScreen() {
             const result = await register({ login, password });
             console.log(result);
             setMessage("Регистрация успешна: " + JSON.stringify(result));
+
+            if (result.success) {
+                router.replace("/");
+            }
         } catch (error: any) {
             setMessage(
                 "Ошибка: " + (error.response?.data?.detail || error.message),

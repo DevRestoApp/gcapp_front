@@ -9,6 +9,11 @@ export async function register({
     password: string;
 }) {
     const res = await api.post("/register", { login, password });
+
+    const { access_token } = res.data;
+
+    await storage.setItem("access_token", access_token);
+
     return res.data;
 }
 
@@ -23,6 +28,8 @@ export async function login({
     const { access_token } = res.data;
 
     await storage.setItem("access_token", access_token);
+    await storage.setItem("user", res.data.user ?? "ewkere");
+    console.log();
 
     return res.data;
 }

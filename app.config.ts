@@ -9,6 +9,7 @@ const config: ExpoConfig = {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL || "http://localhost:8008",
     },
+    plugins: ["expo-secure-store"],
 };
 
 export default config;

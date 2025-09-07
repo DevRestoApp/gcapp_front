@@ -2,9 +2,15 @@ import { View, Text, Button, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 
+import { useAuth } from "../src/contexts/AuthContext";
+
 export default function Home() {
     const router = useRouter();
     const { IIKO_API } = Constants.expoConfig?.extra || {};
+    const { user, token, logout } = useAuth();
+
+    console.log("user", user);
+    console.log("token", token);
 
     return (
         <View style={styles.container}>
