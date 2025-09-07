@@ -16,7 +16,7 @@ type User = {
 
 type AuthContextType = {
     user: User | null;
-    token: string | null;
+    token: string | null | undefined; // undefined = ещё загружается
     login: (user: User, token: string) => Promise<void>;
     logout: () => Promise<void>;
 };
@@ -25,14 +25,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
+    const [token, setToken] = useState<string | null | undefined>(undefined);
 
     useEffect(() => {
         const load = async () => {
             const savedToken = await storage.getItem("access_token");
             const savedUser = await storage.getItem("user");
-            if (savedToken && savedUser && savedUser !== "undefined") {
-                setToken(savedToken);
+
+            setToken(savedToken ?? null); // undefined → null
+            if (savedUser && savedUser !== "undefined") {
                 setUser(JSON.parse(savedUser));
             }
         };
