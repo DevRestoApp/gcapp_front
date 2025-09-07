@@ -1,27 +1,26 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const isMobile = Platform.OS === "ios" || Platform.OS === "android";
 
-// test push git
 export const storage = {
     async setItem(key: string, value: string) {
         if (isMobile) {
-            await AsyncStorage.setItem(key, value);
+            await SecureStore.setItemAsync(key, value);
         } else {
             localStorage.setItem(key, value);
         }
     },
     async getItem(key: string) {
         if (isMobile) {
-            return await AsyncStorage.getItem(key);
+            return await SecureStore.getItemAsync(key);
         } else {
             return localStorage.getItem(key);
         }
     },
     async removeItem(key: string) {
         if (isMobile) {
-            await AsyncStorage.removeItem(key);
+            await SecureStore.deleteItemAsync(key);
         } else {
             localStorage.removeItem(key);
         }
