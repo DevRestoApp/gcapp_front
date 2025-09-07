@@ -1,32 +1,47 @@
-import { Stack, Redirect } from "expo-router";
-import { useEffect, useState } from "react";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { AppProviders } from "@/src/contexts/AppProviders";
-import { storage } from "@/src/server/storage";
+import { useAuth } from "@/src/contexts/AuthContext";
 
-export default function Layout() {
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+function AuthWrapper() {
+    const { token } = useAuth();
+    const router = useRouter();
+    const segments = useSegments();
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const token = await storage.getItem("access_token");
-            setIsLoggedIn(!!token);
-        };
-        checkAuth();
-    }, []);
+        if (token === undefined) return;
 
-    if (isLoggedIn === null) {
-        return null;
+        const inAuthGroup = segments[0] === "auth";
+
+        if (!token && !inAuthGroup) {
+            router.replace("/auth");
+        } else if (token && inAuthGroup) {
+            router.replace("/");
+        }
+    }, [token, segments]);
+
+    if (token === undefined) {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+            >
+                <ActivityIndicator size="large" />
+            </View>
+        );
     }
 
+    return <Stack screenOptions={{ headerShown: false }} />;
+}
+
+export default function Layout() {
     return (
         <AppProviders>
-            <Stack screenOptions={{ headerShown: false }}>
-                {isLoggedIn ? (
-                    <Redirect href="/index" />
-                ) : (
-                    <Redirect href="/auth/index" />
-                )}
-            </Stack>
+            <AuthWrapper />
         </AppProviders>
     );
 }

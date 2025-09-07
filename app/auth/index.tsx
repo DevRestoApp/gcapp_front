@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -14,11 +14,17 @@ import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function Login() {
     const router = useRouter();
-    const { login } = useAuth();
+    const { login, token } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (token) {
+            router.replace("/"); // если токен появился → сразу на главную
+        }
+    }, [token]);
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -34,11 +40,10 @@ export default function Login() {
             if (response.success) {
                 const userObj = {
                     id: response.user_id,
-                    email: email,
+                    email,
                     role: response.role,
                 };
                 await login(userObj, response.access_token);
-                router.replace("/"); // кидаем на главную
             } else {
                 Alert.alert("Ошибка", "Неверные данные");
             }
