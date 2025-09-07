@@ -25,7 +25,6 @@ export default function Index() {
             <View style={styles.statusBar}>
                 <Text style={styles.timeText}>12:48</Text>
                 <View style={styles.statusIcons}>
-                    {/* Симуляция иконок */}
                     <View style={styles.signalBars}>
                         <View style={[styles.bar, { height: 12 }]} />
                         <View style={[styles.bar, { height: 16 }]} />
