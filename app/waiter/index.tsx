@@ -108,11 +108,4 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     startButtonText: { color: "#2C2D2E", fontWeight: "600", fontSize: 16 },
-    bottomNav: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        paddingVertical: 12,
-    },
-    navText: { color: "#aaa", fontSize: 12 },
-    navActive: { color: "#fff", fontSize: 12, fontWeight: "600" },
 });
