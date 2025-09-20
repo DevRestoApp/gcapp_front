@@ -8,6 +8,10 @@ import {
 } from "react-native";
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
+import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrapper";
+
+// TODO переписать на получение из storage либо из базы
+const isActive = true;
 
 export default function Index() {
     const [days, setDays] = useState<Day[]>([]);
@@ -53,23 +57,36 @@ export default function Index() {
             <Calendar days={days} onDayPress={handleDayPress} />
 
             {/* Контент */}
-            <ScrollView
-                style={styles.main}
-                contentContainerStyle={{ alignItems: "center" }}
-            >
-                <Text style={styles.greetingSmall}>Добрый день, Адилет!</Text>
-                <Text style={styles.greetingBig}>
-                    Начните сегодняшнюю смену
-                </Text>
 
-                <View style={styles.card}>
-                    <Text style={styles.cardSubtitle}>Цель на сегодня</Text>
-                    <Text style={styles.cardTitle}>Обслуживать 15 стол</Text>
-                    <TouchableOpacity style={styles.startButton}>
-                        <Text style={styles.startButtonText}>Начать смену</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+            {isActive ? (
+                <ScrollView
+                    style={styles.main}
+                    contentContainerStyle={{ alignItems: "center" }}
+                >
+                    <Text style={styles.greetingSmall}>
+                        Добрый день, Адилет!
+                    </Text>
+                    <Text style={styles.greetingBig}>
+                        Начните сегодняшнюю смену
+                    </Text>
+
+                    <View style={styles.card}>
+                        <Text style={styles.cardSubtitle}>Цель на сегодня</Text>
+                        <Text style={styles.cardTitle}>
+                            Обслуживать 15 стол
+                        </Text>
+                        <TouchableOpacity style={styles.startButton}>
+                            <Text style={styles.startButtonText}>
+                                Начать смену
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            ) : (
+                <ScrollView>
+                    <ActiveShiftWrapper></ActiveShiftWrapper>
+                </ScrollView>
+            )}
         </View>
     );
 }
