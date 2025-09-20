@@ -9,6 +9,7 @@ import {
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrapper";
+import ShiftStartModal from "@/src/client/components/modals/ShiftStartModal";
 
 // TODO переписать на получение из storage либо из базы
 const isActive = true;
@@ -59,6 +60,10 @@ export default function Index() {
             {/* Контент */}
 
             {isActive ? (
+                <ScrollView>
+                    <ActiveShiftWrapper></ActiveShiftWrapper>
+                </ScrollView>
+            ) : (
                 <ScrollView
                     style={styles.main}
                     contentContainerStyle={{ alignItems: "center" }}
@@ -75,16 +80,10 @@ export default function Index() {
                         <Text style={styles.cardTitle}>
                             Обслуживать 15 стол
                         </Text>
-                        <TouchableOpacity style={styles.startButton}>
-                            <Text style={styles.startButtonText}>
-                                Начать смену
-                            </Text>
+                        <TouchableOpacity>
+                            <ShiftStartModal />
                         </TouchableOpacity>
                     </View>
-                </ScrollView>
-            ) : (
-                <ScrollView>
-                    <ActiveShiftWrapper></ActiveShiftWrapper>
                 </ScrollView>
             )}
         </View>
@@ -117,12 +116,6 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontWeight: "600",
         marginBottom: 16,
-    },
-    startButton: {
-        backgroundColor: "#fff",
-        paddingVertical: 12,
-        borderRadius: 24,
-        alignItems: "center",
     },
     startButtonText: { color: "#2C2D2E", fontWeight: "600", fontSize: 16 },
 });
