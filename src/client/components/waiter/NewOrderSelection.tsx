@@ -9,17 +9,17 @@ import {
 } from "react-native";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 
-interface TableRoomSelectionProps {
+interface NewOrderSelectionProps {
     onTableChange?: (table: string) => void;
     onRoomChange?: (room: string) => void;
     onAddDish?: () => void;
 }
 
-export default function TableRoomSelection({
+export default function NewOrderSelection({
     onTableChange,
     onRoomChange,
     onAddDish,
-}: TableRoomSelectionProps) {
+}: NewOrderSelectionProps) {
     const [selectedTable, setSelectedTable] = useState("");
     const [selectedRoom, setSelectedRoom] = useState("Общий зал");
 
