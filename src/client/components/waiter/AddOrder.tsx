@@ -9,7 +9,7 @@ export default function AddOrder() {
     return (
         <TouchableOpacity
             style={[ButtonStyles.buttonWhite, { width: "100%" }]}
-            onPress={() => router.push("/newOrder")}
+            onPress={() => router.push("/waiter/newOrder")}
         >
             <Text style={ButtonStyles.buttonText}>+ Новый заказ</Text>
         </TouchableOpacity>

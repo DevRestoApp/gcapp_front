@@ -52,6 +52,15 @@ export default function WaiterLayout() {
                     ),
                 }}
             />
+            {/* Вложенный стек для модальных/доп. экранов */}
+            <Tabs.Screen
+                name="menu"
+                options={{ href: null }} // 👈 убираем его из табов
+            />
+            <Tabs.Screen
+                name="newOrder"
+                options={{ href: null }} // 👈 убираем его из табов
+            />
         </Tabs>
     );
 }

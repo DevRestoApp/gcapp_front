@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 import {
     View,
     Text,
@@ -20,6 +21,8 @@ export default function NewOrderSelection({
     onRoomChange,
     onAddDish,
 }: NewOrderSelectionProps) {
+    const router = useRouter();
+
     const [selectedTable, setSelectedTable] = useState("");
     const [selectedRoom, setSelectedRoom] = useState("Общий зал");
 
@@ -107,7 +110,7 @@ export default function NewOrderSelection({
                             ButtonStyles.buttonWhite,
                             { marginTop: 16, width: "100%" },
                         ]}
-                        onPress={onAddDish}
+                        onPress={() => router.push("/waiter/menu")}
                     >
                         <Text style={ButtonStyles.buttonText}>Добавить</Text>
                     </TouchableOpacity>
