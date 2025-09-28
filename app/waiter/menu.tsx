@@ -288,22 +288,18 @@ export default function MenuScreen() {
 
             <View style={styles.dishesList}>
                 {filteredDishes.map((dish) => (
-                    <TouchableOpacity
+                    <DishItem
                         key={dish.id}
-                        onPress={() => handleDishPress(dish)}
-                        activeOpacity={0.8}
-                        style={styles.dishItemWrapper}
-                    >
-                        <DishItem
-                            id={dish.id}
-                            name={dish.name}
-                            description={dish.description}
-                            price={dish.price}
-                            image={dish.image}
-                            initialQuantity={quantities[dish.id] || 0}
-                            onQuantityChange={handleQuantityChange}
-                        />
-                    </TouchableOpacity>
+                        id={dish.id}
+                        name={dish.name}
+                        description={dish.description}
+                        price={dish.price}
+                        image={dish.image}
+                        variant="interactive"
+                        initialQuantity={quantities[dish.id] || 0}
+                        onQuantityChange={handleQuantityChange}
+                        onPress={() => handleDishPress(dish)} // Pass the handler here
+                    />
                 ))}
             </View>
 
