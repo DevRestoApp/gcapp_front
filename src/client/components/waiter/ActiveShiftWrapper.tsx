@@ -2,7 +2,7 @@ import { View, StyleSheet } from "react-native";
 import EarningsCard from "./EarningsCard";
 import TimerCard from "./TimerCard";
 import MotivationCard from "./MotivationCard";
-import AddOrder from "./AddOrder";
+import ActiveOrdersSection from "./ActiveOrderSection";
 
 export default function ActiveShiftWrapper() {
     return (
@@ -31,8 +31,8 @@ export default function ActiveShiftWrapper() {
                 }
             </View>
 
-            <View style={styles.newOrderContainer}>
-                <AddOrder></AddOrder>
+            <View>
+                <ActiveOrdersSection></ActiveOrdersSection>
             </View>
         </View>
     );
