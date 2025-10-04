@@ -1,9 +1,20 @@
 import React, { useState } from "react";
-import { View, StyleSheet, SafeAreaView, StatusBar, Alert } from "react-native";
+import { useRouter } from "expo-router";
+import {
+    View,
+    StyleSheet,
+    SafeAreaView,
+    StatusBar,
+    Alert,
+    Text,
+    TouchableOpacity,
+} from "react-native";
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 
 // Example usage of the updated OrderSelection component
 export default function OrderSelectionScreen() {
+    const router = useRouter();
+
     // Example order data - this would come from your state management/API
     const [currentOrder, setCurrentOrder] = useState({
         id: "order-123",
@@ -75,15 +86,7 @@ export default function OrderSelectionScreen() {
             status: "cancelled",
         });
 
-        Alert.alert("Заказ отменен", "Данные заказа очищены", [
-            {
-                text: "OK",
-                onPress: () => {
-                    // Navigate back or to orders list
-                    console.log("Navigate back after cancellation");
-                },
-            },
-        ]);
+        router.push("/waiter/cancel");
     };
 
     // Handle complete order
@@ -115,22 +118,29 @@ export default function OrderSelectionScreen() {
 
         setCurrentOrder(completedOrder);
 
-        Alert.alert(
-            "Заказ завершен",
-            `Заказ отправлен на кухню!\n\nСтол: ${currentOrder.table}\nСумма: ${totalAmount.toLocaleString()} тг\nБлюд: ${totalItems}`,
-            [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        console.log(
-                            "Navigate to orders list or create new order",
-                        );
-                        // Navigate back to orders list or create new order
-                    },
-                },
-            ],
-        );
+        router.push("/waiter/payment");
     };
+
+    // Render action buttons
+    const renderActionButtons = () => (
+        <View style={styles.actionsSection}>
+            <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelOrder}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.cancelButtonText}>Отменить заказ</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+                style={[styles.completeButton]}
+                onPress={handleCompleteOrder}
+                activeOpacity={0.8}
+            >
+                <Text style={[styles.completeButtonText]}>Завершить</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -146,95 +156,8 @@ export default function OrderSelectionScreen() {
                 onCancelOrder={handleCancelOrder}
                 onCompleteOrder={handleCompleteOrder}
             />
-        </SafeAreaView>
-    );
-}
 
-// Example with empty order (new order)
-export function NewOrderExample() {
-    const [newOrder, setNewOrder] = useState({
-        table: "",
-        location: 'VIP-зал "Жемчужина"',
-        room: "VIP-залы",
-        items: [], // Empty items array
-        status: "draft",
-        createdAt: new Date(),
-    });
-
-    const handleCompleteOrder = () => {
-        // This will show validation error since no items
-        console.log("Attempting to complete empty order");
-    };
-
-    const handleCancelOrder = () => {
-        Alert.alert("Пустой заказ", "Нет данных для отмены");
-    };
-
-    return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#000" />
-
-            <OrderSelection
-                order={newOrder}
-                onOrderUpdate={setNewOrder}
-                onCompleteOrder={handleCompleteOrder}
-                onCancelOrder={handleCancelOrder}
-            />
-        </SafeAreaView>
-    );
-}
-
-// Example with custom dishes
-export function CustomDishesExample() {
-    const customDishes = [
-        {
-            id: "special-1",
-            name: "Блюдо от шефа",
-            description:
-                "Эксклюзивное авторское блюдо с сезонными ингредиентами",
-            price: "Цена : 12 500 тг",
-            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-            category: "Авторская кухня",
-        },
-        {
-            id: "special-2",
-            name: 'Торт "Медовик"',
-            description: "Классический медовый торт с нежным кремом",
-            price: "Цена : 3 800 тг",
-            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-            category: "Десерты",
-        },
-    ];
-
-    const [specialOrder, setSpecialOrder] = useState({
-        table: "VIP-1",
-        location: "Банкетный зал",
-        room: "VIP-залы",
-        items: [{ dishId: "special-1", quantity: 1, price: 12500 }],
-        status: "draft",
-    });
-
-    return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#000" />
-
-            <OrderSelection
-                order={specialOrder}
-                dishes={customDishes}
-                onOrderUpdate={setSpecialOrder}
-                onDishPress={(dish) => {
-                    Alert.alert("Авторское блюдо", dish.description);
-                }}
-                onCompleteOrder={() => {
-                    Alert.alert(
-                        "Специальный заказ",
-                        "Заказ передан шеф-повару",
-                    );
-                }}
-                onCancelOrder={() => {
-                    Alert.alert("Заказ отменен", "Специальный заказ отменен");
-                }}
-            />
+            {renderActionButtons()}
         </SafeAreaView>
     );
 }
@@ -243,5 +166,55 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#000",
+    },
+    // Action buttons styles
+    actionsSection: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 8,
+    },
+    completeButton: {
+        flex: 1,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "#4CAF50",
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#4CAF50",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    completeButtonDisabled: {
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+    },
+    completeButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    completeButtonTextDisabled: {
+        color: "rgba(255, 255, 255, 0.4)",
+    },
+    cancelButton: {
+        flex: 1,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "#FF4444",
+        justifyContent: "center",
+        alignItems: "center",
+        shadowColor: "#FF4444",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    cancelButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
     },
 });

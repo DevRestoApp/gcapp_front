@@ -56,6 +56,8 @@ export default function WaiterLayout() {
             <Tabs.Screen name="menu" options={{ href: null }} />
             <Tabs.Screen name="newOrder" options={{ href: null }} />
             <Tabs.Screen name="order" options={{ href: null }} />
+            <Tabs.Screen name="payment" options={{ href: null }} />
+            <Tabs.Screen name="cancel" options={{ href: null }} />
         </Tabs>
     );
 }

@@ -240,9 +240,6 @@ export default function OrderSelection({
         );
     }, [selectedTable, selectedRoom, order.location, onCompleteOrder]);
 
-    const isFormValid =
-        selectedTable.trim().length > 0 && getTotalItemsCount() > 0;
-
     // Render table selection section
     const renderTableSelection = () => (
         <View style={styles.section}>
@@ -431,38 +428,6 @@ export default function OrderSelection({
         );
     };
 
-    // Render action buttons
-    const renderActionButtons = () => (
-        <View style={styles.actionsSection}>
-            <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCancelOrder}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.cancelButtonText}>Отменить заказ</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={[
-                    styles.completeButton,
-                    !isFormValid && styles.completeButtonDisabled,
-                ]}
-                onPress={handleCompleteOrder}
-                disabled={!isFormValid}
-                activeOpacity={0.8}
-            >
-                <Text
-                    style={[
-                        styles.completeButtonText,
-                        !isFormValid && styles.completeButtonTextDisabled,
-                    ]}
-                >
-                    Завершить
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
-
     return (
         <ScrollView
             style={styles.container}
@@ -474,7 +439,6 @@ export default function OrderSelection({
             {renderRoomSelection()}
             {renderDishesSection()}
             {renderOrderSummary()}
-            {renderActionButtons()}
         </ScrollView>
     );
 }
@@ -698,56 +662,5 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontWeight: "700",
         textAlign: "right",
-    },
-
-    // Action buttons styles
-    actionsSection: {
-        flexDirection: "row",
-        gap: 12,
-        marginTop: 8,
-    },
-    cancelButton: {
-        flex: 1,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "#FF4444",
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#FF4444",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    cancelButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    completeButton: {
-        flex: 1,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "#4CAF50",
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#4CAF50",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    completeButtonDisabled: {
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-    },
-    completeButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    completeButtonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.4)",
     },
 });
