@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "expo-router";
 import {
     View,
@@ -9,8 +9,7 @@ import {
     StyleSheet,
     Alert,
 } from "react-native";
-import DishItem from "./DishItem"; // Import our flexible DishItem
-import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import DishItem from "./DishItem";
 
 interface Dish {
     id: string;
@@ -21,12 +20,32 @@ interface Dish {
     category: string;
 }
 
+interface OrderItem {
+    dishId: string;
+    quantity: number;
+    price: number;
+}
+
+interface Order {
+    id?: string;
+    table: string;
+    location: string;
+    room: string;
+    items: OrderItem[];
+    status?: string;
+    createdAt?: Date;
+}
+
 interface OrderSelectionProps {
+    order: Order; // Required order data
+    dishes?: Dish[]; // Available dishes for display
+    onOrderUpdate?: (updatedOrder: Order) => void;
     onTableChange?: (table: string) => void;
     onRoomChange?: (room: string) => void;
     onAddDish?: () => void;
     onDishPress?: (dish: Dish) => void;
-    dishes?: Dish[]; // Optional dishes list
+    onCancelOrder?: () => void;
+    onCompleteOrder?: () => void;
 }
 
 // Sample dishes data
@@ -79,16 +98,27 @@ const sampleDishes: Dish[] = [
 ];
 
 export default function OrderSelection({
+    order,
+    dishes = sampleDishes,
+    onOrderUpdate,
     onTableChange,
     onRoomChange,
     onAddDish,
     onDishPress,
-    dishes = sampleDishes,
+    onCancelOrder,
+    onCompleteOrder,
 }: OrderSelectionProps) {
     const router = useRouter();
 
-    const [selectedTable, setSelectedTable] = useState("");
-    const [selectedRoom, setSelectedRoom] = useState("Общий зал");
+    // Initialize state from order data
+    const [selectedTable, setSelectedTable] = useState(order.table || "");
+    const [selectedRoom, setSelectedRoom] = useState(order.room || "Общий зал");
+
+    // Update local state when order prop changes
+    useEffect(() => {
+        setSelectedTable(order.table || "");
+        setSelectedRoom(order.room || "Общий зал");
+    }, [order]);
 
     const rooms = [
         "Общий зал",
@@ -97,21 +127,48 @@ export default function OrderSelection({
         "VIP-залы",
     ];
 
+    // Calculate order totals
+    const calculateOrderTotal = () => {
+        return order.items.reduce(
+            (total, item) => total + item.price * item.quantity,
+            0,
+        );
+    };
+
+    const getTotalItemsCount = () => {
+        return order.items.reduce((total, item) => total + item.quantity, 0);
+    };
+
+    const formatPrice = (price: number) => {
+        return `${price.toLocaleString()} тг`;
+    };
+
+    // Update order helper
+    const updateOrder = useCallback(
+        (updates: Partial<Order>) => {
+            const updatedOrder = { ...order, ...updates };
+            onOrderUpdate?.(updatedOrder);
+        },
+        [order, onOrderUpdate],
+    );
+
     // Handlers
     const handleTableChange = useCallback(
         (value: string) => {
             setSelectedTable(value);
+            updateOrder({ table: value });
             onTableChange?.(value);
         },
-        [onTableChange],
+        [updateOrder, onTableChange],
     );
 
     const handleRoomSelect = useCallback(
         (room: string) => {
             setSelectedRoom(room);
+            updateOrder({ room });
             onRoomChange?.(room);
         },
-        [onRoomChange],
+        [updateOrder, onRoomChange],
     );
 
     const handleDishPress = useCallback(
@@ -129,12 +186,67 @@ export default function OrderSelection({
         router.push("/waiter/menu");
     }, [onAddDish, router]);
 
-    const isFormValid = selectedTable.trim().length > 0;
+    const handleCancelOrder = useCallback(() => {
+        Alert.alert(
+            "Отменить заказ",
+            "Вы уверены, что хотите отменить заказ? Все данные будут потеряны.",
+            [
+                {
+                    text: "Нет",
+                    style: "cancel",
+                },
+                {
+                    text: "Да, отменить",
+                    style: "destructive",
+                    onPress: () => onCancelOrder?.(),
+                },
+            ],
+        );
+    }, [onCancelOrder]);
+
+    const handleCompleteOrder = useCallback(() => {
+        const totalItems = getTotalItemsCount();
+        const totalAmount = calculateOrderTotal();
+
+        if (totalItems === 0) {
+            Alert.alert(
+                "Пустой заказ",
+                "Добавьте блюда в заказ перед завершением",
+                [{ text: "OK" }],
+            );
+            return;
+        }
+
+        if (selectedTable.trim().length === 0) {
+            Alert.alert("Укажите стол", "Пожалуйста, введите номер стола", [
+                { text: "OK" },
+            ]);
+            return;
+        }
+
+        Alert.alert(
+            "Завершить заказ",
+            `Стол: ${selectedTable}\nЛокация: ${order.location}\nПомещение: ${selectedRoom}\nБлюд: ${totalItems}\nСумма: ${formatPrice(totalAmount)}`,
+            [
+                {
+                    text: "Отмена",
+                    style: "cancel",
+                },
+                {
+                    text: "Завершить",
+                    onPress: () => onCompleteOrder?.(),
+                },
+            ],
+        );
+    }, [selectedTable, selectedRoom, order.location, onCompleteOrder]);
+
+    const isFormValid =
+        selectedTable.trim().length > 0 && getTotalItemsCount() > 0;
 
     // Render table selection section
     const renderTableSelection = () => (
         <View style={styles.section}>
-            <Text style={styles.title}>Выберите стол</Text>
+            <Text style={styles.title}>Стол</Text>
             <TextInput
                 value={selectedTable}
                 onChangeText={handleTableChange}
@@ -152,6 +264,16 @@ export default function OrderSelection({
             {selectedTable.trim().length === 0 && (
                 <Text style={styles.helperText}>Обязательное поле</Text>
             )}
+        </View>
+    );
+
+    // Render location info section
+    const renderLocationInfo = () => (
+        <View style={styles.section}>
+            <Text style={styles.title}>Локация</Text>
+            <View style={styles.locationContainer}>
+                <Text style={styles.locationText}>{order.location}</Text>
+            </View>
         </View>
     );
 
@@ -200,7 +322,7 @@ export default function OrderSelection({
                     style={styles.addMoreButton}
                     activeOpacity={0.7}
                 >
-                    <Text style={styles.addMoreButtonText}>Посмотреть все</Text>
+                    <Text style={styles.addMoreButtonText}>Все блюда</Text>
                 </TouchableOpacity>
             </View>
 
@@ -220,79 +342,123 @@ export default function OrderSelection({
                         </TouchableOpacity>
                     </View>
                 ) : (
-                    <ScrollView
-                        style={styles.dishesList}
-                        contentContainerStyle={styles.dishesContent}
-                        showsVerticalScrollIndicator={false}
-                        nestedScrollEnabled
-                    >
-                        {dishes.map((dish) => (
-                            <DishItem
-                                key={dish.id}
-                                id={dish.id}
-                                name={dish.name}
-                                description={dish.description}
-                                price={dish.price}
-                                image={dish.image}
-                                variant="informative"
-                                onPress={handleDishPress}
-                                maxLines={2}
-                            />
-                        ))}
-                    </ScrollView>
+                    <>
+                        <ScrollView
+                            style={styles.dishesList}
+                            contentContainerStyle={styles.dishesContent}
+                            showsVerticalScrollIndicator={false}
+                            nestedScrollEnabled
+                        >
+                            {dishes.map((dish) => (
+                                <DishItem
+                                    key={dish.id}
+                                    id={dish.id}
+                                    name={dish.name}
+                                    description={dish.description}
+                                    price={dish.price}
+                                    image={dish.image}
+                                    variant="informative"
+                                    onPress={handleDishPress}
+                                    maxLines={2}
+                                />
+                            ))}
+                        </ScrollView>
+
+                        {/* Add Dish Button at bottom of dishes */}
+                        <TouchableOpacity
+                            style={styles.addDishButton}
+                            onPress={handleAddMoreDishes}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.addDishButtonText}>
+                                + Добавить блюдо
+                            </Text>
+                        </TouchableOpacity>
+                    </>
                 )}
             </View>
         </View>
     );
 
+    // Render order summary section
+    const renderOrderSummary = () => {
+        const totalItems = getTotalItemsCount();
+        const totalAmount = calculateOrderTotal();
+
+        return (
+            <View style={styles.summarySection}>
+                <Text style={styles.summaryTitle}>Итого по заказу</Text>
+
+                <View style={styles.summaryContent}>
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>
+                            Количество блюд:
+                        </Text>
+                        <Text style={styles.summaryValue}>{totalItems}</Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Стол:</Text>
+                        <Text style={styles.summaryValue}>
+                            {selectedTable || "Не указан"}
+                        </Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Локация:</Text>
+                        <Text style={styles.summaryValue}>
+                            {order.location}
+                        </Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Помещение:</Text>
+                        <Text style={styles.summaryValue}>{selectedRoom}</Text>
+                    </View>
+
+                    <View style={styles.summaryDivider} />
+
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryTotalLabel}>
+                            Общая сумма:
+                        </Text>
+                        <Text style={styles.summaryTotalValue}>
+                            {formatPrice(totalAmount)}
+                        </Text>
+                    </View>
+                </View>
+            </View>
+        );
+    };
+
     // Render action buttons
     const renderActionButtons = () => (
         <View style={styles.actionsSection}>
             <TouchableOpacity
-                style={[
-                    styles.primaryButton,
-                    !isFormValid && styles.primaryButtonDisabled,
-                ]}
-                onPress={() => {
-                    if (!isFormValid) {
-                        Alert.alert(
-                            "Заполните форму",
-                            "Пожалуйста, выберите стол",
-                            [{ text: "OK" }],
-                        );
-                        return;
-                    }
+                style={styles.cancelButton}
+                onPress={handleCancelOrder}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.cancelButtonText}>Отменить заказ</Text>
+            </TouchableOpacity>
 
-                    Alert.alert(
-                        "Заказ создан",
-                        `Стол: ${selectedTable}\nПомещение: ${selectedRoom}`,
-                        [
-                            {
-                                text: "Продолжить",
-                                onPress: () => router.push("/waiter/menu"),
-                            },
-                        ],
-                    );
-                }}
+            <TouchableOpacity
+                style={[
+                    styles.completeButton,
+                    !isFormValid && styles.completeButtonDisabled,
+                ]}
+                onPress={handleCompleteOrder}
                 disabled={!isFormValid}
                 activeOpacity={0.8}
             >
                 <Text
                     style={[
-                        styles.primaryButtonText,
-                        !isFormValid && styles.primaryButtonTextDisabled,
+                        styles.completeButtonText,
+                        !isFormValid && styles.completeButtonTextDisabled,
                     ]}
                 >
-                    Создать заказ
+                    Завершить
                 </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={handleAddMoreDishes}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.secondaryButtonText}>Перейти к меню</Text>
             </TouchableOpacity>
         </View>
     );
@@ -304,8 +470,10 @@ export default function OrderSelection({
             showsVerticalScrollIndicator={false}
         >
             {renderTableSelection()}
+            {renderLocationInfo()}
             {renderRoomSelection()}
             {renderDishesSection()}
+            {renderOrderSummary()}
             {renderActionButtons()}
         </ScrollView>
     );
@@ -358,6 +526,22 @@ const styles = StyleSheet.create({
         color: "#FF6B6B",
         marginTop: 4,
         marginLeft: 4,
+    },
+
+    // Location info styles
+    locationContainer: {
+        height: 44,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        justifyContent: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+    locationText: {
+        fontSize: 16,
+        color: "#fff",
+        fontWeight: "500",
     },
 
     // Room selection styles
@@ -418,6 +602,22 @@ const styles = StyleSheet.create({
         padding: 12,
         gap: 8,
     },
+    addDishButton: {
+        margin: 12,
+        height: 44,
+        borderRadius: 20,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+        borderStyle: "dashed",
+    },
+    addDishButtonText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "500",
+    },
 
     // Empty state styles
     emptyState: {
@@ -450,48 +650,104 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
 
+    // Order summary styles
+    summarySection: {
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        borderRadius: 20,
+        padding: 20,
+        gap: 16,
+    },
+    summaryTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "white",
+        textAlign: "center",
+    },
+    summaryContent: {
+        gap: 12,
+    },
+    summaryRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    summaryLabel: {
+        fontSize: 14,
+        color: "rgba(121, 122, 128, 1)",
+        flex: 1,
+    },
+    summaryValue: {
+        fontSize: 14,
+        color: "#fff",
+        fontWeight: "500",
+        textAlign: "right",
+    },
+    summaryDivider: {
+        height: 1,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        marginVertical: 4,
+    },
+    summaryTotalLabel: {
+        fontSize: 16,
+        color: "#fff",
+        fontWeight: "600",
+        flex: 1,
+    },
+    summaryTotalValue: {
+        fontSize: 18,
+        color: "#fff",
+        fontWeight: "700",
+        textAlign: "right",
+    },
+
     // Action buttons styles
     actionsSection: {
+        flexDirection: "row",
         gap: 12,
         marginTop: 8,
     },
-    primaryButton: {
+    cancelButton: {
+        flex: 1,
         height: 48,
         borderRadius: 24,
-        backgroundColor: "#fff",
+        backgroundColor: "#FF4444",
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
+        shadowColor: "#FF4444",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 2,
     },
-    primaryButtonDisabled: {
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        shadowOpacity: 0,
-        elevation: 0,
-    },
-    primaryButtonText: {
-        color: "#000",
+    cancelButtonText: {
+        color: "#fff",
         fontSize: 16,
         fontWeight: "600",
     },
-    primaryButtonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.4)",
-    },
-    secondaryButton: {
+    completeButton: {
+        flex: 1,
         height: 48,
         borderRadius: 24,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+        backgroundColor: "#4CAF50",
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
+        shadowColor: "#4CAF50",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    secondaryButtonText: {
-        color: "rgba(255, 255, 255, 0.9)",
+    completeButtonDisabled: {
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+    },
+    completeButtonText: {
+        color: "#fff",
         fontSize: 16,
-        fontWeight: "500",
+        fontWeight: "600",
+    },
+    completeButtonTextDisabled: {
+        color: "rgba(255, 255, 255, 0.4)",
     },
 });

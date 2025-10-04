@@ -7,6 +7,8 @@ import {
     ScrollView,
     Dimensions,
 } from "react-native";
+import { useRouter } from "expo-router";
+
 import OrderItem from "./OrderItem";
 import AddOrder from "./AddOrder";
 
@@ -75,6 +77,8 @@ export default function ActiveOrdersSection({
     showScrollIndicator = false,
     maxHeight,
 }: ActiveOrdersSectionProps) {
+    const router = useRouter();
+
     const handleNewOrder = useCallback(() => {
         onNewOrder?.();
     }, [onNewOrder]);
@@ -82,6 +86,7 @@ export default function ActiveOrdersSection({
     const handleOrderClick = useCallback(
         (orderId: string) => {
             onOrderClick?.(orderId);
+            router.push(`/waiter/order`);
         },
         [onOrderClick],
     );
