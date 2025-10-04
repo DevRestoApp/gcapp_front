@@ -1,10 +1,36 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Text, Pressable } from "react-native";
+import React, { useRef } from "react";
+
 import EarningsCard from "./EarningsCard";
 import TimerCard from "./TimerCard";
 import MotivationCard from "./MotivationCard";
 import ActiveOrdersSection from "./ActiveOrderSection";
+import ShiftCloseModal, {
+    ShiftCloseModalRef,
+} from "@/src/client/components/modals/ShiftCloseModal";
+import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 
 export default function ActiveShiftWrapper() {
+    const shiftCloseModalRef = useRef<ShiftCloseModalRef>(null);
+
+    const handleOpenModal = () => {
+        shiftCloseModalRef.current?.open();
+    };
+
+    const handleCloseShift = (data: {
+        startTime: string;
+        endTime: string;
+        totalOrdersSold: number;
+        totalRevenue: number;
+        duration: string;
+    }) => {
+        console.log("Shift closed:", data);
+    };
+
+    const handleCancel = () => {
+        console.log("Shift close canceled");
+    };
+
     return (
         <View style={styles.container}>
             {/* Top row */}
@@ -33,6 +59,37 @@ export default function ActiveShiftWrapper() {
 
             <View>
                 <ActiveOrdersSection></ActiveOrdersSection>
+            </View>
+
+            <View>
+                <ShiftCloseModal
+                    ref={shiftCloseModalRef}
+                    startTime="09:00"
+                    totalOrdersSold={45}
+                    totalRevenue={456000}
+                    onCloseShift={(data) => {
+                        console.log("Shift closed:", data);
+                        // Navigate to login or generate report
+                    }}
+                    onCancel={() => console.log("Cancelled")}
+                />
+
+                <Pressable
+                    style={[ButtonStyles.buttonWhite, { width: "100%" }]}
+                    onPress={handleOpenModal}
+                >
+                    <Text>Закончить смену</Text>
+                </Pressable>
+
+                {/* The modal itself */}
+                <ShiftCloseModal
+                    ref={shiftCloseModalRef}
+                    startTime="09:00"
+                    totalOrdersSold={42}
+                    totalRevenue={123456}
+                    onCloseShift={handleCloseShift}
+                    onCancel={handleCancel}
+                />
             </View>
         </View>
     );

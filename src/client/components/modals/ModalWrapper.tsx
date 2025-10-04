@@ -16,7 +16,7 @@ import {
     Dimensions,
 } from "react-native";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
 
 export type ModalWrapperRef = {
     open: () => void;
@@ -233,6 +233,5 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 20,
         elevation: 10,
-        // Remove default padding - let children handle their own spacing
     },
 });
