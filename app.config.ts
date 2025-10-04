@@ -1,6 +1,8 @@
 import "dotenv/config";
 import { ExpoConfig } from "@expo/config-types";
 
+declare const process: any;
+
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
