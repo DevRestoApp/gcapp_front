@@ -1,5 +1,5 @@
 export interface Day {
-    date: number;
+    date: string;
     day: string;
     active: boolean;
 }
