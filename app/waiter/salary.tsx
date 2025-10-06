@@ -4,16 +4,18 @@ import {
     Text,
     ScrollView,
     StyleSheet,
-    SafeAreaView,
     StatusBar,
     ActivityIndicator,
     Alert,
     FlatList,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
+
+import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 
 interface DailyEarnings {
     date: string;
@@ -330,9 +332,9 @@ export default function SalaryScreen({
 
     // Render motivation section
     const renderLoadingState = () => (
-        <View style={styles.loadingContainer}>
+        <View style={loadingStyles.loadingContainer}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Загрузка квестов...</Text>
+            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
         </View>
     );
 
@@ -378,9 +380,9 @@ export default function SalaryScreen({
                     <Text style={styles.dateTitle}>{selectedDate}</Text>
 
                     {loading ? (
-                        <View style={styles.loadingContainer}>
+                        <View style={loadingStyles.loadingContainer}>
                             <ActivityIndicator size="large" color="#fff" />
-                            <Text style={styles.loadingText}>
+                            <Text style={loadingStyles.loadingText}>
                                 Загрузка данных...
                             </Text>
                         </View>
@@ -446,19 +448,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         lineHeight: 28,
     },
-
-    // Loading
-    loadingContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 60,
-        gap: 16,
-    },
-    loadingText: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 16,
-    },
-
     // Card
     card: {
         backgroundColor: "rgba(35, 35, 36, 1)",

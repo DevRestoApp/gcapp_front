@@ -4,14 +4,17 @@ import {
     Text,
     FlatList,
     StyleSheet,
-    SafeAreaView,
     StatusBar,
     ActivityIndicator,
     Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
+
+import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 
 interface MotivationScreenProps {
     waiterId?: string;
@@ -176,9 +179,9 @@ export default function MotivationScreen({
 
     // Render loading state
     const renderLoadingState = () => (
-        <View style={styles.loadingContainer}>
+        <View style={loadingStyles.loadingContainer}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Загрузка квестов...</Text>
+            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
         </View>
     );
 
@@ -259,20 +262,6 @@ const styles = StyleSheet.create({
     itemSeparator: {
         height: 16,
     },
-
-    // Loading state
-    loadingContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 16,
-        paddingVertical: 60,
-    },
-    loadingText: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 16,
-    },
-
     // Empty state
     emptyState: {
         flex: 1,
