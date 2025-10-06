@@ -7,12 +7,12 @@ import {
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    SafeAreaView,
     StatusBar,
     Alert,
     KeyboardAvoidingView,
     Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface PaymentScreenProps {
     totalBill?: number;

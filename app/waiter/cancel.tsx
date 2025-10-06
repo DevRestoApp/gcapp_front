@@ -6,10 +6,10 @@ import {
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    SafeAreaView,
     StatusBar,
     Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface CancelReasonScreenProps {
     orderId?: string;

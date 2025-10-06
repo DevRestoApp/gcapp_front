@@ -3,12 +3,13 @@ import { useRouter } from "expo-router";
 import {
     View,
     StyleSheet,
-    SafeAreaView,
     StatusBar,
     Alert,
     Text,
     TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 
 // Example usage of the updated OrderSelection component
