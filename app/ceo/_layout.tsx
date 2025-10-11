@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 
-export default function WaiterLayout() {
+export default function CeoLayout() {
     return (
         <Tabs
             screenOptions={{
@@ -25,20 +25,11 @@ export default function WaiterLayout() {
                 }}
             />
             <Tabs.Screen
-                name="salary"
+                name="analytics"
                 options={{
-                    title: "Зарплата",
+                    title: "Аналитика",
                     tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="wallet" size={size} color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="motivation"
-                options={{
-                    title: "Мотивация",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="star" size={size} color={color} />
+                        <AntDesign name="line-chart" size={24} color={color} />
                     ),
                 }}
             />
@@ -52,11 +43,7 @@ export default function WaiterLayout() {
                 }}
             />
             {/* Вложенный стек для модальных/доп. экранов */}
-            <Tabs.Screen name="menu" options={{ href: null }} />
-            <Tabs.Screen name="newOrder" options={{ href: null }} />
-            <Tabs.Screen name="order" options={{ href: null }} />
-            <Tabs.Screen name="payment" options={{ href: null }} />
-            <Tabs.Screen name="cancel" options={{ href: null }} />
+            <Tabs.Screen name="employees" options={{ href: null }} />
         </Tabs>
     );
 }

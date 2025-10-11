@@ -23,48 +23,37 @@ export default function IndexScreen() {
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
-    const [openEmployees, setOpenEmployees] = useState(20);
-    const [totalAmount, setTotalAmount] = useState(150232);
+    const [openEmployees, setOpenEmployees] = useState(0);
+    const [totalAmount, setTotalAmount] = useState(0);
     const [finesCount, setFinesCount] = useState(0);
     const [motivationCount, setMotivationCount] = useState(0);
-    const [loading, setLoading] = useState(true); // Start with true if loading initially
+    const [loading, setLoading] = useState(false);
 
     // Initialize calendar
     useEffect(() => {
-        const initializeData = async () => {
-            setLoading(true);
+        const today = new Date();
+        const weekDays: Day[] = [];
 
-            const today = new Date();
-            const weekDays: Day[] = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - (6 - i));
 
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - (6 - i));
-
-                weekDays.push({
-                    date: date.getDate().toString(),
-                    day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                    active: i === 6,
-                });
-            }
-
-            setDays(weekDays);
-
-            // Set today's date as selected
-            const todayStr = today.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
+            weekDays.push({
+                date: date.getDate().toString(),
+                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
+                active: i === 6, // Last day is active by default
             });
-            setSelectedDate(todayStr);
+        }
 
-            // Add your data fetching logic here
-            // await fetchData();
+        setDays(weekDays);
 
-            setLoading(false);
-        };
-
-        initializeData();
+        // Set today's date as selected
+        const todayStr = today.toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        setSelectedDate(todayStr);
     }, []);
 
     // Update elapsed time
@@ -227,6 +216,13 @@ export default function IndexScreen() {
         </View>
     );
 
+    const renderLoadingState = () => (
+        <View style={loadingStyles.loadingContainer}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
+        </View>
+    );
+
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar
@@ -248,10 +244,16 @@ export default function IndexScreen() {
                     </View>
                 ) : (
                     <>
-                        {renderHeader()}
-                        {renderEmployeesSection()}
-                        {renderFinesSection()}
-                        {renderMotivationSection()}
+                        {loading ? (
+                            renderLoadingState()
+                        ) : (
+                            <>
+                                {renderHeader()}
+                                {renderEmployeesSection()}
+                                {renderFinesSection()}
+                                {renderMotivationSection()}
+                            </>
+                        )}
                     </>
                 )}
             </ScrollView>
