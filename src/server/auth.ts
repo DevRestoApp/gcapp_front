@@ -25,10 +25,10 @@ export async function login({
     password: string;
 }) {
     const res = await api.post("/login", { login, password });
-    const { access_token } = res.data;
+    const { access_token, user } = res.data;
 
     await storage.setItem("access_token", access_token);
-    await storage.setItem("user", res.data.user ?? "ewkere");
+    await storage.setItem("user", user);
 
     return res.data;
 }

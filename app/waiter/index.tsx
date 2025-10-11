@@ -16,31 +16,32 @@ const isActive = true;
 
 export default function Index() {
     const [days, setDays] = useState<Day[]>([]);
+    const [selectedDate, setSelectedDate] = useState<string>("");
 
-    // Генерация текущей недели
     useEffect(() => {
-        const generateWeek = (): Day[] => {
-            const today = new Date();
-            const currentDayIndex = today.getDay();
+        const today = new Date();
+        const weekDays: Day[] = [];
 
-            const startOfWeek = new Date(today);
-            const diff = currentDayIndex === 0 ? -6 : 1 - currentDayIndex;
-            startOfWeek.setDate(today.getDate() + diff);
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - (6 - i));
 
-            const weekDays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-
-            return Array.from({ length: 7 }).map((_, i) => {
-                const d = new Date(startOfWeek);
-                d.setDate(startOfWeek.getDate() + i);
-                return {
-                    date: d.getDate(),
-                    day: weekDays[d.getDay()],
-                    active: d.toDateString() === today.toDateString(),
-                };
+            weekDays.push({
+                date: date.getDate().toString(),
+                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
+                active: i === 6, // Last day is active by default
             });
-        };
+        }
 
-        setDays(generateWeek());
+        setDays(weekDays);
+
+        // Set today's date as selected
+        const todayStr = today.toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        setSelectedDate(todayStr);
     }, []);
 
     const handleDayPress = (index: number) => {
@@ -91,9 +92,20 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#121212" },
-    header: { paddingHorizontal: 16, paddingVertical: 12 },
-    headerTitle: { fontSize: 28, fontWeight: "700", color: "#fff" },
+    container: { flex: 1, backgroundColor: "rgba(25, 25, 26, 1)" },
+
+    // Header
+    header: {
+        paddingHorizontal: 16,
+        height: 56,
+        justifyContent: "center",
+    },
+    headerTitle: {
+        color: "#fff",
+        fontSize: 32,
+        fontWeight: "600",
+        letterSpacing: -0.24,
+    },
 
     main: { flex: 1, paddingHorizontal: 16 },
     greetingSmall: { fontSize: 16, color: "#aaa", marginBottom: 4 },
