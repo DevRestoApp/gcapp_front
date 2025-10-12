@@ -108,7 +108,7 @@ export default function IndexScreen() {
 
     // Navigation handlers
     const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
+        router.push("/employees");
     }, [router]);
 
     const handlePenaltiesPress = useCallback(() => {

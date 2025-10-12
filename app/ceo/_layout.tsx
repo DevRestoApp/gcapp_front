@@ -42,8 +42,6 @@ export default function CeoLayout() {
                     ),
                 }}
             />
-            {/* Вложенный стек для модальных/доп. экранов */}
-            <Tabs.Screen name="employees" options={{ href: null }} />
         </Tabs>
     );
 }
