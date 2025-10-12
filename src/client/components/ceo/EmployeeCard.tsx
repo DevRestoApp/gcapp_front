@@ -135,12 +135,13 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
     statsSection: {
+        flexDirection: "row", // 👈 размещаем дочерние элементы горизонтально
+        justifyContent: "space-between", // 👈 равномерно распределяем (лево/право)
+        alignItems: "center",
         gap: 8,
     },
     statItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
+        flex: 1,
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 12,
         paddingHorizontal: 8,
