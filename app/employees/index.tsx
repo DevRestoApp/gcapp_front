@@ -4,23 +4,16 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    SafeAreaView,
     StatusBar,
     StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 
-interface Employee {
-    id: string;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-}
+import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
 
 const employeesData: Employee[] = [
     {
@@ -73,11 +66,33 @@ const employeesData: Employee[] = [
         shiftTime: "00:56:25",
         isActive: true,
     },
+    {
+        id: "7",
+        name: "Тима Янь",
+        role: "Хостес",
+        avatarUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
+        totalAmount: "56 897 тг",
+        shiftTime: "00:56:25",
+        isActive: false,
+    },
+    {
+        id: "8",
+        name: "Асылай Арнатова",
+        role: "Официант",
+        avatarUrl:
+            "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
+        totalAmount: "56 897 тг",
+        shiftTime: "00:56:25",
+        isActive: false,
+    },
 ];
 
 export default function EmployeesScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+
+    const { setSelectedEmployee } = useEmployee();
 
     const filteredEmployees =
         activeTab === "open"
@@ -178,13 +193,13 @@ export default function EmployeesScreen() {
                                 avatarUrl={employee.avatarUrl}
                                 totalAmount={employee.totalAmount}
                                 shiftTime={employee.shiftTime}
+                                statsSectionActive={activeTab === "open"}
                                 onPress={() => {
-                                    console.log(
-                                        "Clicked employee:",
-                                        employee.name,
-                                    );
+                                    setSelectedEmployee(employee);
                                     // Navigate to employee detail page
-                                    // router.push(`/ceo/employees/${employee.id}`);
+                                    router.push({
+                                        pathname: `/employees/${employee.id}`,
+                                    });
                                 }}
                             />
                         ))}
