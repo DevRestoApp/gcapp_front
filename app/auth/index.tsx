@@ -35,8 +35,21 @@ export default function Login() {
         try {
             setLoading(true);
 
-            const response = await loginRequest({ login: email, password });
+            router.replace("/");
+            /*const response = await loginRequest({ login: email, password });*/
 
+            const response = {
+                success: true,
+                user_id: 1,
+                role: "waiter",
+                access_token: "<KEY>",
+                refresh_token: "<KEY>",
+                token_type: "Bearer",
+                expires_in: 3600,
+                scope: "read write",
+                jti: "1234567890",
+                user: {},
+            };
             if (response.success) {
                 const userObj = {
                     id: response.user_id,
@@ -50,6 +63,7 @@ export default function Login() {
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
             console.error(err);
+            router.replace("/");
         } finally {
             setLoading(false);
         }

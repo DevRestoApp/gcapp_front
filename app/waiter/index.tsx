@@ -9,10 +9,10 @@ import {
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrapper";
-import ShiftStartModal from "@/src/client/components/modals/ShiftStartModal";
+import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 
 // TODO переписать на получение из storage либо из базы
-const isActive = true;
+const isActive = false;
 
 export default function Index() {
     const [days, setDays] = useState<Day[]>([]);
@@ -82,7 +82,13 @@ export default function Index() {
                             Обслуживать 15 стол
                         </Text>
                         <TouchableOpacity>
-                            <ShiftStartModal />
+                            <ShiftTimeModal
+                                type="start"
+                                onShiftStart={(time) =>
+                                    // can put some action
+                                    console.log(time)
+                                }
+                            />
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
