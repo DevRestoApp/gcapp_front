@@ -14,7 +14,6 @@ export default function EmployeesLayout() {
                     name="index"
                     options={{
                         title: "Сотрудники",
-                        // табы будут видны
                     }}
                 />
                 <Stack.Screen

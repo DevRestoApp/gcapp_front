@@ -114,7 +114,7 @@ export default function EmployeesScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.back()}
+                        onPress={() => router.push("/ceo")}
                         style={styles.backButton}
                         activeOpacity={0.7}
                     >
