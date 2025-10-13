@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
     TouchableOpacity,
     ScrollView,
@@ -8,12 +8,16 @@ import {
     Text,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Feather from "@expo/vector-icons/Feather";
 
 import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
+import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
+import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
+import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 
 const rooms = [
     "Общий зал",
@@ -25,6 +29,8 @@ const rooms = [
 export default function EmployeeDetailScreen() {
     const { id } = useLocalSearchParams();
     const { selectedEmployee } = useEmployee();
+    const editModalRef = useRef<ModalWrapperRef>(null);
+    const dropdownRef = useRef<any>(null);
 
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"info" | "history">("info");
@@ -70,25 +76,32 @@ export default function EmployeeDetailScreen() {
                         </Svg>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Сотрудники</Text>
-                    <TouchableOpacity
-                        style={styles.headerButton}
-                        activeOpacity={0.7}
-                    >
-                        <Svg
-                            width="28"
-                            height="28"
-                            viewBox="0 0 28 28"
-                            fill="none"
+                    <DropdownMenuDots ref={dropdownRef}>
+                        <TouchableOpacity
+                            style={styles.headerMenuItem}
+                            onPress={() => {
+                                dropdownRef.current?.close();
+                                editModalRef.current?.open();
+                            }}
                         >
-                            <Path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M0.666748 3.00033C0.666748 1.71166 1.71142 0.666992 3.00008 0.666992C4.28875 0.666992 5.33342 1.71166 5.33342 3.00033C5.33342 4.28899 4.28875 5.33366 3.00008 5.33366C1.71142 5.33366 0.666748 4.28899 0.666748 3.00033ZM3.00008 7.66699C1.71142 7.66699 0.666748 8.71166 0.666748 10.0003C0.666748 11.289 1.71142 12.3337 3.00008 12.3337C4.28875 12.3337 5.33342 11.289 5.33342 10.0003C5.33342 8.71166 4.28875 7.66699 3.00008 7.66699ZM0.666748 17.0003C0.666748 15.7117 1.71142 14.667 3.00008 14.667C4.28875 14.667 5.33342 15.7117 5.33342 17.0003C5.33342 18.289 4.28875 19.3337 3.00008 19.3337C1.71142 19.3337 0.666748 18.289 0.666748 17.0003Z"
-                                fill="white"
-                            />
-                        </Svg>
-                    </TouchableOpacity>
+                            <Feather name="edit" size={20} color="white" />
+                            <Text style={styles.headerMenuTitle}>
+                                Редактировать время
+                            </Text>
+                        </TouchableOpacity>
+                    </DropdownMenuDots>
                 </View>
+
+                <ShiftTimeModal
+                    ref={editModalRef}
+                    type="edit"
+                    initialTime="09:30" // or get from your state/props
+                    onShiftEdit={(time) => {
+                        console.log("New time:", time);
+
+                        // Handle the time update here
+                    }}
+                />
 
                 {/* Segmented Control */}
                 <View style={styles.segmentedControlContainer}>
@@ -202,6 +215,19 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         lineHeight: 28,
         letterSpacing: -0.24,
+    },
+    headerMenuItem: {
+        flexDirection: "row",
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 12,
+        gap: 6,
+    },
+    headerMenuTitle: {
+        color: "#FFFFFF",
+        fontSize: 16,
     },
     segmentedControlContainer: {
         paddingHorizontal: 16,
