@@ -4,7 +4,6 @@ import {
     ScrollView,
     StatusBar,
     StyleSheet,
-    Image,
     View,
     Text,
 } from "react-native";
