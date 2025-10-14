@@ -44,6 +44,7 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
         useImperativeHandle(ref, () => ({
             open: () => modalRef.current?.open(),
             close: () => modalRef.current?.close(),
+            isVisible: () => modalRef.current?.isVisible() || false,
         }));
 
         // Helper function to get current time in HH:MM format
@@ -75,7 +76,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
         // Handle modal open
         const handleModalOpen = useCallback(() => {
-            // Reset time to current time when opening start modal
             // For edit mode, keep the initialTime
             if (isStartMode) {
                 setTime(getCurrentTime());
@@ -111,7 +111,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
                 modalRef.current?.close();
 
-                // Show success message
                 Alert.alert("Смена начата", `Время начала смены: ${time}`, [
                     { text: "OK" },
                 ]);
@@ -147,17 +146,7 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                 onShiftEdit?.(time);
 
                 modalRef.current?.close();
-
-                // Show success message
-                Alert.alert("Время изменено", `Новое время: ${time}`, [
-                    { text: "OK" },
-                ]);
             } catch (error) {
-                Alert.alert(
-                    "Ошибка",
-                    "Не удалось изменить время. Попробуйте снова.",
-                    [{ text: "OK" }],
-                );
             } finally {
                 setIsProcessing(false);
             }

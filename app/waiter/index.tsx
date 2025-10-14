@@ -12,7 +12,7 @@ import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrappe
 import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 
 // TODO переписать на получение из storage либо из базы
-const isActive = false;
+const isActive = true;
 
 export default function Index() {
     const [days, setDays] = useState<Day[]>([]);

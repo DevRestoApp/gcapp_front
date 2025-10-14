@@ -10,12 +10,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 
-import { useRouter, useLocalSearchParams, Stack } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
 import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
+import TableNumberGrid from "@/src/client/components/TableNumberGrid";
+import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
 import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
 import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 
@@ -25,6 +27,8 @@ const rooms = [
     "Летняя терраса",
     "VIP-залы",
 ];
+
+// TODO add useEffect to get info about all rooms + active and disabled tables
 
 export default function EmployeeDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -95,11 +99,13 @@ export default function EmployeeDetailScreen() {
                 <ShiftTimeModal
                     ref={editModalRef}
                     type="edit"
-                    initialTime="09:30" // or get from your state/props
+                    initialTime="09:30"
                     onShiftEdit={(time) => {
                         console.log("New time:", time);
-
                         // Handle the time update here
+
+                        // Close dropdown after modal completes
+                        dropdownRef.current?.close();
                     }}
                 />
 
@@ -149,15 +155,34 @@ export default function EmployeeDetailScreen() {
 
                 {/* Info Tab Content */}
                 {activeTab === "info" && (
-                    <EmployeeCard
-                        name={selectedEmployee.name}
-                        role={selectedEmployee.role}
-                        avatarUrl={selectedEmployee.avatarUrl}
-                        totalAmount={selectedEmployee.totalAmount}
-                        shiftTime={selectedEmployee.shiftTime}
-                        statsSectionActive={activeTab === "info"}
-                        onPress={() => {}}
-                    />
+                    <View style={styles.contentContainer}>
+                        <EmployeeCard
+                            name={selectedEmployee.name}
+                            role={selectedEmployee.role}
+                            avatarUrl={selectedEmployee.avatarUrl}
+                            totalAmount={selectedEmployee.totalAmount}
+                            shiftTime={selectedEmployee.shiftTime}
+                            statsSectionActive={activeTab === "info"}
+                            onPress={() => {}}
+                        />
+                        <Text style={styles.headerTitle}>
+                            Выберите помещение
+                        </Text>
+                        <RoomNumberGrid
+                            rooms={rooms}
+                            selectedRoom={"2"}
+                        ></RoomNumberGrid>
+                        <Text style={styles.headerTitle}>Стол</Text>
+                        <TableNumberGrid
+                            tableCount={21}
+                            columns={7}
+                            selectedTable={5}
+                            disabledTables={[3, 7, 12]} // These tables will be grayed out
+                            onTableSelect={(tableNumber) => {
+                                router.push(`/tables/${tableNumber}`);
+                            }}
+                        />
+                    </View>
                 )}
 
                 {/* History Tab Content */}
