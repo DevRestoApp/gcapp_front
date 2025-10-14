@@ -3,6 +3,7 @@ import React, {
     useRef,
     forwardRef,
     useImperativeHandle,
+    ReactNode,
 } from "react";
 import {
     View,
@@ -13,7 +14,18 @@ import {
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-const DropdownMenuDots = forwardRef(
+interface DropdownMenuDotsProps {
+    children?: ReactNode;
+    buttonStyle?: object;
+    menuStyle?: object;
+}
+
+export interface DropdownMenuDotsRef {
+    open: () => void;
+    close: () => void;
+}
+
+const DropdownMenuDots = forwardRef<DropdownMenuDotsRef, DropdownMenuDotsProps>(
     ({ children, buttonStyle, menuStyle }, ref) => {
         const [isOpen, setIsOpen] = useState(false);
         const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
@@ -27,6 +39,7 @@ const DropdownMenuDots = forwardRef(
 
         const handleOpen = () => {
             if (buttonRef.current) {
+                // @ts-ignore
                 buttonRef.current.measure((fx, fy, width, height, px, py) => {
                     setMenuPosition({
                         top: py + height,
