@@ -10,6 +10,7 @@ import {
     Alert,
 } from "react-native";
 import DishItem from "./DishItem";
+import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
 
 interface Dish {
     id: string;
@@ -278,32 +279,10 @@ export default function OrderSelection({
     const renderRoomSelection = () => (
         <View style={styles.section}>
             <Text style={styles.title}>Выберите помещение</Text>
-            <View style={styles.roomsContainer}>
-                {rooms.map((room) => {
-                    const isSelected = selectedRoom === room;
-                    return (
-                        <TouchableOpacity
-                            key={room}
-                            onPress={() => handleRoomSelect(room)}
-                            style={[
-                                styles.roomButton,
-                                isSelected && styles.roomButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.roomButtonText,
-                                    isSelected && styles.roomButtonTextActive,
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {room}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
+            <RoomNumberGrid
+                rooms={rooms}
+                selectedRoom={selectedRoom}
+            ></RoomNumberGrid>
         </View>
     );
 
@@ -506,35 +485,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#fff",
         fontWeight: "500",
-    },
-
-    // Room selection styles
-    roomsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-    },
-    roomButton: {
-        height: 44,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        justifyContent: "center",
-        borderWidth: 1,
-        borderColor: "transparent",
-    },
-    roomButtonActive: {
-        backgroundColor: "#FFFFFF",
-        borderColor: "#FFFFFF",
-    },
-    roomButtonText: {
-        fontSize: 14,
-        color: "#797A80",
-        fontWeight: "500",
-    },
-    roomButtonTextActive: {
-        color: "#2C2D2E",
-        fontWeight: "600",
     },
 
     // Dishes section styles
