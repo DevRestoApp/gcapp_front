@@ -109,7 +109,8 @@ export default function EmployeeDetailScreen() {
                     }}
                 />
 
-                {/* Segmented Control */}
+                {/* Segmented Control // TODO redo as reusable component*/}
+
                 <View style={styles.segmentedControlContainer}>
                     <View style={styles.segmentedControl}>
                         <TouchableOpacity
@@ -179,7 +180,9 @@ export default function EmployeeDetailScreen() {
                             selectedTable={5}
                             disabledTables={[3, 7, 12]} // These tables will be grayed out
                             onTableSelect={(tableNumber) => {
-                                router.push(`/tables/${tableNumber}`);
+                                router.push(
+                                    `/employees/${id}/table/${tableNumber}`,
+                                );
                             }}
                         />
                     </View>

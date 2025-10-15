@@ -1,16 +1,11 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "expo-router";
-import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    ScrollView,
-    StyleSheet,
-    Alert,
-} from "react-native";
-import DishItem from "./DishItem";
-import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
+import { ScrollView, StyleSheet, Alert } from "react-native";
+import TableInput from "@/src/client/components/TableInput";
+import LocationDisplay from "@/src/client/components/LocationDisplay";
+import RoomSelector from "@/src/client/components/RoomSelector";
+import DishesSection from "@/src/client/components/DishesSection";
+import OrderSummary from "@/src/client/components/OrderSummary";
 
 interface Dish {
     id: string;
@@ -38,8 +33,8 @@ interface Order {
 }
 
 interface OrderSelectionProps {
-    order: Order; // Required order data
-    dishes?: Dish[]; // Available dishes for display
+    order: Order;
+    dishes?: Dish[];
     onOrderUpdate?: (updatedOrder: Order) => void;
     onTableChange?: (table: string) => void;
     onRoomChange?: (room: string) => void;
@@ -111,15 +106,8 @@ export default function OrderSelection({
 }: OrderSelectionProps) {
     const router = useRouter();
 
-    // Initialize state from order data
     const [selectedTable, setSelectedTable] = useState(order.table || "");
     const [selectedRoom, setSelectedRoom] = useState(order.room || "Общий зал");
-
-    // Update local state when order prop changes
-    useEffect(() => {
-        setSelectedTable(order.table || "");
-        setSelectedRoom(order.room || "Общий зал");
-    }, [order]);
 
     const rooms = [
         "Общий зал",
@@ -128,23 +116,11 @@ export default function OrderSelection({
         "VIP-залы",
     ];
 
-    // Calculate order totals
-    const calculateOrderTotal = () => {
-        return order.items.reduce(
-            (total, item) => total + item.price * item.quantity,
-            0,
-        );
-    };
+    useEffect(() => {
+        setSelectedTable(order.table || "");
+        setSelectedRoom(order.room || "Общий зал");
+    }, [order]);
 
-    const getTotalItemsCount = () => {
-        return order.items.reduce((total, item) => total + item.quantity, 0);
-    };
-
-    const formatPrice = (price: number) => {
-        return `${price.toLocaleString()} тг`;
-    };
-
-    // Update order helper
     const updateOrder = useCallback(
         (updates: Partial<Order>) => {
             const updatedOrder = { ...order, ...updates };
@@ -153,7 +129,6 @@ export default function OrderSelection({
         [order, onOrderUpdate],
     );
 
-    // Handlers
     const handleTableChange = useCallback(
         (value: string) => {
             setSelectedTable(value);
@@ -187,237 +162,37 @@ export default function OrderSelection({
         router.push("/waiter/menu");
     }, [onAddDish, router]);
 
-    const handleCancelOrder = useCallback(() => {
-        Alert.alert(
-            "Отменить заказ",
-            "Вы уверены, что хотите отменить заказ? Все данные будут потеряны.",
-            [
-                {
-                    text: "Нет",
-                    style: "cancel",
-                },
-                {
-                    text: "Да, отменить",
-                    style: "destructive",
-                    onPress: () => onCancelOrder?.(),
-                },
-            ],
-        );
-    }, [onCancelOrder]);
-
-    const handleCompleteOrder = useCallback(() => {
-        const totalItems = getTotalItemsCount();
-        const totalAmount = calculateOrderTotal();
-
-        if (totalItems === 0) {
-            Alert.alert(
-                "Пустой заказ",
-                "Добавьте блюда в заказ перед завершением",
-                [{ text: "OK" }],
-            );
-            return;
-        }
-
-        if (selectedTable.trim().length === 0) {
-            Alert.alert("Укажите стол", "Пожалуйста, введите номер стола", [
-                { text: "OK" },
-            ]);
-            return;
-        }
-
-        Alert.alert(
-            "Завершить заказ",
-            `Стол: ${selectedTable}\nЛокация: ${order.location}\nПомещение: ${selectedRoom}\nБлюд: ${totalItems}\nСумма: ${formatPrice(totalAmount)}`,
-            [
-                {
-                    text: "Отмена",
-                    style: "cancel",
-                },
-                {
-                    text: "Завершить",
-                    onPress: () => onCompleteOrder?.(),
-                },
-            ],
-        );
-    }, [selectedTable, selectedRoom, order.location, onCompleteOrder]);
-
-    // Render table selection section
-    const renderTableSelection = () => (
-        <View style={styles.section}>
-            <Text style={styles.title}>Стол</Text>
-            <TextInput
-                value={selectedTable}
-                onChangeText={handleTableChange}
-                placeholder="Введите номер стола"
-                placeholderTextColor="#797A80"
-                style={[
-                    styles.input,
-                    selectedTable.trim().length > 0 && styles.inputFilled,
-                ]}
-                keyboardType="default"
-                returnKeyType="next"
-                autoCapitalize="none"
-                maxLength={20}
-            />
-            {selectedTable.trim().length === 0 && (
-                <Text style={styles.helperText}>Обязательное поле</Text>
-            )}
-        </View>
-    );
-
-    // Render location info section
-    const renderLocationInfo = () => (
-        <View style={styles.section}>
-            <Text style={styles.title}>Локация</Text>
-            <View style={styles.locationContainer}>
-                <Text style={styles.locationText}>{order.location}</Text>
-            </View>
-        </View>
-    );
-
-    // Render room selection section
-    const renderRoomSelection = () => (
-        <View style={styles.section}>
-            <Text style={styles.title}>Выберите помещение</Text>
-            <RoomNumberGrid
-                rooms={rooms}
-                selectedRoom={selectedRoom}
-            ></RoomNumberGrid>
-        </View>
-    );
-
-    // Render dishes section
-    const renderDishesSection = () => (
-        <View style={styles.section}>
-            <View style={styles.dishesHeader}>
-                <Text style={styles.title}>
-                    Рекомендуемые блюда ({dishes.length})
-                </Text>
-                <TouchableOpacity
-                    onPress={handleAddMoreDishes}
-                    style={styles.addMoreButton}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.addMoreButtonText}>Все блюда</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.dishesContainer}>
-                {dishes.length === 0 ? (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyStateIcon}>🍽️</Text>
-                        <Text style={styles.emptyText}>Нет доступных блюд</Text>
-                        <TouchableOpacity
-                            style={styles.emptyActionButton}
-                            onPress={handleAddMoreDishes}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={styles.emptyActionButtonText}>
-                                Перейти к меню
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <>
-                        <ScrollView
-                            style={styles.dishesList}
-                            contentContainerStyle={styles.dishesContent}
-                            showsVerticalScrollIndicator={false}
-                            nestedScrollEnabled
-                        >
-                            {dishes.map((dish) => (
-                                <DishItem
-                                    key={dish.id}
-                                    id={dish.id}
-                                    name={dish.name}
-                                    description={dish.description}
-                                    price={dish.price}
-                                    image={dish.image}
-                                    variant="informative"
-                                    onPress={handleDishPress}
-                                    maxLines={2}
-                                />
-                            ))}
-                        </ScrollView>
-
-                        {/* Add Dish Button at bottom of dishes */}
-                        <TouchableOpacity
-                            style={styles.addDishButton}
-                            onPress={handleAddMoreDishes}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.addDishButtonText}>
-                                + Добавить блюдо
-                            </Text>
-                        </TouchableOpacity>
-                    </>
-                )}
-            </View>
-        </View>
-    );
-
-    // Render order summary section
-    const renderOrderSummary = () => {
-        const totalItems = getTotalItemsCount();
-        const totalAmount = calculateOrderTotal();
-
-        return (
-            <View style={styles.summarySection}>
-                <Text style={styles.summaryTitle}>Итого по заказу</Text>
-
-                <View style={styles.summaryContent}>
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>
-                            Количество блюд:
-                        </Text>
-                        <Text style={styles.summaryValue}>{totalItems}</Text>
-                    </View>
-
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Стол:</Text>
-                        <Text style={styles.summaryValue}>
-                            {selectedTable || "Не указан"}
-                        </Text>
-                    </View>
-
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Локация:</Text>
-                        <Text style={styles.summaryValue}>
-                            {order.location}
-                        </Text>
-                    </View>
-
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Помещение:</Text>
-                        <Text style={styles.summaryValue}>{selectedRoom}</Text>
-                    </View>
-
-                    <View style={styles.summaryDivider} />
-
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryTotalLabel}>
-                            Общая сумма:
-                        </Text>
-                        <Text style={styles.summaryTotalValue}>
-                            {formatPrice(totalAmount)}
-                        </Text>
-                    </View>
-                </View>
-            </View>
-        );
-    };
-
     return (
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
         >
-            {renderTableSelection()}
-            {renderLocationInfo()}
-            {renderRoomSelection()}
-            {renderDishesSection()}
-            {renderOrderSummary()}
+            <TableInput
+                value={selectedTable}
+                onChangeText={handleTableChange}
+            />
+
+            <LocationDisplay location={order.location} />
+
+            <RoomSelector
+                rooms={rooms}
+                selectedRoom={selectedRoom}
+                onRoomSelect={handleRoomSelect}
+            />
+
+            <DishesSection
+                dishes={dishes}
+                onDishPress={handleDishPress}
+                onAddMoreDishes={handleAddMoreDishes}
+            />
+
+            <OrderSummary
+                items={order.items}
+                table={selectedTable}
+                location={order.location}
+                room={selectedRoom}
+            />
         </ScrollView>
     );
 }
@@ -435,182 +210,5 @@ const styles = StyleSheet.create({
         width: "100%",
         maxWidth: 390,
         alignSelf: "center",
-    },
-
-    // Section styles
-    section: {
-        gap: 16,
-        width: "100%",
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: "white",
-        lineHeight: 28,
-    },
-
-    // Input styles
-    input: {
-        height: 44,
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        color: "#fff",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    inputFilled: {
-        borderColor: "#fff",
-        color: "#fff",
-    },
-    helperText: {
-        fontSize: 12,
-        color: "#FF6B6B",
-        marginTop: 4,
-        marginLeft: 4,
-    },
-
-    // Location info styles
-    locationContainer: {
-        height: 44,
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        justifyContent: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    locationText: {
-        fontSize: 16,
-        color: "#fff",
-        fontWeight: "500",
-    },
-
-    // Dishes section styles
-    dishesHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    addMoreButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 12,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-    },
-    addMoreButtonText: {
-        fontSize: 12,
-        color: "#fff",
-        fontWeight: "500",
-    },
-    dishesContainer: {
-        borderRadius: 20,
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        overflow: "hidden",
-    },
-    dishesList: {
-        maxHeight: 300,
-    },
-    dishesContent: {
-        padding: 12,
-        gap: 8,
-    },
-    addDishButton: {
-        margin: 12,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.2)",
-        borderStyle: "dashed",
-    },
-    addDishButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "500",
-    },
-
-    // Empty state styles
-    emptyState: {
-        alignItems: "center",
-        justifyContent: "center",
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        gap: 12,
-    },
-    emptyStateIcon: {
-        fontSize: 48,
-        opacity: 0.6,
-    },
-    emptyText: {
-        fontSize: 16,
-        color: "rgba(255,255,255,0.75)",
-        textAlign: "center",
-        lineHeight: 22,
-    },
-    emptyActionButton: {
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 16,
-        marginTop: 8,
-    },
-    emptyActionButtonText: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "500",
-    },
-
-    // Order summary styles
-    summarySection: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
-        padding: 20,
-        gap: 16,
-    },
-    summaryTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "white",
-        textAlign: "center",
-    },
-    summaryContent: {
-        gap: 12,
-    },
-    summaryRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-    },
-    summaryLabel: {
-        fontSize: 14,
-        color: "rgba(121, 122, 128, 1)",
-        flex: 1,
-    },
-    summaryValue: {
-        fontSize: 14,
-        color: "#fff",
-        fontWeight: "500",
-        textAlign: "right",
-    },
-    summaryDivider: {
-        height: 1,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        marginVertical: 4,
-    },
-    summaryTotalLabel: {
-        fontSize: 16,
-        color: "#fff",
-        fontWeight: "600",
-        flex: 1,
-    },
-    summaryTotalValue: {
-        fontSize: 18,
-        color: "#fff",
-        fontWeight: "700",
-        textAlign: "right",
     },
 });

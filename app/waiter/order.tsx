@@ -101,15 +101,6 @@ export default function OrderSelectionScreen() {
             0,
         );
 
-        console.log("Order completed:", {
-            orderId: currentOrder.id,
-            table: currentOrder.table,
-            location: currentOrder.location,
-            room: currentOrder.room,
-            totalAmount,
-            totalItems,
-        });
-
         // Update order status
         const completedOrder = {
             ...currentOrder,
