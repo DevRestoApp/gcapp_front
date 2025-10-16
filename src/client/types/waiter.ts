@@ -28,3 +28,9 @@ export interface Order {
     status?: string;
     createdAt?: Date;
 }
+
+export interface HistoryItem extends OrderItem {
+    name: string;
+    timestamp: string;
+    action: "added" | "removed";
+}

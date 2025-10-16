@@ -19,7 +19,8 @@ import RoomSelector from "@/src/client/components/RoomSelector";
 import DishesSection from "@/src/client/components/DishesSection";
 import OrderSummary from "@/src/client/components/OrderSummary";
 
-import { Dish, OrderItem, Order } from "@/src/client/types/waiter";
+import { Dish, OrderItem, Order, HistoryItem } from "@/src/client/types/waiter";
+import OrderHistory from "@/src/client/components/OrderHistory";
 
 const rooms = [
     "Общий зал",
@@ -97,6 +98,48 @@ export default function TableDetailScreen() {
             createdAt: new Date(),
         },
     };
+    const historyItems: HistoryItem[] = [
+        {
+            id: "1",
+            name: "Цезарь с курицей",
+            price: 2500,
+            quantity: 2,
+            timestamp: "14:23",
+            action: "added",
+        },
+        {
+            id: "2",
+            name: "Том Ям",
+            price: 3200,
+            quantity: 1,
+            timestamp: "14:25",
+            action: "added",
+        },
+        {
+            id: "3",
+            name: "Маргарита пицца",
+            price: 2800,
+            quantity: 1,
+            timestamp: "14:30",
+            action: "removed",
+        },
+        {
+            id: "4",
+            name: "Капучино",
+            price: 800,
+            quantity: 2,
+            timestamp: "14:35",
+            action: "added",
+        },
+        {
+            id: "5",
+            name: "Тирамису",
+            price: 1500,
+            quantity: 1,
+            timestamp: "14:40",
+            action: "removed",
+        },
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -107,7 +150,7 @@ export default function TableDetailScreen() {
 
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={styles.contentEwkere}
+                contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
@@ -147,12 +190,12 @@ export default function TableDetailScreen() {
                     onAddMoreDishes={() => {}}
                 />
 
-                <OrderSummary
-                    items={mockData.order.items}
-                    table={tableId}
+                <OrderHistory
+                    items={historyItems}
+                    table={String(tableId)}
                     location={mockData.order.location}
                     room={mockData.order.room}
-                />
+                ></OrderHistory>
             </ScrollView>
 
             {/* Bottom Fixed Section */}
@@ -251,6 +294,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 28,
         gap: 28,
+        paddingBottom: 200,
     },
     section: {
         gap: 16,
@@ -386,18 +430,5 @@ const styles = StyleSheet.create({
     },
     bottomNavPlaceholder: {
         height: 94,
-    },
-    containerEwkere: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
-    contentEwkere: {
-        gap: 28,
-        paddingHorizontal: 16,
-        paddingVertical: 20,
-        paddingBottom: 200,
-        width: "100%",
-        maxWidth: 390,
-        alignSelf: "center",
     },
 });
