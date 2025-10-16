@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
     TouchableOpacity,
     ScrollView,
@@ -8,18 +8,19 @@ import {
     Text,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Feather from "@expo/vector-icons/Feather";
 
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
-import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
-import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
-import TableNumberGrid from "@/src/client/components/TableNumberGrid";
-import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
-import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
-import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
+import TableInput from "@/src/client/components/TableInput";
+import LocationDisplay from "@/src/client/components/LocationDisplay";
+import RoomSelector from "@/src/client/components/RoomSelector";
+import DishesSection from "@/src/client/components/DishesSection";
+import OrderSummary from "@/src/client/components/OrderSummary";
+
+import { Dish, OrderItem, Order, HistoryItem } from "@/src/client/types/waiter";
+import OrderHistory from "@/src/client/components/OrderHistory";
 
 const rooms = [
     "Общий зал",
@@ -30,23 +31,115 @@ const rooms = [
 
 // TODO add useEffect to get info about all rooms + active and disabled tables
 
-export default function EmployeeDetailScreen() {
-    const { id } = useLocalSearchParams();
+export default function TableDetailScreen() {
+    const { id, tableId } = useLocalSearchParams();
     const { selectedEmployee } = useEmployee();
-    const editModalRef = useRef<ModalWrapperRef>(null);
-    const dropdownRef = useRef<any>(null);
-
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"info" | "history">("info");
-    const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
 
-    const toggleRoom = (room: string) => {
-        setSelectedRooms((prev) =>
-            prev.includes(room)
-                ? prev.filter((r) => r !== room)
-                : [...prev, room],
-        );
+    const sampleDishes: Dish[] = [
+        {
+            id: "1",
+            name: "Бесбармак по-казахски",
+            description:
+                "Состав: отварное мясо (конина, баранина или говядина), домашняя лапша, бульон, лук.",
+            price: "Цена : 5 600 тг",
+            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
+            category: "Горячие блюда",
+        },
+        {
+            id: "2",
+            name: "Манты с мясом",
+            description:
+                "Состав: тесто, мясная начинка из баранины и говядины, лук, специи.",
+            price: "Цена : 3 200 тг",
+            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
+            category: "Горячие блюда",
+        },
+        {
+            id: "3",
+            name: "Плов узбекский",
+            description:
+                "Состав: рис, мясо, морковь, лук, растительное масло, специи.",
+            price: "Цена : 4 800 тг",
+            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
+            category: "Горячие блюда",
+        },
+        {
+            id: "4",
+            name: "Борщ красный",
+            description:
+                "Состав: свекла, капуста, морковь, лук, мясной бульон, сметана.",
+            price: "Цена : 2 400 тг",
+            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
+            category: "Супы",
+        },
+        {
+            id: "5",
+            name: "Омлет с беконом",
+            description:
+                "Состав: яйца, бекон, молоко, сыр, зелень, масло сливочное.",
+            price: "Цена : 1 800 тг",
+            image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
+            category: "Завтраки",
+        },
+    ];
+    const mockData = {
+        order: {
+            id: "order-123",
+            table: "12", // Pre-filled table value
+            location: 'Ресторан "Дастархан"', // Pre-filled location
+            room: "Общий зал",
+            items: [
+                { dishId: "1", quantity: 2, price: 5600 }, // 2x Бесбармак
+                { dishId: "2", quantity: 1, price: 3200 }, // 1x Манты
+                { dishId: "4", quantity: 1, price: 2400 }, // 1x Борщ
+            ],
+            status: "draft",
+            createdAt: new Date(),
+        },
     };
+    const historyItems: HistoryItem[] = [
+        {
+            id: "1",
+            name: "Цезарь с курицей",
+            price: 2500,
+            quantity: 2,
+            timestamp: "14:23",
+            action: "added",
+        },
+        {
+            id: "2",
+            name: "Том Ям",
+            price: 3200,
+            quantity: 1,
+            timestamp: "14:25",
+            action: "added",
+        },
+        {
+            id: "3",
+            name: "Маргарита пицца",
+            price: 2800,
+            quantity: 1,
+            timestamp: "14:30",
+            action: "removed",
+        },
+        {
+            id: "4",
+            name: "Капучино",
+            price: 800,
+            quantity: 2,
+            timestamp: "14:35",
+            action: "added",
+        },
+        {
+            id: "5",
+            name: "Тирамису",
+            price: 1500,
+            quantity: 1,
+            timestamp: "14:40",
+            action: "removed",
+        },
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -57,7 +150,7 @@ export default function EmployeeDetailScreen() {
 
             <ScrollView
                 style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}
@@ -79,119 +172,30 @@ export default function EmployeeDetailScreen() {
                             />
                         </Svg>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Сотрудники</Text>
-                    <DropdownMenuDots ref={dropdownRef}>
-                        <TouchableOpacity
-                            style={styles.headerMenuItem}
-                            onPress={() => {
-                                dropdownRef.current?.close();
-                                editModalRef.current?.open();
-                            }}
-                        >
-                            <Feather name="edit" size={20} color="white" />
-                            <Text style={styles.headerMenuTitle}>
-                                Редактировать время
-                            </Text>
-                        </TouchableOpacity>
-                    </DropdownMenuDots>
+                    <Text style={styles.headerTitle}>{tableId}</Text>
+                    <View></View>
                 </View>
 
-                <ShiftTimeModal
-                    ref={editModalRef}
-                    type="edit"
-                    initialTime="09:30"
-                    onShiftEdit={(time) => {
-                        console.log("New time:", time);
-                        // Handle the time update here
+                <LocationDisplay location={mockData.order.location} />
 
-                        // Close dropdown after modal completes
-                        dropdownRef.current?.close();
-                    }}
+                <RoomSelector
+                    rooms={rooms}
+                    selectedRoom={mockData.order.room}
+                    onRoomSelect={() => {}}
                 />
 
-                {/* Segmented Control */}
-                <View style={styles.segmentedControlContainer}>
-                    <View style={styles.segmentedControl}>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("info")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "info" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "info" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                Инфо
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("history")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "history" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "history" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                История
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                <DishesSection
+                    dishes={sampleDishes}
+                    onDishPress={() => {}}
+                    onAddMoreDishes={() => {}}
+                />
 
-                {/* Info Tab Content */}
-                {activeTab === "info" && (
-                    <View style={styles.contentContainer}>
-                        <EmployeeCard
-                            name={selectedEmployee.name}
-                            role={selectedEmployee.role}
-                            avatarUrl={selectedEmployee.avatarUrl}
-                            totalAmount={selectedEmployee.totalAmount}
-                            shiftTime={selectedEmployee.shiftTime}
-                            statsSectionActive={activeTab === "info"}
-                            onPress={() => {}}
-                        />
-                        <Text style={styles.headerTitle}>
-                            Выберите помещение
-                        </Text>
-                        <RoomNumberGrid
-                            rooms={rooms}
-                            selectedRoom={"2"}
-                        ></RoomNumberGrid>
-                        <Text style={styles.headerTitle}>Стол</Text>
-                        <TableNumberGrid
-                            tableCount={21}
-                            columns={7}
-                            selectedTable={5}
-                            disabledTables={[3, 7, 12]} // These tables will be grayed out
-                            onTableSelect={(tableNumber) => {
-                                router.push(`/tables/${tableNumber}`);
-                            }}
-                        />
-                    </View>
-                )}
-
-                {/* History Tab Content */}
-                {activeTab === "history" && (
-                    <View style={styles.contentContainer}>
-                        <Text style={styles.sectionTitle}>История</Text>
-                        {/* Add history content here */}
-                    </View>
-                )}
+                <OrderHistory
+                    items={historyItems}
+                    table={String(tableId)}
+                    location={mockData.order.location}
+                    room={mockData.order.room}
+                ></OrderHistory>
             </ScrollView>
 
             {/* Bottom Fixed Section */}
@@ -216,9 +220,6 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
-    },
-    scrollContent: {
-        paddingBottom: 166,
     },
     header: {
         flexDirection: "row",
@@ -293,6 +294,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 28,
         gap: 28,
+        paddingBottom: 200,
     },
     section: {
         gap: 16,

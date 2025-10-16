@@ -5,6 +5,7 @@ import { RoomNumberGridStyles } from "@/src/client/styles/ui/buttons/RoomNumberG
 interface TableNumberGridProps {
     rooms?: string[];
     selectedRoom: string;
+    onRoomSelect: (room: string) => void;
 }
 
 export default function RoomNumberGrid({
