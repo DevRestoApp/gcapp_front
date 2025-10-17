@@ -1,51 +1,103 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { Entypo } from "@expo/vector-icons";
 
 interface EmployeeCardProps {
     name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    statsSectionActive: boolean;
+    amount?: string; // for simple variant
+    avatar: string;
+    role?: string; // for full variant
+    totalAmount?: string; // for full variant
+    shiftTime?: string; // for full variant
+    variant?: "simple" | "full"; // determines which variant to show
+    showStats?: boolean; // for full variant - shows stats section
     onPress?: () => void;
 }
 
 export default function EmployeeCard({
     name,
+    amount,
+    avatar,
     role,
-    avatarUrl,
     totalAmount,
     shiftTime,
-    statsSectionActive = false,
+    variant = "simple",
+    showStats = false,
     onPress,
 }: EmployeeCardProps) {
+    // Simple variant (for analytics screen)
+    if (variant === "simple") {
+        console.log("simple", {
+            name,
+            amount,
+            avatar,
+            role,
+            totalAmount,
+            shiftTime,
+            variant,
+            showStats,
+            onPress,
+        });
+        return (
+            <TouchableOpacity
+                style={styles.simpleCard}
+                onPress={onPress}
+                activeOpacity={0.7}
+                disabled={!onPress}
+            >
+                <View style={styles.employeeContent}>
+                    <Image source={{ uri: avatar }} style={styles.avatar} />
+                    <View style={styles.employeeText}>
+                        <Text style={styles.employeeName}>{name}</Text>
+                        <Text style={styles.employeeAmount} numberOfLines={1}>
+                            Общий сумма:{" "}
+                            <Text style={styles.bold}>{amount}</Text>
+                        </Text>
+                    </View>
+                </View>
+                {onPress && (
+                    <View style={styles.chevronContainer}>
+                        <Entypo
+                            name="chevron-right"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    }
+
+    // Full variant (for employee management screen)
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={styles.fullCard}
             onPress={onPress}
             activeOpacity={0.9}
+            disabled={!onPress}
         >
             {/* Employee Info Row */}
             <View style={styles.employeeInfo}>
                 <View style={styles.employeeDetails}>
-                    <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                    <Image source={{ uri: avatar }} style={styles.avatar} />
                     <View style={styles.textContainer}>
                         <Text style={styles.name}>{name}</Text>
-                        <Text style={styles.role}>{role}</Text>
+                        {role && <Text style={styles.role}>{role}</Text>}
                     </View>
                 </View>
-                <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <Path
-                        d="M15.7799 11.2799C15.9206 11.4204 15.9997 11.611 15.9999 11.8099V12.1899C15.9976 12.3883 15.9188 12.5781 15.7799 12.7199L10.6399 17.8499C10.546 17.9445 10.4182 17.9978 10.2849 17.9978C10.1516 17.9978 10.0238 17.9445 9.92992 17.8499L9.21992 17.1399C9.12586 17.0477 9.07285 16.9215 9.07285 16.7899C9.07285 16.6582 9.12586 16.532 9.21992 16.4399L13.6699 11.9999L9.21992 7.55985C9.12526 7.46597 9.07202 7.33817 9.07202 7.20485C9.07202 7.07153 9.12526 6.94374 9.21992 6.84985L9.92992 6.14985C10.0238 6.0552 10.1516 6.00195 10.2849 6.00195C10.4182 6.00195 10.546 6.0552 10.6399 6.14985L15.7799 11.2799Z"
-                        fill="white"
-                    />
-                </Svg>
+                {onPress && (
+                    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <Path
+                            d="M15.7799 11.2799C15.9206 11.4204 15.9997 11.611 15.9999 11.8099V12.1899C15.9976 12.3883 15.9188 12.5781 15.7799 12.7199L10.6399 17.8499C10.546 17.9445 10.4182 17.9978 10.2849 17.9978C10.1516 17.9978 10.0238 17.9445 9.92992 17.8499L9.21992 17.1399C9.12586 17.0477 9.07285 16.9215 9.07285 16.7899C9.07285 16.6582 9.12586 16.532 9.21992 16.4399L13.6699 11.9999L9.21992 7.55985C9.12526 7.46597 9.07202 7.33817 9.07202 7.20485C9.07202 7.07153 9.12526 6.94374 9.21992 6.84985L9.92992 6.14985C10.0238 6.0552 10.1516 6.00195 10.2849 6.00195C10.4182 6.00195 10.546 6.0552 10.6399 6.14985L15.7799 11.2799Z"
+                            fill="white"
+                        />
+                    </Svg>
+                )}
             </View>
 
-            {/* Stats Section */}
-            {statsSectionActive ? (
+            {/* Stats Section - only shown if showStats is true */}
+            {showStats && totalAmount && shiftTime && (
                 <View style={styles.statsSection}>
                     {/* Total Amount */}
                     <View style={styles.statItem}>
@@ -57,7 +109,7 @@ export default function EmployeeCard({
                                 fill="none"
                             >
                                 <Path
-                                    d="M7 0.333008C10.6819 0.333008 13.667 3.3181 13.667 7C13.667 10.6819 10.6819 13.667 7 13.667C3.3181 13.667 0.333008 10.6819 0.333008 7C0.333008 3.3181 3.3181 0.333008 7 0.333008ZM4.83301 5.45312C4.55703 5.4533 4.33304 5.67809 4.33301 5.9541C4.33301 6.23014 4.55702 6.45588 4.83301 6.45605H6.23535V9.83301C6.23535 10.1092 6.45921 10.333 6.73535 10.333H7.26465C7.54079 10.333 7.76465 10.1092 7.76465 9.83301V6.45605H9.16699C9.44299 6.45588 9.66699 6.23014 9.66699 5.9541C9.66696 5.67809 9.44297 5.4533 9.16699 5.45312H4.83301ZM4.83301 3.66699C4.55706 3.66717 4.33308 3.89199 4.33301 4.16797C4.33301 4.444 4.55702 4.66974 4.83301 4.66992H9.16699C9.44299 4.66975 9.66699 4.444 9.66699 4.16797C9.66692 3.89199 9.44294 3.66717 9.16699 3.66699H4.83301Z"
+                                    d="M7 0.333008C10.6819 0.333008 13.667 3.3181 13.667 7C13.667 10.6819 10.6819 13.667 7 13.667C3.3181 13.667 0.333008 10.6819 0.333008 7C0.333008 3.3181 3.3181 0.333008 7 0.333008ZM4.83301 5.45312C4.55703 5.4533 4.33304 5.67809 4.33301 5.9541C4.33301 6.23014 4.55702 6.45588 4.83301 6.45605H6.23535V9.83301C6.23535 10.1092 6.45921 10.333 6.73535 10.333H7.26465C7.54079 10.333 7.76465 10.1092 7.76465 9.83301V6.45605H7.76465C9.44297 5.4533 9.16699 5.45312H4.83301ZM4.83301 3.66699C4.55706 3.66717 4.33308 3.89199 4.33301 4.16797C4.33301 4.444 4.55702 4.66974 4.83301 4.66992H9.16699C9.44299 4.66975 9.66699 4.444 9.66699 4.16797C9.66692 3.89199 9.44294 3.66717 9.16699 3.66699H4.83301Z"
                                     fill="#0DC268"
                                 />
                             </Svg>
@@ -89,15 +141,50 @@ export default function EmployeeCard({
                         <Text style={styles.statValue}>{shiftTime}</Text>
                     </View>
                 </View>
-            ) : (
-                <View></View>
             )}
         </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    // Simple variant styles
+    simpleCard: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+    },
+    employeeContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        flex: 1,
+    },
+    employeeText: {
+        flex: 1,
+        gap: 4,
+    },
+    employeeName: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+    },
+    employeeAmount: {
+        color: "rgba(255, 255, 255, 0.75)",
+        fontSize: 12,
+        lineHeight: 16,
+    },
+    bold: {
+        fontWeight: "bold",
+    },
+    chevronContainer: {
+        padding: 8,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    // Full variant styles
+    fullCard: {
         backgroundColor: "rgba(35, 35, 36, 1)",
         borderRadius: 20,
         padding: 12,
@@ -121,6 +208,7 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         gap: 4,
+        flex: 1,
     },
     name: {
         color: "#FFFFFF",
@@ -135,8 +223,8 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
     statsSection: {
-        flexDirection: "row", // 👈 размещаем дочерние элементы горизонтально
-        justifyContent: "space-between", // 👈 равномерно распределяем (лево/право)
+        flexDirection: "row",
+        justifyContent: "space-between",
         alignItems: "center",
         gap: 8,
     },

@@ -153,17 +153,18 @@ export default function EmployeeDetailScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
-
                 {/* Info Tab Content */}
                 {activeTab === "info" && (
                     <View style={styles.contentContainer}>
                         <EmployeeCard
                             name={selectedEmployee.name}
+                            amount={""}
+                            avatar={selectedEmployee.avatarUrl}
                             role={selectedEmployee.role}
-                            avatarUrl={selectedEmployee.avatarUrl}
                             totalAmount={selectedEmployee.totalAmount}
                             shiftTime={selectedEmployee.shiftTime}
-                            statsSectionActive={activeTab === "info"}
+                            variant="full"
+                            showStats={activeTab === "info"}
                             onPress={() => {}}
                         />
                         <Text style={styles.headerTitle}>

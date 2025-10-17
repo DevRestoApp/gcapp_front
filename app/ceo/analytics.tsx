@@ -1,420 +1,603 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import {
     View,
     Text,
-    TouchableOpacity,
+    TextInput,
     ScrollView,
+    TouchableOpacity,
     StyleSheet,
-    StatusBar,
-    Image,
-    ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
-import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
+import Loading from "@/src/client/components/Loading";
 
-export default function IndexScreen() {
-    const router = useRouter();
+import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
+import MetricCard from "@/src/client/components/ceo/MetricCard";
+import ListItem from "@/src/client/components/ceo/ListItem";
+import ReportCard from "@/src/client/components/ceo/ReportCard";
 
-    const [days, setDays] = useState<Day[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>("");
-    const [elapsedTime, setElapsedTime] = useState("00:00:00");
-    const [openEmployees, setOpenEmployees] = useState(0);
-    const [totalAmount, setTotalAmount] = useState(0);
-    const [finesCount, setFinesCount] = useState(0);
-    const [motivationCount, setMotivationCount] = useState(0);
-    const [loading, setLoading] = useState(false);
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-    // Initialize calendar
-    useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6, // Last day is active by default
-            });
-        }
-
-        setDays(weekDays);
-
-        // Set today's date as selected
-        const todayStr = today.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        });
-        setSelectedDate(todayStr);
-    }, []);
-
-    // Update elapsed time
-    useEffect(() => {
-        const updateTime = () => {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, "0");
-            const minutes = now.getMinutes().toString().padStart(2, "0");
-            const seconds = now.getSeconds().toString().padStart(2, "0");
-            setElapsedTime(`${hours}:${minutes}:${seconds}`);
-        };
-
-        updateTime();
-        const interval = setInterval(updateTime, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setSelectedDate(dateStr);
+// Mock data
+const analyticsData = {
+    metrics: [
+        {
+            id: 1,
+            label: "Выручка",
+            value: "19 589 699 тг",
+            change: { value: "-28%", trend: "down" },
         },
-        [days],
-    );
+        {
+            id: 2,
+            label: "Чеки",
+            value: "886",
+            change: { value: "-41%", trend: "down" },
+        },
+        {
+            id: 3,
+            label: "Срендний чек",
+            value: "22 110,27 тг",
+            change: { value: "+21%", trend: "up" },
+        },
+        { id: 4, label: "Возвраты", value: "0" },
+        {
+            id: 5,
+            label: "Скидки",
+            value: "1 241 163,28 тг",
+            change: { value: "-37%", trend: "down" },
+        },
+        { id: 6, label: "НДС", value: "0,00 тг" },
+    ],
+    reports: [
+        {
+            id: 1,
+            title: "Итого Расходы",
+            value: "+14 000 568 тг",
+            date: "07.09",
+            type: "expense",
+        },
+        {
+            id: 2,
+            title: "Итого Прибыль от основной деятельности",
+            value: "+14 000 568 тг",
+            date: "07.09",
+            type: "income",
+        },
+        {
+            id: 3,
+            title: "Итого чистая прибыль",
+            value: "+14 000 568 тг",
+            date: "07.09",
+            type: "income",
+        },
+    ],
+    orders: [
+        { id: 1, label: "Средний чек", value: "120 568 тг" },
+        {
+            id: 2,
+            label: "Сумма возвратов",
+            value: "-15 800 тг",
+            type: "negative",
+        },
+        {
+            id: 3,
+            label: "Среднее количество позиций в заказе",
+            value: "1 241 163,28 тг",
+        },
+        {
+            id: 4,
+            label: "Популярные блюда по количеству и сумме",
+            value: "Манты 56 (256 840 тг)",
+        },
+        {
+            id: 5,
+            label: "Непопулярные блюда по количеству и сумме",
+            value: "Каша 2 (2 840 тг)",
+        },
+    ],
+    financial: [
+        {
+            id: 1,
+            label: "Сумма всех проданных блюд по себестоимости",
+            value: "120 568 598 тг",
+        },
+        { id: 2, label: "Сумма списаний", value: "256 840 568 тг" },
+        {
+            id: 3,
+            label: "Сумма доходов",
+            value: "+150 800 тг",
+            type: "positive",
+        },
+        {
+            id: 4,
+            label: "Сумма расходов",
+            value: "-15 800 тг",
+            type: "negative",
+        },
+    ],
+    inventory: [
+        {
+            id: 1,
+            label: "Сумма товаров на начало периода",
+            value: "120 568 598 тг",
+        },
+        {
+            id: 2,
+            label: "Сумма товаров на конец периода",
+            value: "256 840 568 тг",
+        },
+        {
+            id: 3,
+            label: "Товары с критическим остатком",
+            value: "-15 800 тг",
+            type: "negative",
+        },
+        { id: 4, label: "Остатки на складе", value: "1 241 163,28 тг" },
+    ],
+    employees: [
+        {
+            id: 1,
+            name: "Аслан Аманов",
+            amount: "256 024 тг",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
+        },
+        {
+            id: 2,
+            name: "Айгүл Айтен",
+            amount: "256 024 тг",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
+        },
+        {
+            id: 3,
+            name: "Асан Асылов",
+            amount: "256 024 тг",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
+        },
+    ],
+};
 
-    // Navigation handlers
-    const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
-    }, [router]);
+export default function AnalyticsScreen() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handlePenaltiesPress = useCallback(() => {
-        router.push("/ceo/penalties");
-    }, [router]);
+    // Filter data based on search query
+    const filteredData = useMemo(() => {
+        if (!searchQuery.trim()) return analyticsData;
 
-    const handleMotivationPress = useCallback(() => {
-        router.push("/ceo/motivation");
-    }, [router]);
+        const query = searchQuery.toLowerCase();
+        return {
+            metrics: analyticsData.metrics.filter(
+                (item) =>
+                    item.label.toLowerCase().includes(query) ||
+                    item.value.toLowerCase().includes(query),
+            ),
+            reports: analyticsData.reports.filter(
+                (item) =>
+                    item.title.toLowerCase().includes(query) ||
+                    item.value.toLowerCase().includes(query),
+            ),
+            orders: analyticsData.orders.filter(
+                (item) =>
+                    item.label.toLowerCase().includes(query) ||
+                    item.value.toLowerCase().includes(query),
+            ),
+            financial: analyticsData.financial.filter(
+                (item) =>
+                    item.label.toLowerCase().includes(query) ||
+                    item.value.toLowerCase().includes(query),
+            ),
+            inventory: analyticsData.inventory.filter(
+                (item) =>
+                    item.label.toLowerCase().includes(query) ||
+                    item.value.toLowerCase().includes(query),
+            ),
+            employees: analyticsData.employees.filter(
+                (item) =>
+                    item.name.toLowerCase().includes(query) ||
+                    item.amount.toLowerCase().includes(query),
+            ),
+        };
+    }, [searchQuery]);
 
-    // Render header
-    const renderHeader = () => (
-        <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Смена</Text>
-                <View style={styles.timerBadge}>
-                    <Text style={styles.timerIcon}>⏰</Text>
-                    <Text style={styles.timerText}>{elapsedTime}</Text>
+    const renderValueBadge = (value, type) => {
+        if (type === "positive") {
+            return (
+                <View style={[styles.badge, backgroundsStyles.positiveBg]}>
+                    <Text
+                        style={[styles.badgeText, backgroundsStyles.positive]}
+                    >
+                        {value}
+                    </Text>
                 </View>
-            </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
-        </View>
-    );
-
-    // Render employees section
-    const renderEmployeesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Сотрудники</Text>
-            <View style={styles.card}>
-                {/* Open Employees Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
-                        <Text style={styles.infoValue}>
-                            {openEmployees} официанта
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-
-                {/* Total Amount Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Общая сумма</Text>
-                        <Text style={styles.infoValue}>
-                            {totalAmount.toLocaleString()} тг
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы <Text style={styles.countBadge}>({finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет список штрафов</Text>
+            );
+        }
+        if (type === "negative") {
+            return (
+                <View style={[styles.badge, backgroundsStyles.negativeBg]}>
+                    <Text
+                        style={[styles.badgeText, backgroundsStyles.negative]}
+                    >
+                        {value}
+                    </Text>
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+            );
+        }
+        return null;
+    };
 
-    // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
-                <Text style={styles.countBadge}>({motivationCount})</Text>
-            </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
-        </View>
-    );
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar
-                barStyle="light-content"
-                backgroundColor="rgba(25, 25, 26, 1)"
-            />
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerTop}>
+                    <Text style={styles.headerTitle}>Аналитика</Text>
+                </View>
+                <View style={styles.searchContainer}>
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Искать данные"
+                        placeholderTextColor="#797A80"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                    />
+                    <Ionicons
+                        name="search"
+                        size={20}
+                        color="#797A80"
+                        style={styles.searchIcon}
+                    />
+                </View>
+            </View>
 
+            {/* Scrollable Content */}
             <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
+                style={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
+                {/* General Metrics */}
+                {filteredData.metrics.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Общие показатели
                         </Text>
+                        <View style={styles.card}>
+                            {filteredData.metrics.map((metric, index) => (
+                                <React.Fragment key={metric.id}>
+                                    {index > 0 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                    <MetricCard {...metric} />
+                                </React.Fragment>
+                            ))}
+                        </View>
                     </View>
-                ) : (
-                    <>
-                        {loading ? (
-                            renderLoadingState()
-                        ) : (
-                            <>
-                                {renderHeader()}
-                                {renderEmployeesSection()}
-                                {renderFinesSection()}
-                                {renderMotivationSection()}
-                            </>
-                        )}
-                    </>
                 )}
+
+                {/* Profit & Loss Report */}
+                {filteredData.reports.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Отчет о прибылях и убытках
+                        </Text>
+                        <View style={styles.card}>
+                            <Text style={styles.subsectionTitle}>Сегодня</Text>
+                            <View style={styles.reportsContainer}>
+                                {filteredData.reports.map((report) => (
+                                    <ReportCard key={report.id} {...report} />
+                                ))}
+                            </View>
+                            <TouchableOpacity style={styles.button}>
+                                <Text style={styles.buttonText}>
+                                    Посмотреть все
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {/* Orders Report */}
+                {filteredData.orders.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Отчеты по заказам
+                        </Text>
+                        <View style={styles.card}>
+                            {filteredData.orders.map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    {index > 0 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                    <ListItem
+                                        label={item.label}
+                                        value={
+                                            item.type
+                                                ? renderValueBadge(
+                                                      item.value,
+                                                      item.type,
+                                                  )
+                                                : item.value
+                                        }
+                                    />
+                                </React.Fragment>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Financial Reports */}
+                {filteredData.financial.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Денежные отчеты</Text>
+                        <View style={styles.card}>
+                            {filteredData.financial.map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    {index > 0 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                    <ListItem
+                                        label={item.label}
+                                        value={
+                                            item.type
+                                                ? renderValueBadge(
+                                                      item.value,
+                                                      item.type,
+                                                  )
+                                                : item.value
+                                        }
+                                    />
+                                </React.Fragment>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Inventory Reports */}
+                {filteredData.inventory.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Складские отчеты
+                        </Text>
+                        <View style={styles.card}>
+                            {filteredData.inventory.map((item, index) => (
+                                <React.Fragment key={item.id}>
+                                    {index > 0 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                    <ListItem
+                                        label={item.label}
+                                        value={
+                                            item.type
+                                                ? renderValueBadge(
+                                                      item.value,
+                                                      item.type,
+                                                  )
+                                                : item.value
+                                        }
+                                    />
+                                </React.Fragment>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Employee Reports */}
+                {filteredData.employees.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Отчеты по персоналу
+                        </Text>
+                        <View style={styles.card}>
+                            {filteredData.employees.map((employee, index) => (
+                                <React.Fragment key={employee.id}>
+                                    {index > 0 && (
+                                        <View style={styles.divider} />
+                                    )}
+                                    <EmployeeCard
+                                        name={employee.name}
+                                        amount={employee.amount}
+                                        avatar={employee.avatar}
+                                        role={""}
+                                        totalAmount={""}
+                                        shiftTime={""}
+                                        variant="simple"
+                                        showStats={false}
+                                        onPress={() => {}}
+                                    />
+                                </React.Fragment>
+                            ))}
+                            <TouchableOpacity style={styles.button}>
+                                <Text style={styles.buttonText}>
+                                    Все сотрудники
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                <View style={{ height: 16 }} />
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
+        backgroundColor: "#1C1C1E",
     },
-    scrollView: {
-        flex: 1,
+    header: {
+        backgroundColor: "rgba(28, 28, 30, 0.8)",
+        paddingTop: 50,
     },
-    scrollContent: {
-        paddingBottom: 128,
-        gap: 28,
-    },
-
-    // Header Section
-    headerSection: {
-        gap: 16,
-    },
-    headerRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
+    headerTop: {
         height: 56,
         paddingHorizontal: 16,
+        justifyContent: "center",
     },
     headerTitle: {
-        color: "#fff",
+        color: "#FFFFFF",
         fontSize: 32,
-        fontWeight: "600",
+        fontWeight: "bold",
         letterSpacing: -0.24,
-        flex: 1,
     },
-    timerBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: "rgba(255, 158, 0, 0.08)",
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    timerIcon: {
-        fontSize: 16,
-    },
-    timerText: {
-        color: "#FF9E00",
-        fontSize: 16,
-        fontWeight: "600",
-        letterSpacing: -0.064,
-        lineHeight: 20,
-    },
-
-    // Section
-    section: {
+    searchContainer: {
         paddingHorizontal: 16,
-        gap: 16,
+        paddingBottom: 12,
+        position: "relative",
+    },
+    searchInput: {
+        height: 44,
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderRadius: 20,
+        backgroundColor: "#2C2C2E",
+        borderWidth: 1,
+        borderColor: "rgba(0, 0, 0, 0.12)",
+        color: "#FFFFFF",
+        fontSize: 16,
+        paddingRight: 40,
+    },
+    searchIcon: {
+        position: "absolute",
+        right: 28,
+        top: 12,
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 16,
+    },
+    section: {
+        marginTop: 32,
     },
     sectionTitle: {
-        color: "#fff",
+        color: "#FFFFFF",
         fontSize: 24,
         fontWeight: "bold",
         lineHeight: 28,
+        marginBottom: 16,
     },
-    countBadge: {
-        color: "#797A80",
-    },
-
-    // Card
     card: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
         padding: 12,
-        gap: 16,
-    },
-
-    // Info Row
-    infoRow: {
-        flexDirection: "row",
-        alignItems: "center",
+        backgroundColor: "#2C2C2E",
+        borderRadius: 20,
         gap: 8,
     },
-    iconContainer: {
+    divider: {
+        height: 1,
+        backgroundColor: "#3A3A3C",
+    },
+    reportCard: {
+        padding: 12,
+        backgroundColor: "#3A3A3C",
+        borderRadius: 20,
+    },
+    reportContent: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+    },
+    reportMain: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        flex: 1,
+    },
+    reportIcon: {
         width: 40,
         height: 40,
-        borderRadius: 16,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        justifyContent: "center",
+        padding: 10,
+        borderRadius: 12,
         alignItems: "center",
+        justifyContent: "center",
     },
-    iconText: {
-        fontSize: 20,
-    },
-    infoContent: {
+    reportText: {
         flex: 1,
         gap: 4,
     },
-    infoLabel: {
+    reportTitle: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+    },
+    reportValue: {
+        fontSize: 14,
+        lineHeight: 18,
+    },
+    subsectionTitle: {
+        color: "#FFFFFF",
+        fontSize: 24,
+        fontWeight: "bold",
+        lineHeight: 28,
+        marginBottom: 8,
+    },
+    reportsContainer: {
+        gap: 12,
+        marginTop: 8,
+    },
+    button: {
+        height: 44,
+        paddingHorizontal: 14,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 20,
+        backgroundColor: "#FFFFFF",
+        marginTop: 16,
+    },
+    buttonText: {
+        color: "#2C2D2E",
+        fontSize: 16,
+        fontWeight: "bold",
+        lineHeight: 24,
+    },
+    badge: {
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+        alignSelf: "flex-start",
+    },
+    badgeText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        lineHeight: 20,
+    },
+    employeeCard: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+    },
+    employeeContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        flex: 1,
+    },
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+    },
+    employeeText: {
+        flex: 1,
+        gap: 4,
+    },
+    employeeName: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+    },
+    employeeAmount: {
         color: "rgba(255, 255, 255, 0.75)",
         fontSize: 12,
         lineHeight: 16,
     },
-    infoValue: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-        lineHeight: 20,
-    },
-    chevron: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "300",
-    },
-
-    // Divider
-    divider: {
-        height: 1,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-    },
-
-    // Empty State
-    emptyState: {
-        alignItems: "center",
-        gap: 8,
-    },
-    emptyIcon: {
-        width: 80,
-        height: 80,
-    },
-    emptyText: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 16,
-        textAlign: "center",
-        lineHeight: 20,
-    },
-
-    // Add Button
-    addButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
-        fontWeight: "600",
-    },
-    addButtonText: {
-        color: "#2C2D2E",
-        fontSize: 16,
-        fontWeight: "600",
-        textAlign: "center",
-        lineHeight: 24,
+    bold: {
+        fontWeight: "bold",
     },
 });

@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
+import Loading from "@/src/client/components/Loading";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 
@@ -331,12 +332,7 @@ export default function SalaryScreen({
     };
 
     // Render motivation section
-    const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
-        </View>
-    );
+    const renderLoadingState = () => <Loading></Loading>;
 
     const renderQuestItem = ({ item }: { item: Quest }) => (
         <QuestCard quest={item} />
