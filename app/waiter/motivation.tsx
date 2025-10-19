@@ -15,6 +15,7 @@ import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface MotivationScreenProps {
     waiterId?: string;
@@ -197,7 +198,9 @@ export default function MotivationScreen({
     const ItemSeparator = () => <View style={styles.itemSeparator} />;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -228,7 +231,6 @@ export default function MotivationScreen({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
     },
 
     // Header

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 // Example usage of the updated OrderSelection component
 export default function OrderSelectionScreen() {
@@ -135,7 +136,9 @@ export default function OrderSelectionScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar barStyle="light-content" backgroundColor="#000" />
 
             <OrderSelection
@@ -157,7 +160,6 @@ export default function OrderSelectionScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
     },
     // Action buttons styles
     actionsSection: {

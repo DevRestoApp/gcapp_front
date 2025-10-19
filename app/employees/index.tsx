@@ -14,6 +14,7 @@ import Svg, { Path } from "react-native-svg";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 
 import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 const employeesData: Employee[] = [
     {
@@ -100,7 +101,9 @@ export default function EmployeesScreen() {
             : employeesData;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -213,7 +216,6 @@ export default function EmployeesScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
     },
     scrollView: {
         flex: 1,
