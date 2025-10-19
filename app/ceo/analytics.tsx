@@ -18,6 +18,8 @@ import ListItem from "@/src/client/components/ceo/ListItem";
 import ReportCard from "@/src/client/components/ceo/ReportCard";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { textStyles } from "@/src/client/styles/ui/text.styles";
+import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 
 // Mock data
 const analyticsData = {
@@ -204,9 +206,7 @@ export default function AnalyticsScreen() {
         if (type === "positive") {
             return (
                 <View style={[styles.badge, backgroundsStyles.positiveBg]}>
-                    <Text
-                        style={[styles.badgeText, backgroundsStyles.positive]}
-                    >
+                    <Text style={[styles.badgeText, textStyles.positive]}>
                         {value}
                     </Text>
                 </View>
@@ -215,9 +215,7 @@ export default function AnalyticsScreen() {
         if (type === "negative") {
             return (
                 <View style={[styles.badge, backgroundsStyles.negativeBg]}>
-                    <Text
-                        style={[styles.badgeText, backgroundsStyles.negative]}
-                    >
+                    <Text style={[styles.badgeText, textStyles.negative]}>
                         {value}
                     </Text>
                 </View>
@@ -231,7 +229,7 @@ export default function AnalyticsScreen() {
     }
 
     return (
-        <View style={styles.container}>
+        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
@@ -261,15 +259,15 @@ export default function AnalyticsScreen() {
             >
                 {/* General Metrics */}
                 {filteredData.metrics.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
                             Общие показатели
                         </Text>
-                        <View style={styles.card}>
+                        <View style={cardStyles.card}>
                             {filteredData.metrics.map((metric, index) => (
                                 <React.Fragment key={metric.id}>
                                     {index > 0 && (
-                                        <View style={styles.divider} />
+                                        <View style={cardStyles.divider} />
                                     )}
                                     <MetricCard {...metric} />
                                 </React.Fragment>
@@ -280,13 +278,15 @@ export default function AnalyticsScreen() {
 
                 {/* Profit & Loss Report */}
                 {filteredData.reports.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
                             Отчет о прибылях и убытках
                         </Text>
-                        <View style={styles.card}>
-                            <Text style={styles.subsectionTitle}>Сегодня</Text>
-                            <View style={styles.reportsContainer}>
+                        <View style={cardStyles.card}>
+                            <Text style={cardStyles.subsectionTitle}>
+                                Сегодня
+                            </Text>
+                            <View style={cardStyles.reportsContainer}>
                                 {filteredData.reports.map((report) => (
                                     <ReportCard key={report.id} {...report} />
                                 ))}
@@ -302,15 +302,15 @@ export default function AnalyticsScreen() {
 
                 {/* Orders Report */}
                 {filteredData.orders.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
                             Отчеты по заказам
                         </Text>
-                        <View style={styles.card}>
+                        <View style={cardStyles.card}>
                             {filteredData.orders.map((item, index) => (
                                 <React.Fragment key={item.id}>
                                     {index > 0 && (
-                                        <View style={styles.divider} />
+                                        <View style={cardStyles.divider} />
                                     )}
                                     <ListItem
                                         label={item.label}
@@ -331,13 +331,15 @@ export default function AnalyticsScreen() {
 
                 {/* Financial Reports */}
                 {filteredData.financial.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Денежные отчеты</Text>
-                        <View style={styles.card}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
+                            Денежные отчеты
+                        </Text>
+                        <View style={cardStyles.card}>
                             {filteredData.financial.map((item, index) => (
                                 <React.Fragment key={item.id}>
                                     {index > 0 && (
-                                        <View style={styles.divider} />
+                                        <View style={cardStyles.divider} />
                                     )}
                                     <ListItem
                                         label={item.label}
@@ -358,15 +360,15 @@ export default function AnalyticsScreen() {
 
                 {/* Inventory Reports */}
                 {filteredData.inventory.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
                             Складские отчеты
                         </Text>
-                        <View style={styles.card}>
+                        <View style={cardStyles.card}>
                             {filteredData.inventory.map((item, index) => (
                                 <React.Fragment key={item.id}>
                                     {index > 0 && (
-                                        <View style={styles.divider} />
+                                        <View style={cardStyles.divider} />
                                     )}
                                     <ListItem
                                         label={item.label}
@@ -387,15 +389,15 @@ export default function AnalyticsScreen() {
 
                 {/* Employee Reports */}
                 {filteredData.employees.length > 0 && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>
+                    <View style={cardStyles.section}>
+                        <Text style={cardStyles.sectionTitle}>
                             Отчеты по персоналу
                         </Text>
-                        <View style={styles.card}>
+                        <View style={cardStyles.card}>
                             {filteredData.employees.map((employee, index) => (
                                 <React.Fragment key={employee.id}>
                                     {index > 0 && (
-                                        <View style={styles.divider} />
+                                        <View style={cardStyles.divider} />
                                     )}
                                     <EmployeeCard
                                         name={employee.name}
@@ -428,11 +430,9 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#1C1C1E",
     },
     header: {
         backgroundColor: "rgba(28, 28, 30, 0.8)",
-        paddingTop: 50,
     },
     headerTop: {
         height: 56,
@@ -471,26 +471,6 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
     },
-    section: {
-        marginTop: 32,
-    },
-    sectionTitle: {
-        color: "#FFFFFF",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
-        marginBottom: 16,
-    },
-    card: {
-        padding: 12,
-        backgroundColor: "#2C2C2E",
-        borderRadius: 20,
-        gap: 8,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: "#3A3A3C",
-    },
     reportCard: {
         padding: 12,
         backgroundColor: "#3A3A3C",
@@ -527,17 +507,6 @@ const styles = StyleSheet.create({
     reportValue: {
         fontSize: 14,
         lineHeight: 18,
-    },
-    subsectionTitle: {
-        color: "#FFFFFF",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
-        marginBottom: 8,
-    },
-    reportsContainer: {
-        gap: 12,
-        marginTop: 8,
     },
     button: {
         height: 44,

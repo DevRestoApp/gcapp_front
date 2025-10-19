@@ -10,6 +10,7 @@ import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrapper";
 import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 // TODO переписать на получение из storage либо из базы
 const isActive = true;
@@ -50,7 +51,7 @@ export default function Index() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
@@ -98,7 +99,7 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "rgba(25, 25, 26, 1)" },
+    container: { flex: 1 },
 
     // Header
     header: {

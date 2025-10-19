@@ -7,4 +7,7 @@ export const backgroundsStyles = StyleSheet.create({
     negativeBg: {
         backgroundColor: "rgba(255, 59, 48, 0.15)",
     },
+    generalBg: {
+        backgroundColor: "#19191A",
+    },
 });

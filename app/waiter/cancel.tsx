@@ -10,6 +10,7 @@ import {
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface CancelReasonScreenProps {
     orderId?: string;
@@ -163,7 +164,9 @@ export default function CancelScreen({
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -189,7 +192,6 @@ export default function CancelScreen({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
     },
     mainContent: {
         flex: 1,

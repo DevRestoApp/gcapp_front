@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 
 import { useAuth } from "@/src/contexts/AuthContext";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 export default function Home() {
     const router = useRouter();
@@ -10,7 +11,7 @@ export default function Home() {
     const { user, token, logout } = useAuth();
 
     return (
-        <View style={styles.container}>
+        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <Text style={styles.title}>🏢 Добро пожаловать в GCApp</Text>
             <Text style={styles.subtitle}>
                 Выберите свою роль, чтобы войти:
@@ -43,7 +44,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         paddingHorizontal: 20,
-        backgroundColor: "#f5f5f5",
     },
     title: {
         fontSize: 28,

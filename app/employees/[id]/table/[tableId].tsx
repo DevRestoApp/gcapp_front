@@ -21,6 +21,7 @@ import OrderSummary from "@/src/client/components/OrderSummary";
 
 import { Dish, OrderItem, Order, HistoryItem } from "@/src/client/types/waiter";
 import OrderHistory from "@/src/client/components/OrderHistory";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 const rooms = [
     "Общий зал",
@@ -142,7 +143,9 @@ export default function TableDetailScreen() {
     ];
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -216,7 +219,6 @@ export default function TableDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
     },
     scrollView: {
         flex: 1,

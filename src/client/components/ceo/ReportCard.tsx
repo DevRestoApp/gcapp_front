@@ -18,8 +18,8 @@ export default function ReportCard({ title, value, date, type }) {
                             style={[
                                 styles.reportIcon,
                                 isExpense
-                                    ? backgroundsStyles.negativeBg
-                                    : backgroundsStyles.positiveBg,
+                                    ? backgroundsStyles.positiveBg
+                                    : backgroundsStyles.negativeBg,
                             ]}
                         >
                             {isExpense ? (

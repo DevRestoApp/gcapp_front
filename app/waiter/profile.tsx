@@ -18,6 +18,7 @@ import LogoutConfirmationModal, {
 } from "@/src/client/components/modals/LogoutModal";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface ProfileData {
     id: string;
@@ -285,7 +286,9 @@ export default function ProfileScreen({
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
                 <StatusBar
                     barStyle="light-content"
                     backgroundColor="rgba(25, 25, 26, 1)"
@@ -296,7 +299,9 @@ export default function ProfileScreen({
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -328,7 +333,6 @@ export default function ProfileScreen({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "rgba(25, 25, 26, 1)",
     },
     mainContainer: {
         flex: 1,

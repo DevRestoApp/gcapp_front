@@ -12,6 +12,7 @@ import DishItem from "@/src/client/components/waiter/DishItem";
 import DishDetailModal, {
     DishDetailModalRef,
 } from "@/src/client/components/modals/DishDetailModal";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface Dish {
     id: string;
@@ -342,7 +343,7 @@ export default function MenuScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -374,7 +375,6 @@ export default function MenuScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
     },
     scrollContent: {
         paddingHorizontal: 16,
