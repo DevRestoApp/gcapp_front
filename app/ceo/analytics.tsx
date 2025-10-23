@@ -16,6 +16,7 @@ import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 import MetricCard from "@/src/client/components/ceo/MetricCard";
 import ListItem from "@/src/client/components/ceo/ListItem";
 import ReportCard from "@/src/client/components/ceo/ReportCard";
+import ValueBadge from "@/src/client/components/ValueBadge";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
@@ -202,27 +203,9 @@ export default function AnalyticsScreen() {
         };
     }, [searchQuery]);
 
-    const renderValueBadge = (value, type) => {
-        if (type === "positive") {
-            return (
-                <View style={[styles.badge, backgroundsStyles.positiveBg]}>
-                    <Text style={[styles.badgeText, textStyles.positive]}>
-                        {value}
-                    </Text>
-                </View>
-            );
-        }
-        if (type === "negative") {
-            return (
-                <View style={[styles.badge, backgroundsStyles.negativeBg]}>
-                    <Text style={[styles.badgeText, textStyles.negative]}>
-                        {value}
-                    </Text>
-                </View>
-            );
-        }
-        return null;
-    };
+    const renderValueBadge = (value, type) => (
+        <ValueBadge value={value} type={type} />
+    );
 
     if (isLoading) {
         return <Loading />;
@@ -522,19 +505,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
         lineHeight: 24,
-    },
-    badge: {
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-        alignSelf: "flex-start",
-    },
-    badgeText: {
-        fontSize: 16,
-        fontWeight: "bold",
-        lineHeight: 20,
     },
     employeeCard: {
         flexDirection: "row",

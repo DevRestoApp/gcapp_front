@@ -2,7 +2,13 @@ import { Text, View, StyleSheet } from "react-native";
 import React from "react";
 import { Entypo } from "@expo/vector-icons";
 
-export default function ListItem({ label, value, withChevron = true }) {
+import { ListItemProps } from "@/src/client/types/waiter";
+
+export default function ListItem({
+    label,
+    value,
+    withChevron = true,
+}: ListItemProps) {
     const isValueNode = typeof value !== "string";
 
     return (
