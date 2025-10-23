@@ -71,6 +71,8 @@ const fetchSalesData = async (filters: ReportFilters) => {
     ];
 };
 
+// TODO динамикоа по дням + динамика по часам 24 колонки и 7 колонок
+
 const fetchPaymentData = async (filters: ReportFilters) => {
     // TODO: Replace with actual API call
     // const response = await api.get('/reports/payments', { params: filters });

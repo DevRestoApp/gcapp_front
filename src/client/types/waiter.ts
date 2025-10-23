@@ -1,3 +1,5 @@
+import React, { ReactNode } from "react";
+
 export interface Day {
     date: string;
     day: string;
@@ -33,4 +35,12 @@ export interface HistoryItem extends OrderItem {
     name: string;
     timestamp: string;
     action: "added" | "removed";
+}
+
+export interface ListItemProps {
+    label: string;
+    value: string | React.ReactNode;
+    withChevron?: boolean;
+    icon?: ReactNode;
+    time?: string;
 }
