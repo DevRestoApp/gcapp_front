@@ -1,9 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export const cardStyles = StyleSheet.create({
-    section: {
-        marginTop: 32,
-    },
+    section: {},
     sectionTitle: {
         color: "#FFFFFF",
         fontSize: 24,

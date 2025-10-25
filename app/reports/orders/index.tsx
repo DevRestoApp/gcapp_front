@@ -146,7 +146,7 @@ export default function OrderReports() {
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Сегодня</Text>
-                <View style={{ ...cardStyles.card }}>
+                <View style={cardStyles.card}>
                     <TouchableOpacity
                         onPress={() => {
                             router.push("reports/orders/history");

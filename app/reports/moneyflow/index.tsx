@@ -11,6 +11,7 @@ import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
+import { useMoneyFlow } from "./_layout";
 
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -29,27 +30,39 @@ const fetchMoneyFlow = async (filters: ReportFilters) => {
             id: 213123,
             label: "Проданные блюда по себестоимости",
             value: "560 200 тг",
-            data: [],
+            data: [
+                { id: 1, name: "Dish 1", amount: 100 },
+                { id: 2, name: "Dish 2", amount: 200 },
+            ],
         },
         writeoffs: {
             id: 31341,
             label: "Сумма списаний",
             value: "160 200 тг",
-            data: [],
+            data: [
+                { id: 1, item: "Item 1", quantity: 5 },
+                { id: 2, item: "Item 2", quantity: 10 },
+            ],
         },
         expenses: {
             id: 315,
             label: "Сумма возвратов",
             value: "-124 800 тг",
             type: "negative",
-            data: [],
+            data: [
+                { id: 1, reason: "Reason 1", amount: -50 },
+                { id: 2, reason: "Reason 2", amount: -74.8 },
+            ],
         },
         incomes: {
             id: 544,
             label: "Сумма возвратов",
             value: "+350 800 тг",
             type: "positive",
-            data: [],
+            data: [
+                { id: 1, source: "Source 1", amount: 150 },
+                { id: 2, source: "Source 2", amount: 200.8 },
+            ],
         },
     };
 };
@@ -62,6 +75,7 @@ interface ReportFilters {
 
 export default function MoneyflowReports() {
     const router = useRouter();
+    const { setMoneyFlowData } = useMoneyFlow();
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState<ReportFilters>({
         date: "01.09.2025",
@@ -81,7 +95,6 @@ export default function MoneyflowReports() {
     const loadReportData = async () => {
         try {
             setLoading(true);
-            // TODO описать входящие переменные после того как буду получать рил данные
 
             // Fetch all data in parallel with filters
             const [data] = await Promise.all([fetchMoneyFlow(filters)]);
@@ -90,6 +103,14 @@ export default function MoneyflowReports() {
             setWriteoff(data.writeoffs);
             setExpenses(data.expenses);
             setIncomes(data.incomes);
+
+            // Set data in context for child routes
+            setMoneyFlowData({
+                dishes: data.dishes,
+                writeoffs: data.writeoffs,
+                expenses: data.expenses,
+                incomes: data.incomes,
+            });
         } catch (error) {
             console.error("Error loading report data:", error);
             // TODO: Show error message to user
@@ -121,9 +142,7 @@ export default function MoneyflowReports() {
                 <Text style={cardStyles.sectionTitle}>Сегодня</Text>
                 <View style={{ ...cardStyles.card }}>
                     <TouchableOpacity
-                        onPress={() => {
-                            router.push("reports/orders/history");
-                        }}
+                        onPress={() => router.push("/reports/moneyflow/dishes")}
                     >
                         <View
                             style={{
@@ -154,9 +173,9 @@ export default function MoneyflowReports() {
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => {
-                            router.push("reports/orders/returns");
-                        }}
+                        onPress={() =>
+                            router.push("/reports/moneyflow/writeoffs")
+                        }
                     >
                         <View
                             style={{
@@ -187,9 +206,9 @@ export default function MoneyflowReports() {
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => {
-                            router.push("reports/orders/returns");
-                        }}
+                        onPress={() =>
+                            router.push("/reports/moneyflow/expenses")
+                        }
                     >
                         <View
                             style={{
@@ -221,9 +240,9 @@ export default function MoneyflowReports() {
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => {
-                            router.push("reports/orders/returns");
-                        }}
+                        onPress={() =>
+                            router.push("/reports/moneyflow/incomes")
+                        }
                     >
                         <View
                             style={{

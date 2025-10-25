@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from "react-native";
 import Svg, { Path, G } from "react-native-svg";
 
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
+import { ListCard } from "@/src/client/components/ListCard";
+import { list } from "postcss";
 
 interface DonutData {
     name: string;
@@ -158,25 +160,7 @@ export function ReportDonutSection({
                 })}
             </View>
 
-            <View style={styles.listContainer}>
-                {listItems.map((item, index) => (
-                    <View key={index}>
-                        <View style={styles.listItem}>
-                            <View style={styles.listItemLeft}>
-                                <Text style={styles.label}>{item.label}</Text>
-                                <Text style={styles.sublabel}>
-                                    {item.sublabel}
-                                </Text>
-                            </View>
-                            <Text style={styles.value}>{item.value}</Text>
-                        </View>
-
-                        {index < listItems.length - 1 && (
-                            <View style={styles.divider} />
-                        )}
-                    </View>
-                ))}
-            </View>
+            <ListCard items={listItems}></ListCard>
         </View>
     );
 }
@@ -205,43 +189,5 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 12,
         lineHeight: 16,
-    },
-    listContainer: {
-        padding: 12,
-        borderRadius: 20,
-        backgroundColor: "#2C2C2E",
-        gap: 12,
-    },
-    listItem: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-    listItemLeft: {
-        flex: 1,
-        justifyContent: "center",
-        gap: 4,
-    },
-    label: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        lineHeight: 16,
-    },
-    sublabel: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        lineHeight: 20,
-    },
-    value: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        lineHeight: 20,
-        fontWeight: "700",
-    },
-    divider: {
-        width: "100%",
-        height: 1,
-        backgroundColor: "#2C2C2E",
-        marginTop: 12,
     },
 });
