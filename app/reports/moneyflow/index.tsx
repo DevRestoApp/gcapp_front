@@ -303,11 +303,11 @@ export default function MoneyflowReports() {
     return (
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <ReportHeader
-                title="Общие показатели"
+                title="Денежные отчеты"
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.back()}
+                onBack={() => router.push("/reports")}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}

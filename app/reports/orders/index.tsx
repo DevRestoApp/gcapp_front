@@ -243,11 +243,11 @@ export default function OrderReports() {
     return (
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <ReportHeader
-                title="Общие показатели"
+                title="Отчет по заказам"
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.back()}
+                onBack={() => router.push("/reports")}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}
