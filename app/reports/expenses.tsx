@@ -141,7 +141,7 @@ interface ReportFilters {
     location: string;
 }
 
-export default function Reports() {
+export default function ExpensesReports() {
     const navigation = useNavigation();
 
     const [loading, setLoading] = useState(true);

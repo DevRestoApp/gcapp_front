@@ -42,5 +42,6 @@ export interface ListItemProps {
     value: string | React.ReactNode;
     withChevron?: boolean;
     icon?: ReactNode;
+    iconType?: string | undefined;
     time?: string;
 }

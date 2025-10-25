@@ -3,11 +3,13 @@ import React from "react";
 import { Entypo } from "@expo/vector-icons";
 
 import { ListItemProps } from "@/src/client/types/waiter";
+import IconCard from "@/src/client/components/IconCard";
 
 export default function ListItemIcon({
     label,
     value,
     icon,
+    iconType,
     withChevron,
 }: ListItemProps) {
     const isValueNode = typeof value !== "string";
@@ -16,7 +18,7 @@ export default function ListItemIcon({
         <View style={styles.listItem}>
             <View style={styles.listContent}>
                 <View style={styles.listContentLeft}>
-                    {icon && <View style={styles.iconContainer}>{icon}</View>}
+                    {icon && <IconCard type={iconType} icon={icon}></IconCard>}
 
                     <View style={{ gap: 6 }}>
                         <Text style={styles.listLabel} numberOfLines={1}>
@@ -46,14 +48,6 @@ export default function ListItemIcon({
 }
 
 const styles = StyleSheet.create({
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#1C1C1E",
-        alignItems: "center",
-        justifyContent: "center",
-    },
     listItem: {
         flexDirection: "row",
         alignItems: "center",
