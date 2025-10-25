@@ -141,7 +141,7 @@ interface ReportFilters {
     location: string;
 }
 
-export default function Reports() {
+export default function ExpensesReports() {
     const navigation = useNavigation();
 
     const [loading, setLoading] = useState(true);
@@ -199,12 +199,11 @@ export default function Reports() {
 
     const renderGeneralCard = () => {
         return (
-            <View style={cardStyles.card}>
+            <View style={styles.card}>
                 <Text style={cardStyles.subsectionTitle}>Сегодня</Text>
                 <View style={cardStyles.reportsContainer}>
                     {generalMetrics.map((metric, index) => (
                         <React.Fragment key={metric.id}>
-                            {index > 0 && <View style={cardStyles.divider} />}
                             <ReportCard {...metric} />
                         </React.Fragment>
                     ))}

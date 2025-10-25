@@ -8,6 +8,7 @@ import {
     FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { textStyles } from "@/src/client/styles/ui/text.styles";
 
 interface ReportHeaderProps {
     title: string;
@@ -192,10 +193,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     title: {
-        color: "#FFFFFF",
         fontSize: 20,
         fontWeight: "700",
         textAlign: "center",
+        ...textStyles.white,
     },
     placeholder: {
         width: 28,

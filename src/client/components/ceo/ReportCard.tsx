@@ -64,7 +64,7 @@ export default function ReportCard({ title, value, date, type }) {
 const styles = StyleSheet.create({
     reportCard: {
         padding: 12,
-        backgroundColor: "#3A3A3C",
+        backgroundColor: "#232324",
         borderRadius: 20,
     },
     reportContent: {
