@@ -31,6 +31,30 @@ interface CategoryData {
     listItems: { label: string; sublabel: string; value: string }[];
 }
 
+interface ExpensesMetricData {
+    id: number;
+    title: string;
+    value: string;
+    date: string;
+    type: "income" | "expense";
+}
+
+interface EmployeesData {
+    id: string;
+    name: string;
+    role: string;
+    avatarUrl: string;
+    totalAmount: string;
+    shiftTime: string;
+    isActive: boolean;
+    data: { label: string; value: string }[];
+}
+
+interface ExpensesTableData {
+    columns: { key: string; label: string; flex: number }[];
+    data: { name: string; revenue: string }[];
+}
+
 interface ReportFilters {
     date: string;
     period: string;
@@ -194,11 +218,159 @@ const fetchCategoryData = async (
     };
 };
 
+const fetchEmployeesData = async (
+    filters: ReportFilters,
+): Promise<ExpensesMetricData[]> => {
+    return [
+        {
+            id: "1",
+            name: "Аслан Аманов",
+            role: "Оффицант",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: true,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "2",
+            name: "Аида Таманова",
+            role: "Оффицант",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: true,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "3",
+            name: "Арман Ашимов",
+            role: "Бармен",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: true,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "4",
+            name: "Тима Янь",
+            role: "Хостес",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: true,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "5",
+            name: "Асылай Арнатова",
+            role: "Официант",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: true,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "7",
+            name: "Тима Янь",
+            role: "Хостес",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: false,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+        {
+            id: "8",
+            name: "Асылай Арнатова",
+            role: "Официант",
+            avatarUrl:
+                "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
+            totalAmount: "56 897 тг",
+            shiftTime: "00:56:25",
+            isActive: false,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: "4412",
+                },
+                {
+                    label: "Время смены",
+                    value: "00:56:25",
+                },
+            ],
+        },
+    ];
+};
+
 export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [metrics, setMetrics] = useState<MetricData[]>([]);
     const [sales, setSales] = useState<SalesData[]>([]);
     const [payments, setPayments] = useState<PaymentData | null>(null);
     const [categories, setCategories] = useState<CategoryData | null>(null);
+    const [employees, setEmployees] = useState<EmployeesData[]>([]);
 
     const [filters, setFilters] = useState<ReportFilters>({
         date: new Date().toLocaleDateString("ru-RU"),
@@ -215,18 +387,25 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
             setError(null);
 
             // Fetch all reports in parallel
-            const [metricsData, salesData, paymentsData, categoriesData] =
-                await Promise.all([
-                    fetchMainMetrics(filters),
-                    fetchSalesData(filters),
-                    fetchPaymentData(filters),
-                    fetchCategoryData(filters),
-                ]);
+            const [
+                metricsData,
+                salesData,
+                paymentsData,
+                categoriesData,
+                employeesData,
+            ] = await Promise.all([
+                fetchMainMetrics(filters),
+                fetchSalesData(filters),
+                fetchPaymentData(filters),
+                fetchCategoryData(filters),
+                fetchEmployeesData(filters),
+            ]);
 
             setMetrics(metricsData);
             setSales(salesData);
             setPayments(paymentsData);
             setCategories(categoriesData);
+            setEmployees(employeesData);
         } catch (err) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
@@ -251,6 +430,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 sales,
                 payments,
                 categories,
+                employees,
                 filters,
                 setFilters,
                 loading,
