@@ -16,9 +16,7 @@ export function InventoryItemCard({
 }: InventoryItemCardProps) {
     let quantityBg;
     let quantityTextColor;
-    console.log("quantity", quantity);
     if (quantity > 30) {
-        console.log("quantity > 30", quantity);
         quantityBg = backgroundsStyles.positiveBg;
         quantityTextColor = textStyles.positive;
     } else {
