@@ -1,3 +1,4 @@
+// TODO move context and all fetches into single Context.tsx file in contexts directory
 import React, {
     createContext,
     useContext,

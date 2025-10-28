@@ -28,17 +28,6 @@ export default function EmployeeCard({
 }: EmployeeCardProps) {
     // Simple variant (for analytics screen)
     if (variant === "simple") {
-        console.log("simple", {
-            name,
-            amount,
-            avatar,
-            role,
-            totalAmount,
-            shiftTime,
-            variant,
-            showStats,
-            onPress,
-        });
         return (
             <TouchableOpacity
                 style={styles.simpleCard}

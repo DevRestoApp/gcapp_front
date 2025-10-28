@@ -1,3 +1,4 @@
+// TODO move context and all fetches into single Context.tsx file in contexts directory
 import React, {
     createContext,
     useContext,
@@ -38,11 +39,25 @@ interface Motivation {
     date: string;
 }
 
+interface QuestEmployees {
+    id: string;
+    title: string;
+    description: string;
+    reward: number;
+    target: number;
+    unit: string;
+    totalEmployees: number;
+    completedEmployees: number;
+    employeeNames?: string[];
+    date: string;
+}
+
 interface ShiftData {
     openEmployees: number;
     totalAmount: number;
     finesCount: number;
     motivationCount: number;
+    questsCount: number;
     elapsedTime: string;
     selectedDate: string;
 }
@@ -58,6 +73,9 @@ interface CeoContextType {
     fines: Fine[];
     motivation: Motivation[];
 
+    // Quests
+    quests: QuestEmployees[];
+
     // State
     loading: boolean;
     error: string | null;
@@ -68,7 +86,10 @@ interface CeoContextType {
     updateEmployee: (id: string, employee: Partial<Employee>) => void;
     addFine: (fine: Omit<Fine, "id">) => void;
     addMotivation: (motivation: Omit<Motivation, "id">) => void;
+    addQuest: (quest: Omit<QuestEmployees, "id">) => void;
     refetch: () => Promise<void>;
+    fetchQuestsForDate: (date: string) => Promise<QuestEmployees[]>;
+    getQuestById: (id: string) => QuestEmployees | undefined;
 }
 
 const CeoContext = createContext<CeoContextType | undefined>(undefined);
@@ -155,16 +176,103 @@ const fetchMotivationData = async (): Promise<Motivation[]> => {
     return [];
 };
 
+const fetchQuestsData = async (date?: string): Promise<QuestEmployees[]> => {
+    console.log("Fetching quests data for date:", date);
+
+    // Mock quest data
+    return [
+        {
+            id: "1",
+            title: "Продажи десертов",
+            description: "Продать 10 десертов за смену",
+            reward: 5000,
+            target: 10,
+            unit: "десертов",
+            totalEmployees: 4,
+            completedEmployees: 3,
+            employeeNames: ["Аслан Аманов", "Аида Таманова", "Арман Ашимов"],
+            date:
+                date ||
+                new Date().toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }),
+        },
+        {
+            id: "2",
+            title: "Обслуживание столов",
+            description: "Обслужить 25 столов качественно",
+            reward: 8000,
+            target: 25,
+            unit: "столов",
+            totalEmployees: 4,
+            completedEmployees: 1,
+            employeeNames: ["Аслан Аманов"],
+            date:
+                date ||
+                new Date().toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }),
+        },
+        {
+            id: "3",
+            title: "Продажи напитков",
+            description: "Продать 30 алкогольных напитков",
+            reward: 12000,
+            target: 30,
+            unit: "напитков",
+            totalEmployees: 4,
+            completedEmployees: 4,
+            employeeNames: [
+                "Аслан Аманов",
+                "Аида Таманова",
+                "Арман Ашимов",
+                "Тима Янь",
+            ],
+            date:
+                date ||
+                new Date().toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }),
+        },
+        {
+            id: "4",
+            title: "Время обслуживания",
+            description: "Подавать заказы в течение 15 минут",
+            reward: 7000,
+            target: 20,
+            unit: "заказов",
+            totalEmployees: 4,
+            completedEmployees: 0,
+            employeeNames: [],
+            date:
+                date ||
+                new Date().toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }),
+        },
+    ];
+};
+
 export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [fines, setFines] = useState<Fine[]>([]);
     const [motivation, setMotivation] = useState<Motivation[]>([]);
+    const [quests, setQuests] = useState<QuestEmployees[]>([]);
 
     const [shiftData, setShiftData] = useState<ShiftData>({
         openEmployees: 0,
         totalAmount: 0,
         finesCount: 0,
         motivationCount: 0,
+        questsCount: 0,
         elapsedTime: "00:00:00",
         selectedDate: new Date().toLocaleDateString("ru-RU", {
             day: "2-digit",
@@ -182,16 +290,18 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setError(null);
 
             // Fetch all data in parallel
-            const [employeesData, finesData, motivationData] =
+            const [employeesData, finesData, motivationData, questsData] =
                 await Promise.all([
                     fetchEmployeesData(),
                     fetchFinesData(),
                     fetchMotivationData(),
+                    fetchQuestsData(shiftData.selectedDate),
                 ]);
 
             setEmployees(employeesData);
             setFines(finesData);
             setMotivation(motivationData);
+            setQuests(questsData);
 
             // Update shift data based on fetched data
             const activeEmployees = employeesData.filter((emp) => emp.isActive);
@@ -206,12 +316,30 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 totalAmount,
                 finesCount: finesData.length,
                 motivationCount: motivationData.length,
+                questsCount: questsData.length,
             }));
         } catch (err) {
             console.error("Error fetching CEO data:", err);
             setError("Не удалось загрузить данные");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchQuestsForDate = async (
+        date: string,
+    ): Promise<QuestEmployees[]> => {
+        try {
+            const questsData = await fetchQuestsData(date);
+            setQuests(questsData);
+            setShiftData((prev) => ({
+                ...prev,
+                questsCount: questsData.length,
+            }));
+            return questsData;
+        } catch (error) {
+            console.error("Error fetching quests for date:", error);
+            return [];
         }
     };
 
@@ -269,6 +397,19 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         }));
     };
 
+    const addQuest = (questItem: Omit<QuestEmployees, "id">) => {
+        const newQuest = { ...questItem, id: Date.now().toString() };
+        setQuests((prev) => [...prev, newQuest]);
+        setShiftData((prev) => ({
+            ...prev,
+            questsCount: prev.questsCount + 1,
+        }));
+    };
+
+    const getQuestById = (id: string): QuestEmployees | undefined => {
+        return quests.find((quest) => quest.id === id);
+    };
+
     const refetch = async () => {
         await fetchAllCeoData();
     };
@@ -280,6 +421,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 employees,
                 fines,
                 motivation,
+                quests,
                 loading,
                 error,
                 updateShiftData,
@@ -287,7 +429,10 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 updateEmployee,
                 addFine,
                 addMotivation,
+                addQuest,
                 refetch,
+                fetchQuestsForDate,
+                getQuestById,
             }}
         >
             {children}
@@ -341,6 +486,8 @@ export default function CeoLayout() {
                         ),
                     }}
                 />
+                <Tabs.Screen name="penalties/index" options={{ href: null }} />
+                <Tabs.Screen name="motivation/index" options={{ href: null }} />
             </Tabs>
         </CeoProvider>
     );
