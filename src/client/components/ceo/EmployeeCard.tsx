@@ -52,7 +52,7 @@ export default function EmployeeCard({
                         <Text style={styles.employeeName}>{name}</Text>
                         <Text style={styles.employeeAmount} numberOfLines={1}>
                             Общий сумма:{" "}
-                            <Text style={styles.bold}>{amount}</Text>
+                            <Text style={styles.bold}>{totalAmount}</Text>
                         </Text>
                     </View>
                 </View>

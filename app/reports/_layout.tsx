@@ -67,6 +67,7 @@ interface ReportsContextType {
     sales: SalesData[];
     payments: PaymentData | null;
     categories: CategoryData | null;
+    employees: EmployeesData[];
 
     // Filters
     filters: ReportFilters;

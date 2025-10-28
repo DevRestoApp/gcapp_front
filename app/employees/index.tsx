@@ -193,10 +193,10 @@ export default function EmployeesScreen() {
                                 key={employee.id}
                                 name={employee.name}
                                 role={employee.role}
-                                avatarUrl={employee.avatarUrl}
+                                avatar={employee.avatarUrl}
                                 totalAmount={employee.totalAmount}
                                 shiftTime={employee.shiftTime}
-                                statsSectionActive={activeTab === "open"}
+                                showStats={activeTab === "open"}
                                 onPress={() => {
                                     setSelectedEmployee(employee);
                                     // Navigate to employee detail page
