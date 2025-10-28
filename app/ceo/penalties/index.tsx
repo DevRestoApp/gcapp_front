@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
     View,
     Text,
@@ -8,97 +8,61 @@ import {
     StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
-import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 
-import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
+import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
+import AddPenaltyModal, {
+    AddPenaltyModalRef,
+} from "@/src/client/components/modals/AddPenaltyModal";
+
+import { useCeo } from "../_layout";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-const employeesData: Employee[] = [
-    {
-        id: "1",
-        name: "Аслан Аманов",
-        role: "Оффицант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "2",
-        name: "Аида Таманова",
-        role: "Оффицант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "3",
-        name: "Арман Ашимов",
-        role: "Бармен",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "4",
-        name: "Тима Янь",
-        role: "Хостес",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "5",
-        name: "Асылай Арнатова",
-        role: "Официант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "7",
-        name: "Тима Янь",
-        role: "Хостес",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: false,
-    },
-    {
-        id: "8",
-        name: "Асылай Арнатова",
-        role: "Официант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: false,
-    },
-];
-
-export default function EmployeesScreen() {
+export default function PenaltiesScreen() {
     const router = useRouter();
+    const { employees, addFine, shiftData } = useCeo();
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+    const [selectedEmployeeForPenalty, setSelectedEmployeeForPenalty] =
+        useState<any>(null);
 
-    const { setSelectedEmployee } = useEmployee();
+    const addPenaltyModalRef = useRef<AddPenaltyModalRef>(null);
 
     const filteredEmployees =
         activeTab === "open"
-            ? employeesData.filter((emp) => emp.isActive)
-            : employeesData;
+            ? employees.filter((emp) => emp.isActive)
+            : employees;
+
+    // Handle employee card press to open penalty modal
+    const handleEmployeePress = useCallback((employee: any) => {
+        setSelectedEmployeeForPenalty(employee);
+        addPenaltyModalRef.current?.open();
+    }, []);
+
+    // Handle penalty submission
+    const handleAddPenalty = useCallback(
+        (data: {
+            employeeId: string;
+            employeeName: string;
+            reason: string;
+            amount: number;
+        }) => {
+            addFine({
+                employeeId: data.employeeId,
+                employeeName: data.employeeName,
+                reason: data.reason,
+                amount: data.amount,
+                date: new Date().toISOString(),
+            });
+            setSelectedEmployeeForPenalty(null);
+        },
+        [addFine],
+    );
+
+    // Handle modal cancel
+    const handleModalCancel = useCallback(() => {
+        setSelectedEmployeeForPenalty(null);
+    }, []);
 
     return (
         <SafeAreaView
@@ -133,7 +97,9 @@ export default function EmployeesScreen() {
                             />
                         </Svg>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Сотрудники</Text>
+                    <Text style={styles.headerTitle}>
+                        Штрафы ({shiftData.finesCount})
+                    </Text>
                     <View style={styles.headerSpacer} />
                 </View>
 
@@ -156,7 +122,7 @@ export default function EmployeesScreen() {
                                         styles.segmentTextActive,
                                 ]}
                             >
-                                Открытий
+                                Открытые
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -184,7 +150,8 @@ export default function EmployeesScreen() {
                 {/* Employees Section */}
                 <View style={styles.employeesSection}>
                     <Text style={styles.sectionTitle}>
-                        Сотрудники ({filteredEmployees.length})
+                        Выберите сотрудника для штрафа (
+                        {filteredEmployees.length})
                     </Text>
 
                     <View style={styles.employeesList}>
@@ -197,18 +164,20 @@ export default function EmployeesScreen() {
                                 totalAmount={employee.totalAmount}
                                 shiftTime={employee.shiftTime}
                                 showStats={activeTab === "open"}
-                                onPress={() => {
-                                    setSelectedEmployee(employee);
-                                    // Navigate to employee detail page
-                                    router.push({
-                                        pathname: `/employees/${employee.id}`,
-                                    });
-                                }}
+                                onPress={() => handleEmployeePress(employee)}
                             />
                         ))}
                     </View>
                 </View>
             </ScrollView>
+
+            {/* Add Penalty Modal */}
+            <AddPenaltyModal
+                ref={addPenaltyModalRef}
+                employees={employees}
+                onAddPenalty={handleAddPenalty}
+                onCancel={handleModalCancel}
+            />
         </SafeAreaView>
     );
 }

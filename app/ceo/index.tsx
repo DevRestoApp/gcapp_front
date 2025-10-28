@@ -10,7 +10,6 @@ import {
     ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useRouter } from "expo-router";
 
 import Calendar from "@/src/client/components/Calendar";
@@ -18,69 +17,33 @@ import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
+import { useCeo } from "./_layout";
+
 export default function IndexScreen() {
     const router = useRouter();
 
+    // Get data from context instead of local state
+    const { shiftData, loading, error, refetch } = useCeo();
+
     const [days, setDays] = useState<Day[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>("");
-    const [elapsedTime, setElapsedTime] = useState("00:00:00");
-    const [openEmployees, setOpenEmployees] = useState(20);
-    const [totalAmount, setTotalAmount] = useState(150232);
-    const [finesCount, setFinesCount] = useState(0);
-    const [motivationCount, setMotivationCount] = useState(0);
-    const [loading, setLoading] = useState(true); // Start with true if loading initially
 
     // Initialize calendar
     useEffect(() => {
-        const initializeData = async () => {
-            setLoading(true);
+        const today = new Date();
+        const weekDays: Day[] = [];
 
-            const today = new Date();
-            const weekDays: Day[] = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - (6 - i));
 
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - (6 - i));
-
-                weekDays.push({
-                    date: date.getDate().toString(),
-                    day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                    active: i === 6,
-                });
-            }
-
-            setDays(weekDays);
-
-            // Set today's date as selected
-            const todayStr = today.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
+            weekDays.push({
+                date: date.getDate().toString(),
+                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
+                active: i === 6,
             });
-            setSelectedDate(todayStr);
+        }
 
-            // Add your data fetching logic here
-            // await fetchData();
-
-            setLoading(false);
-        };
-
-        initializeData();
-    }, []);
-
-    // Update elapsed time
-    useEffect(() => {
-        const updateTime = () => {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, "0");
-            const minutes = now.getMinutes().toString().padStart(2, "0");
-            const seconds = now.getSeconds().toString().padStart(2, "0");
-            setElapsedTime(`${hours}:${minutes}:${seconds}`);
-        };
-
-        updateTime();
-        const interval = setInterval(updateTime, 1000);
-        return () => clearInterval(interval);
+        setDays(weekDays);
     }, []);
 
     // Handle day selection
@@ -102,7 +65,8 @@ export default function IndexScreen() {
                 year: "numeric",
             });
 
-            setSelectedDate(dateStr);
+            // Update selected date in context
+            // updateShiftData({ selectedDate: dateStr });
         },
         [days],
     );
@@ -127,7 +91,9 @@ export default function IndexScreen() {
                 <Text style={styles.headerTitle}>Смена</Text>
                 <View style={styles.timerBadge}>
                     <Text style={styles.timerIcon}>⏰</Text>
-                    <Text style={styles.timerText}>{elapsedTime}</Text>
+                    <Text style={styles.timerText}>
+                        {shiftData.elapsedTime}
+                    </Text>
                 </View>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
@@ -153,7 +119,7 @@ export default function IndexScreen() {
                             Открытых сотрудники
                         </Text>
                         <Text style={styles.infoValue}>
-                            {openEmployees} официанта
+                            {shiftData.openEmployees} официанта
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -173,7 +139,7 @@ export default function IndexScreen() {
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {totalAmount.toLocaleString()} тг
+                            {shiftData.totalAmount.toLocaleString()} тг
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -186,7 +152,8 @@ export default function IndexScreen() {
     const renderFinesSection = () => (
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>
-                Штрафы <Text style={styles.countBadge}>({finesCount})</Text>
+                Штрафы{" "}
+                <Text style={styles.countBadge}>({shiftData.finesCount})</Text>
             </Text>
             <View style={styles.card}>
                 <View style={styles.emptyState}>
@@ -215,7 +182,9 @@ export default function IndexScreen() {
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>
                 Мотивация{" "}
-                <Text style={styles.countBadge}>({motivationCount})</Text>
+                <Text style={styles.countBadge}>
+                    ({shiftData.motivationCount})
+                </Text>
             </Text>
             <TouchableOpacity
                 style={styles.addButton}
@@ -262,6 +231,7 @@ export default function IndexScreen() {
     );
 }
 
+// ... keep all existing styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,

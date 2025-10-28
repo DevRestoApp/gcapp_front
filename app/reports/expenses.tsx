@@ -1,208 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
     View,
     ScrollView,
     StyleSheet,
     ActivityIndicator,
     Text,
-    TouchableOpacity,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { ReportHeader } from "@/src/client/components/reports/header";
 import ReportCard from "@/src/client/components/ceo/ReportCard";
+import { ReportTable } from "@/src/client/components/reports/table";
 
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { ReportTable } from "@/src/client/components/reports/table";
 
-// Mock API functions - replace these with your actual API calls
-const fetchGeneralMetrics = async (filters: ReportFilters) => {
-    // TODO: Replace with actual API call
-    // const response = await api.get('/reports/metrics', { params: filters });
-    // return response.data;
-
-    return [
-        {
-            id: 1,
-            title: "Итого Расходы",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "expense",
-        },
-        {
-            id: 2,
-            title: "Итого Прибыль от основной деятельности",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-        {
-            id: 3,
-            title: "Итого чистая прибыль",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-    ];
-};
-const fetchExpenses = async (filters: ReportFilters) => {
-    // TODO: Replace with actual API call
-    // const response = await api.get('/reports/metrics', { params: filters });
-    // return response.data;
-
-    return [
-        {
-            id: 1,
-            title: "Итого Расходы",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "expense",
-        },
-        {
-            id: 2,
-            title: "Итого Прибыль от основной деятельности",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-        {
-            id: 3,
-            title: "Итого чистая прибыль",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-        {
-            id: 4,
-            title: "Итого Расходы",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "expense",
-        },
-        {
-            id: 5,
-            title: "Итого Прибыль от основной деятельности",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-        {
-            id: 6,
-            title: "Итого чистая прибыль",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-    ];
-};
-const fetchTableData = async (filters: ReportFilters) => {
-    const columns = [
-        { key: "name", label: "", flex: 2 },
-        { key: "revenue", label: "ГК Шарль", flex: 1 },
-    ];
-
-    // children tree nodes if there be some ex: {...el, children: [props]}
-    const data = [
-        {
-            name: "Прибыль от основной деятельности",
-            revenue: "1 000 000 тг",
-        },
-        {
-            name: "Выручка",
-            revenue: "750 000 тг",
-        },
-        {
-            name: "Итого выручка",
-            revenue: "134 000 тг",
-        },
-        {
-            name: "Продажа фабрика",
-            revenue: "35 000 тг",
-        },
-        {
-            name: "Себестоимость",
-            revenue: "90 000 тг",
-        },
-        {
-            name: "Предоставленные скидки",
-            revenue: "142 000 тг",
-        },
-    ];
-
-    return {
-        columns,
-        data,
-    };
-};
-
-interface ReportFilters {
-    date: string;
-    period: string;
-    location: string;
-}
+import { useReports } from "./_layout";
 
 export default function ExpensesReports() {
-    const navigation = useNavigation();
+    const router = useRouter();
 
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<ReportFilters>({
-        date: "01.09.2025",
-        period: "День",
-        location: "Все ресторан",
-    });
-
-    const [generalMetrics, setGeneralMetrics] = useState([]);
-    const [expenses, setExpenses] = useState([]);
-    const [tableColumns, setTableColumn] = useState([]);
-    const [tableData, setTableData] = useState([]);
-
-    useEffect(() => {
-        loadReportData();
-    }, [filters]); // Reload data when filters change
-
-    const loadReportData = async () => {
-        try {
-            setLoading(true);
-
-            // Fetch all data in parallel with filters
-            const [metrics, expenses, tableData] = await Promise.all([
-                fetchGeneralMetrics(filters),
-                fetchExpenses(filters),
-                fetchTableData(filters),
-            ]);
-            console.log("metrics", metrics);
-
-            setGeneralMetrics(metrics);
-            setExpenses(expenses);
-            setTableColumn(tableData.columns);
-            setTableData(tableData.data);
-        } catch (error) {
-            console.error("Error loading report data:", error);
-            // TODO: Show error message to user
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Get everything from context
+    const {
+        expensesGeneral,
+        expensesList,
+        expensesTable,
+        filters,
+        setFilters,
+        loading,
+        error,
+    } = useReports();
 
     const handleDateChange = (date: string) => {
-        setFilters((prev) => ({ ...prev, date }));
-        // TODO: Implement date picker modal
+        setFilters({ ...filters, date });
     };
 
     const handlePeriodChange = (period: string) => {
-        setFilters((prev) => ({ ...prev, period }));
+        setFilters({ ...filters, period });
     };
 
     const handleLocationChange = (location: string) => {
-        setFilters((prev) => ({ ...prev, location }));
+        setFilters({ ...filters, location });
     };
 
+    // get data from context provider
     const renderGeneralCard = () => {
+        if (!expensesGeneral || expensesGeneral.length === 0) {
+            return null;
+        }
+
         return (
             <View style={styles.card}>
-                <Text style={cardStyles.subsectionTitle}>Сегодня</Text>
+                <Text style={cardStyles.subsectionTitle}>Общие показатели</Text>
                 <View style={cardStyles.reportsContainer}>
-                    {generalMetrics.map((metric, index) => (
+                    {expensesGeneral.map((metric) => (
                         <React.Fragment key={metric.id}>
                             <ReportCard {...metric} />
                         </React.Fragment>
@@ -211,13 +61,17 @@ export default function ExpensesReports() {
             </View>
         );
     };
+
     const renderItemList = () => {
+        if (!expensesList || expensesList.length === 0) {
+            return null;
+        }
+
         return (
             <View style={styles.card}>
-                <Text style={cardStyles.subsectionTitle}>Сегодня</Text>
-
+                <Text style={cardStyles.subsectionTitle}>Детали расходов</Text>
                 <View style={cardStyles.reportsContainer}>
-                    {expenses.map((item, index) => (
+                    {expensesList.map((item) => (
                         <React.Fragment key={item.id}>
                             <ReportCard {...item} />
                         </React.Fragment>
@@ -226,27 +80,33 @@ export default function ExpensesReports() {
             </View>
         );
     };
+
     const renderTable = () => {
+        if (!expensesTable) {
+            return null;
+        }
+
         return (
             <View style={styles.card}>
-                <Text style={cardStyles.subsectionTitle}>Сегодня</Text>
-
-                <ReportTable columns={tableColumns} data={tableData} />
+                <Text style={cardStyles.subsectionTitle}>Таблица</Text>
+                <ReportTable
+                    columns={expensesTable.columns}
+                    data={expensesTable.data}
+                />
             </View>
         );
     };
 
+    // Loading state
     if (loading) {
         return (
-            <View
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-            >
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Общие показатели"
+                    title="Расходы и прибыль"
                     date={filters.date}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => navigation.goBack()}
+                    onBack={() => router.back()}
                     onDateChange={handleDateChange}
                     onPeriodChange={handlePeriodChange}
                     onLocationChange={handleLocationChange}
@@ -258,14 +118,36 @@ export default function ExpensesReports() {
         );
     }
 
+    // Error state
+    if (error) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Расходы и прибыль"
+                    date={filters.date}
+                    period={filters.period}
+                    location={filters.location}
+                    onBack={() => router.back()}
+                    onDateChange={handleDateChange}
+                    onPeriodChange={handlePeriodChange}
+                    onLocationChange={handleLocationChange}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Main content
     return (
-        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
+        <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
-                title="Общие показатели"
+                title="Расходы и прибыль"
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => navigation.goBack()}
+                onBack={() => router.back()}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}
@@ -300,6 +182,17 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: "#FFFFFF",
+        textAlign: "center",
     },
     card: {
         padding: 12,
