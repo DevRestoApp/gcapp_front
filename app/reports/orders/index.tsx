@@ -247,7 +247,7 @@ export default function OrderReports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.push("/reports")}
+                onBack={() => router.push("/ceo/analytics")}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}

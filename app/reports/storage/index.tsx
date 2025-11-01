@@ -13,6 +13,8 @@ import { ReportHeader } from "@/src/client/components/reports/header";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import ListItem from "@/src/client/components/ceo/ListItem";
+import Loading from "@/src/client/components/Loading";
+import { useReports } from "@/app/reports/_layout";
 
 const checks = {
     label: "Товары с критическим остатком",
@@ -113,12 +115,87 @@ const RenderInventoryData = ({ data }: { data: InventoryData }) => {
 };
 
 export default function Warehouse() {
+    const {
+        metrics,
+        sales,
+        payments,
+        categories,
+        filters,
+        setFilters,
+        loading,
+        error,
+    } = useReports();
+
     const [inventoryData] = useState<InventoryData>(fetchInventoryData());
     const router = useRouter();
 
+    const handleDateChange = (date: string) => {
+        setFilters((prev) => ({ ...prev, date }));
+        // TODO: Implement date picker modal
+    };
+
+    const handlePeriodChange = (period: string) => {
+        setFilters((prev) => ({ ...prev, period }));
+    };
+
+    const handleLocationChange = (location: string) => {
+        setFilters((prev) => ({ ...prev, location }));
+    };
+
+    // Loading state
+    if (loading) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Общие показатели"
+                    date={filters.date}
+                    period={filters.period}
+                    location={filters.location}
+                    onBack={() => router.back()}
+                    onDateChange={handleDateChange}
+                    onPeriodChange={handlePeriodChange}
+                    onLocationChange={handleLocationChange}
+                />
+                <View>
+                    <Loading size="large" color="#3C82FD" />
+                </View>
+            </View>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Общие показатели"
+                    date={filters.date}
+                    period={filters.period}
+                    location={filters.location}
+                    onBack={() => router.back()}
+                    onDateChange={handleDateChange}
+                    onPeriodChange={handlePeriodChange}
+                    onLocationChange={handleLocationChange}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
-            <ReportHeader title="Складские отчеты" />
+            <ReportHeader
+                title="Складские отчеты"
+                date={filters.date}
+                period={filters.period}
+                location={filters.location}
+                onBack={() => router.push("/ceo/analytics")}
+                onDateChange={handleDateChange}
+                onPeriodChange={handlePeriodChange}
+                onLocationChange={handleLocationChange}
+            />
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.content}

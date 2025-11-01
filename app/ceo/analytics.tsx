@@ -19,8 +19,8 @@ import ReportCard from "@/src/client/components/ceo/ReportCard";
 import ValueBadge from "@/src/client/components/ValueBadge";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { textStyles } from "@/src/client/styles/ui/text.styles";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
+import { useRouter } from "expo-router";
 
 // Mock data
 const analyticsData = {
@@ -164,6 +164,8 @@ export default function AnalyticsScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    const router = useRouter();
+
     // Filter data based on search query
     const filteredData = useMemo(() => {
         if (!searchQuery.trim()) return analyticsData;
@@ -241,134 +243,164 @@ export default function AnalyticsScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* General Metrics */}
-                {filteredData.metrics.length > 0 && (
-                    <View style={cardStyles.section}>
-                        <Text style={cardStyles.sectionTitle}>
-                            Общие показатели
-                        </Text>
-                        <View style={cardStyles.card}>
-                            {filteredData.metrics.map((metric, index) => (
-                                <React.Fragment key={metric.id}>
-                                    {index > 0 && (
-                                        <View style={cardStyles.divider} />
-                                    )}
-                                    <MetricCard {...metric} />
-                                </React.Fragment>
-                            ))}
-                        </View>
-                    </View>
-                )}
-
-                {/* Profit & Loss Report */}
-                {filteredData.reports.length > 0 && (
-                    <View style={cardStyles.section}>
-                        <Text style={cardStyles.sectionTitle}>
-                            Отчет о прибылях и убытках
-                        </Text>
-                        <View style={cardStyles.card}>
-                            <Text style={cardStyles.subsectionTitle}>
-                                Сегодня
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push("/reports");
+                    }}
+                >
+                    {filteredData.metrics.length > 0 && (
+                        <View style={cardStyles.section}>
+                            <Text style={cardStyles.sectionTitle}>
+                                Общие показатели
                             </Text>
-                            <View style={cardStyles.reportsContainer}>
-                                {filteredData.reports.map((report) => (
-                                    <ReportCard key={report.id} {...report} />
+                            <View style={cardStyles.card}>
+                                {filteredData.metrics.map((metric, index) => (
+                                    <React.Fragment key={metric.id}>
+                                        {index > 0 && (
+                                            <View style={cardStyles.divider} />
+                                        )}
+                                        <MetricCard {...metric} />
+                                    </React.Fragment>
                                 ))}
                             </View>
-                            <TouchableOpacity style={styles.button}>
-                                <Text style={styles.buttonText}>
-                                    Посмотреть все
+                        </View>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push("/reports/expenses");
+                    }}
+                >
+                    {/* Profit & Loss Report */}
+                    {filteredData.reports.length > 0 && (
+                        <View style={cardStyles.section}>
+                            <Text style={cardStyles.sectionTitle}>
+                                Отчет о прибылях и убытках
+                            </Text>
+                            <View style={cardStyles.card}>
+                                <Text style={cardStyles.subsectionTitle}>
+                                    Сегодня
                                 </Text>
-                            </TouchableOpacity>
+                                <View style={cardStyles.reportsContainer}>
+                                    {filteredData.reports.map((report) => (
+                                        <ReportCard
+                                            key={report.id}
+                                            {...report}
+                                        />
+                                    ))}
+                                </View>
+                                <TouchableOpacity style={styles.button}>
+                                    <Text style={styles.buttonText}>
+                                        Посмотреть все
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
-                )}
-
-                {/* Orders Report */}
-                {filteredData.orders.length > 0 && (
-                    <View style={cardStyles.section}>
-                        <Text style={cardStyles.sectionTitle}>
-                            Отчеты по заказам
-                        </Text>
-                        <View style={cardStyles.card}>
-                            {filteredData.orders.map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    {index > 0 && (
-                                        <View style={cardStyles.divider} />
-                                    )}
-                                    <ListItem
-                                        label={item.label}
-                                        value={
-                                            item.type
-                                                ? renderValueBadge(
-                                                      item.value,
-                                                      item.type,
-                                                  )
-                                                : item.value
-                                        }
-                                    />
-                                </React.Fragment>
-                            ))}
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push("/reports/orders");
+                    }}
+                >
+                    {/* Orders Report */}
+                    {filteredData.orders.length > 0 && (
+                        <View style={cardStyles.section}>
+                            <Text style={cardStyles.sectionTitle}>
+                                Отчеты по заказам
+                            </Text>
+                            <View style={cardStyles.card}>
+                                {filteredData.orders.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        {index > 0 && (
+                                            <View style={cardStyles.divider} />
+                                        )}
+                                        <ListItem
+                                            label={item.label}
+                                            value={
+                                                item.type
+                                                    ? renderValueBadge(
+                                                          item.value,
+                                                          item.type,
+                                                      )
+                                                    : item.value
+                                            }
+                                        />
+                                    </React.Fragment>
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                )}
-
-                {/* Financial Reports */}
-                {filteredData.financial.length > 0 && (
-                    <View style={cardStyles.section}>
-                        <Text style={cardStyles.sectionTitle}>
-                            Денежные отчеты
-                        </Text>
-                        <View style={cardStyles.card}>
-                            {filteredData.financial.map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    {index > 0 && (
-                                        <View style={cardStyles.divider} />
-                                    )}
-                                    <ListItem
-                                        label={item.label}
-                                        value={
-                                            item.type
-                                                ? renderValueBadge(
-                                                      item.value,
-                                                      item.type,
-                                                  )
-                                                : item.value
-                                        }
-                                    />
-                                </React.Fragment>
-                            ))}
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push("/reports/moneyflow");
+                    }}
+                >
+                    {/* Financial Reports */}
+                    {filteredData.financial.length > 0 && (
+                        <View style={cardStyles.section}>
+                            <Text style={cardStyles.sectionTitle}>
+                                Денежные отчеты
+                            </Text>
+                            <View style={cardStyles.card}>
+                                {filteredData.financial.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        {index > 0 && (
+                                            <View style={cardStyles.divider} />
+                                        )}
+                                        <ListItem
+                                            label={item.label}
+                                            value={
+                                                item.type
+                                                    ? renderValueBadge(
+                                                          item.value,
+                                                          item.type,
+                                                      )
+                                                    : item.value
+                                            }
+                                        />
+                                    </React.Fragment>
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                )}
-
-                {/* Inventory Reports */}
-                {filteredData.inventory.length > 0 && (
-                    <View style={cardStyles.section}>
-                        <Text style={cardStyles.sectionTitle}>
-                            Складские отчеты
-                        </Text>
-                        <View style={cardStyles.card}>
-                            {filteredData.inventory.map((item, index) => (
-                                <React.Fragment key={item.id}>
-                                    {index > 0 && (
-                                        <View style={cardStyles.divider} />
-                                    )}
-                                    <ListItem
-                                        label={item.label}
-                                        value={
-                                            item.type
-                                                ? renderValueBadge(
-                                                      item.value,
-                                                      item.type,
-                                                  )
-                                                : item.value
-                                        }
-                                    />
-                                </React.Fragment>
-                            ))}
+                    )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => {
+                        router.push("/reports/storage");
+                    }}
+                >
+                    {/* Inventory Reports */}
+                    {filteredData.inventory.length > 0 && (
+                        <View style={cardStyles.section}>
+                            <Text style={cardStyles.sectionTitle}>
+                                Складские отчеты
+                            </Text>
+                            <View style={cardStyles.card}>
+                                {filteredData.inventory.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        {index > 0 && (
+                                            <View style={cardStyles.divider} />
+                                        )}
+                                        <ListItem
+                                            label={item.label}
+                                            value={
+                                                item.type
+                                                    ? renderValueBadge(
+                                                          item.value,
+                                                          item.type,
+                                                      )
+                                                    : item.value
+                                            }
+                                        />
+                                    </React.Fragment>
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                )}
+                    )}
+                </TouchableOpacity>
 
                 {/* Employee Reports */}
                 {filteredData.employees.length > 0 && (
@@ -391,7 +423,9 @@ export default function AnalyticsScreen() {
                                         shiftTime={""}
                                         variant="simple"
                                         showStats={false}
-                                        onPress={() => {}}
+                                        onPress={() => {
+                                            router.push("/reports/employees");
+                                        }}
                                     />
                                 </React.Fragment>
                             ))}

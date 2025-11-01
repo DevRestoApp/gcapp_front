@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
+import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 
 interface ReportHeaderProps {
     title: string;
@@ -16,15 +17,13 @@ interface ReportHeaderProps {
     period?: string;
     location?: string;
     onBack?: () => void;
-    onDateChange?: (date: string) => void;
+    onDateChange?: (startDate: Date, endDate: Date) => void;
     onPeriodChange?: (period: string) => void;
     onLocationChange?: (location: string) => void;
 }
 
 const PERIODS = ["День", "Неделя", "Месяц", "Год"];
 const LOCATIONS = ["Все ресторан", "Ресторан 1", "Ресторан 2", "Ресторан 3"];
-
-// TODO import calendar date picker library for period filter
 
 export function ReportHeader({
     title,
@@ -36,8 +35,10 @@ export function ReportHeader({
     onPeriodChange,
     onLocationChange,
 }: ReportHeaderProps) {
+    const [showCalendar, setShowCalendar] = useState(false);
     const [showPeriodModal, setShowPeriodModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
+    const [dateRangeText, setDateRangeText] = useState(date);
 
     const handlePeriodSelect = (selectedPeriod: string) => {
         onPeriodChange?.(selectedPeriod);
@@ -47,6 +48,22 @@ export function ReportHeader({
     const handleLocationSelect = (selectedLocation: string) => {
         onLocationChange?.(selectedLocation);
         setShowLocationModal(false);
+    };
+
+    const handleDateRangeSelect = (startDate: Date, endDate: Date) => {
+        const formatDate = (d: Date) => {
+            const day = d.getDate().toString().padStart(2, "0");
+            const month = (d.getMonth() + 1).toString().padStart(2, "0");
+            const year = d.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+
+        const start = formatDate(startDate);
+        const end = formatDate(endDate);
+        const rangeText = start === end ? start : `${start} - ${end}`;
+
+        setDateRangeText(rangeText);
+        onDateChange?.(startDate, endDate);
     };
 
     const renderModal = (
@@ -123,14 +140,14 @@ export function ReportHeader({
             <View style={styles.filtersContainer}>
                 <TouchableOpacity
                     style={styles.filterButton}
-                    onPress={() => onDateChange?.(date)}
+                    onPress={() => setShowCalendar(true)}
                 >
                     <Ionicons
                         name="calendar-outline"
                         size={20}
                         color="#FFFFFF"
                     />
-                    <Text style={styles.filterText}>{date}</Text>
+                    <Text style={styles.filterText}>{dateRangeText}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -154,6 +171,12 @@ export function ReportHeader({
                     <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
             </View>
+
+            <ReportCalendar
+                visible={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                onDateRangeSelect={handleDateRangeSelect}
+            />
 
             {renderModal(
                 showPeriodModal,

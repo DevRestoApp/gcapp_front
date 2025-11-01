@@ -119,19 +119,6 @@ export default function MoneyflowReports() {
         }
     };
 
-    const handleDateChange = (date: string) => {
-        setFilters((prev) => ({ ...prev, date }));
-        // TODO: Implement date picker modal
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setFilters((prev) => ({ ...prev, period }));
-    };
-
-    const handleLocationChange = (location: string) => {
-        setFilters((prev) => ({ ...prev, location }));
-    };
-
     const renderValueBadge = (value, type) => (
         <ValueBadge value={value} type={type} />
     );
@@ -288,7 +275,7 @@ export default function MoneyflowReports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
+                    onBack={() => router.push("/ceo/analytics")}
                     onDateChange={handleDateChange}
                     onPeriodChange={handlePeriodChange}
                     onLocationChange={handleLocationChange}
@@ -307,7 +294,7 @@ export default function MoneyflowReports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.push("/reports")}
+                onBack={() => router.push("/ceo/analytics")}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}

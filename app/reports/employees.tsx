@@ -10,23 +10,21 @@ import { useRouter } from "expo-router";
 import { ReportHeader } from "@/src/client/components/reports/header";
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
 
-import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useReports } from "./_layout";
-import ReportCard from "@/src/client/components/ceo/ReportCard";
 
 const RenderEmployeeCard = (employeeData) => {
-    const { name, avatar, stats } = employeeData;
+    const { name, avatarUrl, amount, data, role } = employeeData;
     console.log("employeeData: ", employeeData);
-    console.log(name, avatar, stats);
 
     return (
         <EmployeeCardExtended
             name={name}
-            avatar={avatar}
-            role=""
-            stats={stats}
+            avatar={avatarUrl}
+            amount={amount}
+            role={role}
+            stats={data}
             onPress={() => {}}
         />
     );
