@@ -15,34 +15,26 @@ import MetricCard from "@/src/client/components/ceo/MetricCard";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useReports } from "./_layout";
+// ✅ Import from the context file, NOT from _layout
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 export default function Reports() {
     const router = useRouter();
 
-    // Get everything from context - no need for local state
+    // Get everything from context
     const {
         metrics,
         sales,
         payments,
         categories,
         filters,
-        setFilters,
+        setDateRange,
+        setPeriod,
+        setLocation,
+        getFormattedDateRange,
         loading,
         error,
     } = useReports();
-
-    const handleDateChange = (date: string) => {
-        setFilters({ ...filters, date });
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setFilters({ ...filters, period });
-    };
-
-    const handleLocationChange = (location: string) => {
-        setFilters({ ...filters, location });
-    };
 
     const renderMainMetrics = () => {
         if (!metrics || metrics.length === 0) {
@@ -64,18 +56,61 @@ export default function Reports() {
         );
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Общие показатели"
+                    date={getFormattedDateRange()}
+                    period={filters.period}
+                    location={filters.location}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
+                />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#3C82FD" />
+                    <Text style={styles.loadingText}>Загрузка отчетов...</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Общие показатели"
+                    date={getFormattedDateRange()}
+                    period={filters.period}
+                    location={filters.location}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            </View>
+        );
+    }
+
     // Main content
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Общие показатели"
-                date={filters.date}
+                date={getFormattedDateRange()}
                 period={filters.period}
                 location={filters.location}
                 onBack={() => router.push("/ceo/analytics")}
-                onDateChange={handleDateChange}
-                onPeriodChange={handlePeriodChange}
-                onLocationChange={handleLocationChange}
+                onDateChange={setDateRange}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
             />
 
             <ScrollView
@@ -125,6 +160,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        gap: 12,
+    },
+    loadingText: {
+        fontSize: 16,
+        color: "#8E8E93",
     },
     errorContainer: {
         flex: 1,
@@ -134,7 +174,7 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 16,
-        color: "#FFFFFF",
+        color: "#FF6B6B",
         textAlign: "center",
     },
 });
