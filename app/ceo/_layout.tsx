@@ -488,6 +488,7 @@ export default function CeoLayout() {
                 />
                 <Tabs.Screen name="penalties/index" options={{ href: null }} />
                 <Tabs.Screen name="motivation/index" options={{ href: null }} />
+                <Tabs.Screen name="motivation/[id]" options={{ href: null }} />
             </Tabs>
         </CeoProvider>
     );

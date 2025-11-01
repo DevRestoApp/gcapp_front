@@ -64,48 +64,6 @@ export default function Reports() {
         );
     };
 
-    // Loading state
-    if (loading) {
-        return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
-                    title="Общие показатели"
-                    date={filters.date}
-                    period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
-                />
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3C82FD" />
-                </View>
-            </View>
-        );
-    }
-
-    // Error state
-    if (error) {
-        return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
-                    title="Общие показатели"
-                    date={filters.date}
-                    period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
-                />
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>{error}</Text>
-                </View>
-            </View>
-        );
-    }
-
     // Main content
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
@@ -114,7 +72,7 @@ export default function Reports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.back()}
+                onBack={() => router.push("/ceo/analytics")}
                 onDateChange={handleDateChange}
                 onPeriodChange={handlePeriodChange}
                 onLocationChange={handleLocationChange}

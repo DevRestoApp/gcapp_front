@@ -45,7 +45,7 @@ interface EmployeesData {
     name: string;
     role: string;
     avatarUrl: string;
-    totalAmount: string;
+    amount: string;
     shiftTime: string;
     isActive: boolean;
     data: { label: string; value: string }[];
@@ -230,18 +230,14 @@ const fetchEmployeesData = async (
             role: "Оффицант",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: true,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -250,18 +246,14 @@ const fetchEmployeesData = async (
             role: "Оффицант",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: true,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -270,18 +262,14 @@ const fetchEmployeesData = async (
             role: "Бармен",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: true,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -290,18 +278,14 @@ const fetchEmployeesData = async (
             role: "Хостес",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: true,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -310,18 +294,14 @@ const fetchEmployeesData = async (
             role: "Официант",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: true,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -330,18 +310,14 @@ const fetchEmployeesData = async (
             role: "Хостес",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: false,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
         {
@@ -350,18 +326,14 @@ const fetchEmployeesData = async (
             role: "Официант",
             avatarUrl:
                 "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-            totalAmount: "56 897 тг",
-            shiftTime: "00:56:25",
+            amount: "55",
+            shiftTime: "15 768 тг",
             isActive: false,
             data: [
-                {
-                    label: "Общая сумма",
-                    value: "4412",
-                },
-                {
-                    label: "Время смены",
-                    value: "00:56:25",
-                },
+                { label: "Сумма продаж", value: "441222 тг" },
+                { label: "Время смены", value: "15 768 тг" },
+                { label: "Количество чеков", value: "256" },
+                { label: "Количество возвратов", value: "14" },
             ],
         },
     ];

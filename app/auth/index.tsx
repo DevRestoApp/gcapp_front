@@ -27,6 +27,7 @@ export default function Login() {
     }, [token]);
 
     const handleLogin = async () => {
+        router.push("/ceo");
         if (!email || !password) {
             Alert.alert("Ошибка", "Введите email и пароль");
             return;
