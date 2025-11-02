@@ -14,7 +14,8 @@ import { ReportTable } from "@/src/client/components/reports/table";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useReports } from "./_layout";
+// ✅ Import from the context file, NOT from _layout
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 export default function ExpensesReports() {
     const router = useRouter();
@@ -25,21 +26,24 @@ export default function ExpensesReports() {
         expensesList,
         expensesTable,
         filters,
-        setFilters,
+        setDateRange,
+        setPeriod,
+        setLocation,
+        getFormattedDateRange,
         loading,
         error,
     } = useReports();
 
     const handleDateChange = (date: string) => {
-        setFilters({ ...filters, date });
+        setDateRange({ ...filters, date });
     };
 
     const handlePeriodChange = (period: string) => {
-        setFilters({ ...filters, period });
+        setPeriod({ ...filters, period });
     };
 
     const handleLocationChange = (location: string) => {
-        setFilters({ ...filters, location });
+        setLocation({ ...filters, location });
     };
 
     // get data from context provider
@@ -103,13 +107,13 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
@@ -124,13 +128,13 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -144,13 +148,13 @@ export default function ExpensesReports() {
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Расходы и прибыль"
-                date={filters.date}
+                date={getFormattedDateRange()}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.back()}
-                onDateChange={handleDateChange}
-                onPeriodChange={handlePeriodChange}
-                onLocationChange={handleLocationChange}
+                onBack={() => router.push("/ceo/analytics")}
+                onDateChange={setDateRange}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
             />
 
             <ScrollView

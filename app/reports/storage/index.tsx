@@ -148,13 +148,13 @@ export default function Warehouse() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Общие показатели"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View>
                     <Loading size="large" color="#3C82FD" />
@@ -169,13 +169,13 @@ export default function Warehouse() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Общие показатели"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
