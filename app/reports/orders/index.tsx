@@ -225,13 +225,13 @@ export default function OrderReports() {
             >
                 <ReportHeader
                     title="Общие показатели"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
@@ -244,13 +244,13 @@ export default function OrderReports() {
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <ReportHeader
                 title="Отчет по заказам"
-                date={filters.date}
+                date={getFormattedDateRange()}
                 period={filters.period}
                 location={filters.location}
                 onBack={() => router.push("/ceo/analytics")}
-                onDateChange={handleDateChange}
-                onPeriodChange={handlePeriodChange}
-                onLocationChange={handleLocationChange}
+                onDateChange={setDateRange}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
             />
 
             <ScrollView

@@ -54,13 +54,13 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
@@ -75,13 +75,13 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={filters.date}
+                    date={getFormattedDateRange()}
                     period={filters.period}
                     location={filters.location}
-                    onBack={() => router.back()}
-                    onDateChange={handleDateChange}
-                    onPeriodChange={handlePeriodChange}
-                    onLocationChange={handleLocationChange}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDateRange}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -95,13 +95,13 @@ export default function ExpensesReports() {
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Расходы и прибыль"
-                date={filters.date}
+                date={getFormattedDateRange()}
                 period={filters.period}
                 location={filters.location}
-                onBack={() => router.back()}
-                onDateChange={handleDateChange}
-                onPeriodChange={handlePeriodChange}
-                onLocationChange={handleLocationChange}
+                onBack={() => router.push("/ceo/analytics")}
+                onDateChange={setDateRange}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
             />
 
             <ScrollView

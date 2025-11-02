@@ -6,6 +6,7 @@ import React, {
     useEffect,
     ReactNode,
 } from "react";
+import { getMoneyflowData } from "@/src/server/reports/moneyflow";
 
 // Define your report data types
 interface MetricData {
@@ -41,6 +42,19 @@ interface EmployeesData {
     isActive: boolean;
     data: { label: string; value: string }[];
 }
+type MoneyflowInterfaceItem = {
+    id: string;
+    tableNumber: string;
+    amount: string;
+    time: string;
+};
+
+interface MoneyflowInterface {
+    dishes: MoneyflowInterfaceItem[];
+    writeoffs: MoneyflowInterfaceItem[];
+    expenses: MoneyflowInterfaceItem[];
+    incomes: MoneyflowInterfaceItem[];
+}
 
 interface ReportFilters {
     startDate: Date;
@@ -56,6 +70,7 @@ interface ReportsContextType {
     payments: PaymentData | null;
     categories: CategoryData | null;
     employees: EmployeesData[];
+    moneyflow: MoneyflowInterface | null;
 
     // Filters - shared across ALL report screens
     filters: ReportFilters;
@@ -226,6 +241,23 @@ const fetchEmployeesData = async (
     ];
 };
 
+const fetchMoneyflowData = async (
+    filters: ReportFilters,
+): Promise<MoneyflowInterface> => {
+    try {
+        const response = await getMoneyflowData(filters);
+        return response;
+    } catch (e) {
+        console.log(`Error fetchin monetflow data: ${e}`);
+        return {
+            dishes: [],
+            writeoffs: [],
+            expenses: [],
+            incomes: [],
+        };
+    }
+};
+
 export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     // Data state
     const [metrics, setMetrics] = useState<MetricData[]>([]);
@@ -233,6 +265,9 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [payments, setPayments] = useState<PaymentData | null>(null);
     const [categories, setCategories] = useState<CategoryData | null>(null);
     const [employees, setEmployees] = useState<EmployeesData[]>([]);
+    const [moneyflow, setMoneyflowData] = useState<MoneyflowInterface | null>(
+        null,
+    );
 
     // Filter state - shared across ALL report screens
     const [filters, setFilters] = useState<ReportFilters>({
@@ -257,12 +292,14 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 paymentsData,
                 categoriesData,
                 employeesData,
+                moneyflowData,
             ] = await Promise.all([
                 fetchMainMetrics(filters),
                 fetchSalesData(filters),
                 fetchPaymentData(filters),
                 fetchCategoryData(filters),
                 fetchEmployeesData(filters),
+                fetchMoneyflowData(filters),
             ]);
 
             setMetrics(metricsData);
@@ -270,6 +307,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
             setPayments(paymentsData);
             setCategories(categoriesData);
             setEmployees(employeesData);
+            setMoneyflowData(moneyflowData);
         } catch (err) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
@@ -322,6 +360,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 payments,
                 categories,
                 employees,
+                moneyflow,
                 filters,
                 setDateRange,
                 setPeriod,
