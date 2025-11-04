@@ -7,8 +7,6 @@ export async function getSalesDynamicsData(filters: {
 }) {
     const params = {
         date: filters.date,
-        period: filters.period,
-        organization_id: filters.organization_id,
         days: 7,
     };
 

@@ -6,6 +6,7 @@ import React, {
     useEffect,
     ReactNode,
 } from "react";
+import { useRouter } from "expo-router";
 import { getMoneyflowData } from "@/src/server/reports/moneyflow";
 import { getOrdersData } from "@/src/server/reports/orders";
 import { getProfitLossData } from "@/src/server/reports/profitloss";
@@ -13,6 +14,7 @@ import { getAnalyticsData } from "@/src/server/ceo/analytics";
 import { getGoodsData } from "@/src/server/ceo/goods";
 import { getGeneralOrders } from "@/src/server/general/generalOrders";
 import { getSalesDynamicsData } from "@/src/server/reports/salesDynamics";
+import { storage } from "@/src/server/storage";
 
 // Define your report data types
 interface MetricData {
@@ -201,6 +203,7 @@ const fetchOrdersData = async (
     const response = await getOrdersData(filters);
     return response;
 };
+
 const fetchProfitLossData = async (
     filters: ReportFilters,
 ): Promise<ProfitlossInterface> => {
@@ -210,13 +213,10 @@ const fetchProfitLossData = async (
     });
     return response;
 };
-const fetchGeneralOrdersData = async (
-    filters: ReportFilters,
-): Promise<OrdersInterface> => {
-    /*const response = await getGeneralOrders(filters);
 
-    return response;*/
-
+const fetchGeneralOrdersData = async (filters: ReportFilters): Promise<any> => {
+    // const response = await getGeneralOrders(filters);
+    // return response;
     return [];
 };
 
@@ -246,8 +246,7 @@ const fetchEmployeesData = async (
             id: "2",
             name: "Аида Таманова",
             role: "Оффицант",
-            avatarUrl:
-                "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
             amount: "55",
             shiftTime: "15 768 тг",
             isActive: true,
@@ -262,8 +261,7 @@ const fetchEmployeesData = async (
             id: "3",
             name: "Арман Ашимов",
             role: "Бармен",
-            avatarUrl:
-                "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
             amount: "55",
             shiftTime: "15 768 тг",
             isActive: true,
@@ -302,34 +300,41 @@ const fetchAnalyticsData = async (
         return response;
     } catch (e) {
         console.log(e);
-        return [];
+        return {
+            employees: [],
+            financial: [],
+            metrics: [],
+            inventory: [],
+            orders: [],
+            reports: [],
+        };
     }
 };
 
-const fetchGoodsData = async (
-    filters: ReportFilters,
-): Promise<AnalyticsInterface> => {
+const fetchGoodsData = async (filters: ReportFilters): Promise<any> => {
     try {
         const response = await getGoodsData(filters);
         return response;
     } catch (e) {
         console.log(e);
-        return [];
+        return null;
     }
 };
-const fetchSalesDynamicsData = async (
-    filters: ReportFilters,
-): Promise<AnalyticsInterface> => {
+
+const fetchSalesDynamicsData = async (filters: ReportFilters): Promise<any> => {
     try {
         const response = await getSalesDynamicsData(filters);
         return response;
     } catch (e) {
         console.log(e);
-        return [];
+        return null;
     }
 };
 
 export const ReportsProvider = ({ children }: { children: ReactNode }) => {
+    // ✅ useRouter must be called at the top level
+    const router = useRouter();
+
     // Data state
     const [metrics, setMetrics] = useState<MetricData[]>([]);
     const [orders, setOrders] = useState<OrdersInterface | null>(null);
@@ -342,9 +347,8 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [moneyflow, setMoneyflowData] = useState<MoneyflowInterface | null>(
         null,
     );
-    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>();
-    // TODO написать норм пропсы
-    const [goods, setGoods] = useState<any | null>();
+    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
+    const [goods, setGoods] = useState<any | null>(null);
     const [generalOrders, setGeneralOrders] = useState<any | null>(null);
     const [salesDynamics, setSalesDynamics] = useState<any | null>(null);
 
@@ -402,9 +406,14 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
             setGoods(goodsData);
             setGeneralOrders(generalOrdersData);
             setSalesDynamics(salesDynamicsData);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
+
+            // Check if it's an authentication error
+            await storage.removeItem("access_token");
+            await storage.removeItem("user");
+            router.push("/auth");
         } finally {
             setLoading(false);
         }
