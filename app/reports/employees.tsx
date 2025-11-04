@@ -12,16 +12,15 @@ import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtend
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useReports } from "./_layout";
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 const RenderEmployeeCard = (employeeData) => {
-    const { name, avatarUrl, amount, data, role } = employeeData;
-    console.log("employeeData: ", employeeData);
+    const { name, avatar, amount, data, role } = employeeData;
 
     return (
         <EmployeeCardExtended
             name={name}
-            avatar={avatarUrl}
+            avatar={avatar}
             amount={amount}
             role={role}
             stats={data}
@@ -33,20 +32,15 @@ const RenderEmployeeCard = (employeeData) => {
 export default function ExpensesReports() {
     const router = useRouter();
 
-    // Get everything from context
-    const { employees, filters, setFilters, loading, error } = useReports();
-
-    const handleDateChange = (date: string) => {
-        setFilters({ ...filters, date });
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setFilters({ ...filters, period });
-    };
-
-    const handleLocationChange = (location: string) => {
-        setFilters({ ...filters, location });
-    };
+    const {
+        analytics,
+        filters,
+        setDate,
+        setPeriod,
+        setLocation,
+        loading,
+        error,
+    } = useReports();
 
     // Loading state
     if (loading) {
@@ -54,11 +48,11 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/reports")}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -75,11 +69,11 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/reports")}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -90,16 +84,45 @@ export default function ExpensesReports() {
         );
     }
 
+    const employees = analytics?.employees?.map((employees) => {
+        /*const { name, avatarUrl, amount, data, role } = employeeData;*/
+        return {
+            id: employees.id,
+            avatar: employees.avatar,
+            amount: "100",
+            name: employees.name,
+            role: "Официант",
+            data: [
+                {
+                    label: "Общая сумма",
+                    value: employees.amount,
+                },
+                {
+                    label: "Средний чек",
+                    value: "0",
+                },
+                {
+                    label: "Количество чеков",
+                    value: "0",
+                },
+                {
+                    label: "Количество возвратов",
+                    value: "0",
+                },
+            ],
+        };
+    });
+
     // Main content
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Расходы и прибыль"
-                date={getFormattedDateRange()}
+                date={filters.date}
                 period={filters.period}
-                location={filters.location}
-                onBack={() => router.push("/ceo/analytics")}
-                onDateChange={setDateRange}
+                location={filters.organization_id}
+                onBack={() => router.push("/reports")}
+                onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
             />

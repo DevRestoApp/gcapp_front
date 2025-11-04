@@ -5,23 +5,29 @@ import { Ionicons } from "@expo/vector-icons";
 interface CalendarProps {
     visible: boolean;
     onClose: () => void;
-    onDateRangeSelect: (startDate: Date, endDate: Date) => void;
-    initialStartDate?: Date;
-    initialEndDate?: Date;
+    onDateSelect: (date: string) => void; // Returns formatted string "DD.MM.YYYY"
+    initialDate?: string; // Accepts formatted string "DD.MM.YYYY"
 }
 
 export function ReportCalendar({
     visible,
     onClose,
-    onDateRangeSelect,
-    initialStartDate,
-    initialEndDate,
+    onDateSelect,
+    initialDate,
 }: CalendarProps) {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [startDate, setStartDate] = useState<Date | null>(
-        initialStartDate || null,
+    // Parse initial date or use today
+    const parseInitialDate = () => {
+        if (initialDate) {
+            const [day, month, year] = initialDate.split(".");
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        }
+        return new Date();
+    };
+
+    const [currentDate, setCurrentDate] = useState(parseInitialDate());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(
+        parseInitialDate(),
     );
-    const [endDate, setEndDate] = useState<Date | null>(initialEndDate || null);
 
     const monthNames = [
         "Январь",
@@ -59,55 +65,38 @@ export function ReportCalendar({
     };
 
     const handleDateClick = (day: number) => {
-        const selectedDate = new Date(year, month, day);
-        selectedDate.setHours(0, 0, 0, 0);
-
-        if (!startDate || (startDate && endDate)) {
-            // Start new selection
-            setStartDate(selectedDate);
-            setEndDate(null);
-        } else if (startDate && !endDate) {
-            // Complete the range
-            if (selectedDate < startDate) {
-                setEndDate(startDate);
-                setStartDate(selectedDate);
-            } else {
-                setEndDate(selectedDate);
-            }
-        }
-    };
-
-    const isInRange = (day: number) => {
-        if (!startDate || !endDate) return false;
         const date = new Date(year, month, day);
         date.setHours(0, 0, 0, 0);
-        return date >= startDate && date <= endDate;
+        setSelectedDate(date);
     };
 
-    const isStartDate = (day: number) => {
-        if (!startDate) return false;
+    const isSelectedDate = (day: number) => {
+        if (!selectedDate) return false;
         const date = new Date(year, month, day);
         date.setHours(0, 0, 0, 0);
-        return date.getTime() === startDate.getTime();
+        return date.getTime() === selectedDate.getTime();
     };
 
-    const isEndDate = (day: number) => {
-        if (!endDate) return false;
-        const date = new Date(year, month, day);
-        date.setHours(0, 0, 0, 0);
-        return date.getTime() === endDate.getTime();
+    const formatDate = (date: Date) => {
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
     };
 
     const handleApply = () => {
-        if (startDate && endDate) {
-            onDateRangeSelect(startDate, endDate);
+        if (selectedDate) {
+            const formattedDate = formatDate(selectedDate);
+            onDateSelect(formattedDate);
             onClose();
         }
     };
 
     const handleReset = () => {
-        setStartDate(null);
-        setEndDate(null);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        setSelectedDate(today);
+        setCurrentDate(today);
     };
 
     const renderDays = () => {
@@ -120,9 +109,7 @@ export function ReportCalendar({
 
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
-            const isStart = isStartDate(day);
-            const isEnd = isEndDate(day);
-            const inRange = isInRange(day);
+            const isSelected = isSelectedDate(day);
 
             days.push(
                 <TouchableOpacity
@@ -130,14 +117,13 @@ export function ReportCalendar({
                     onPress={() => handleDateClick(day)}
                     style={[
                         styles.dayCell,
-                        inRange && styles.dayCellInRange,
-                        (isStart || isEnd) && styles.dayCellSelected,
+                        isSelected && styles.dayCellSelected,
                     ]}
                 >
                     <Text
                         style={[
                             styles.dayText,
-                            (isStart || isEnd) && styles.dayTextSelected,
+                            isSelected && styles.dayTextSelected,
                         ]}
                     >
                         {day}
@@ -230,22 +216,21 @@ export function ReportCalendar({
                             onPress={handleReset}
                             style={styles.resetButton}
                         >
-                            <Text style={styles.resetButtonText}>Сбросить</Text>
+                            <Text style={styles.resetButtonText}>Сегодня</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={handleApply}
                             style={[
                                 styles.applyButton,
-                                (!startDate || !endDate) &&
-                                    styles.applyButtonDisabled,
+                                !selectedDate && styles.applyButtonDisabled,
                             ]}
-                            disabled={!startDate || !endDate}
+                            disabled={!selectedDate}
                         >
                             <Text
                                 style={[
                                     styles.applyButtonText,
-                                    (!startDate || !endDate) &&
+                                    !selectedDate &&
                                         styles.applyButtonTextDisabled,
                                 ]}
                             >
@@ -315,9 +300,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         borderRadius: 8,
-    },
-    dayCellInRange: {
-        backgroundColor: "rgba(60, 130, 253, 0.2)",
     },
     dayCellSelected: {
         backgroundColor: "#3C82FD",

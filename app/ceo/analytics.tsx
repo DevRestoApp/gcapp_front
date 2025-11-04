@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     View,
     Text,
@@ -21,196 +21,81 @@ import ValueBadge from "@/src/client/components/ValueBadge";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { useRouter } from "expo-router";
+import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
-// Mock data
-const analyticsData = {
-    metrics: [
-        {
-            id: 1,
-            label: "Выручка",
-            value: "19 589 699 тг",
-            change: { value: "-28%", trend: "down" },
-        },
-        {
-            id: 2,
-            label: "Чеки",
-            value: "886",
-            change: { value: "-41%", trend: "down" },
-        },
-        {
-            id: 3,
-            label: "Срендний чек",
-            value: "22 110,27 тг",
-            change: { value: "+21%", trend: "up" },
-        },
-        { id: 4, label: "Возвраты", value: "0" },
-        {
-            id: 5,
-            label: "Скидки",
-            value: "1 241 163,28 тг",
-            change: { value: "-37%", trend: "down" },
-        },
-        { id: 6, label: "НДС", value: "0,00 тг" },
-    ],
-    reports: [
-        {
-            id: 1,
-            title: "Итого Расходы",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "expense",
-        },
-        {
-            id: 2,
-            title: "Итого Прибыль от основной деятельности",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-        {
-            id: 3,
-            title: "Итого чистая прибыль",
-            value: "+14 000 568 тг",
-            date: "07.09",
-            type: "income",
-        },
-    ],
-    orders: [
-        { id: 1, label: "Средний чек", value: "120 568 тг" },
-        {
-            id: 2,
-            label: "Сумма возвратов",
-            value: "-15 800 тг",
-            type: "negative",
-        },
-        {
-            id: 3,
-            label: "Среднее количество позиций в заказе",
-            value: "1 241 163,28 тг",
-        },
-        {
-            id: 4,
-            label: "Популярные блюда по количеству и сумме",
-            value: "Манты 56 (256 840 тг)",
-        },
-        {
-            id: 5,
-            label: "Непопулярные блюда по количеству и сумме",
-            value: "Каша 2 (2 840 тг)",
-        },
-    ],
-    financial: [
-        {
-            id: 1,
-            label: "Сумма всех проданных блюд по себестоимости",
-            value: "120 568 598 тг",
-        },
-        { id: 2, label: "Сумма списаний", value: "256 840 568 тг" },
-        {
-            id: 3,
-            label: "Сумма доходов",
-            value: "+150 800 тг",
-            type: "positive",
-        },
-        {
-            id: 4,
-            label: "Сумма расходов",
-            value: "-15 800 тг",
-            type: "negative",
-        },
-    ],
-    inventory: [
-        {
-            id: 1,
-            label: "Сумма товаров на начало периода",
-            value: "120 568 598 тг",
-        },
-        {
-            id: 2,
-            label: "Сумма товаров на конец периода",
-            value: "256 840 568 тг",
-        },
-        {
-            id: 3,
-            label: "Товары с критическим остатком",
-            value: "-15 800 тг",
-            type: "negative",
-        },
-        { id: 4, label: "Остатки на складе", value: "1 241 163,28 тг" },
-    ],
-    employees: [
-        {
-            id: 1,
-            name: "Аслан Аманов",
-            amount: "256 024 тг",
-            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
-        },
-        {
-            id: 2,
-            name: "Айгүл Айтен",
-            amount: "256 024 тг",
-            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
-        },
-        {
-            id: 3,
-            name: "Асан Асылов",
-            amount: "256 024 тг",
-            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-        },
-    ],
+const getAnalyticsDataFunc = async () => {
+    try {
+        const date = new Date();
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // месяцы начинаются с 0
+        const year = date.getFullYear();
+
+        const formattedDate = `${day}.${month}.${year}`;
+
+        /*return await getAnalyticsData({ date: formattedDate });*/
+        return await getAnalyticsData({ date: "29.10.2025" });
+    } catch (error) {
+        return error;
+    }
 };
 
 export default function AnalyticsScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [analyticsData, setData] = useState<any>(null);
 
     const router = useRouter();
 
-    // Filter data based on search query
-    const filteredData = useMemo(() => {
-        if (!searchQuery.trim()) return analyticsData;
-
-        const query = searchQuery.toLowerCase();
-        return {
-            metrics: analyticsData.metrics.filter(
-                (item) =>
-                    item.label.toLowerCase().includes(query) ||
-                    item.value.toLowerCase().includes(query),
-            ),
-            reports: analyticsData.reports.filter(
-                (item) =>
-                    item.title.toLowerCase().includes(query) ||
-                    item.value.toLowerCase().includes(query),
-            ),
-            orders: analyticsData.orders.filter(
-                (item) =>
-                    item.label.toLowerCase().includes(query) ||
-                    item.value.toLowerCase().includes(query),
-            ),
-            financial: analyticsData.financial.filter(
-                (item) =>
-                    item.label.toLowerCase().includes(query) ||
-                    item.value.toLowerCase().includes(query),
-            ),
-            inventory: analyticsData.inventory.filter(
-                (item) =>
-                    item.label.toLowerCase().includes(query) ||
-                    item.value.toLowerCase().includes(query),
-            ),
-            employees: analyticsData.employees.filter(
-                (item) =>
-                    item.name.toLowerCase().includes(query) ||
-                    item.amount.toLowerCase().includes(query),
-            ),
+    // fetch once when screen loads
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const res = await getAnalyticsDataFunc();
+                setData(res);
+            } catch (err) {
+                console.error("Failed to load analytics data:", err);
+            } finally {
+                setIsLoading(false);
+            }
         };
-    }, [searchQuery]);
+
+        fetchData();
+    }, []);
+
+    if (isLoading || !analyticsData) {
+        return (
+            <View
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
+                <View style={styles.header}>
+                    <View style={styles.headerTop}>
+                        <Text style={styles.headerTitle}>Аналитика</Text>
+                    </View>
+                </View>
+                <Loading />;
+            </View>
+        );
+    }
 
     const renderValueBadge = (value, type) => (
         <ValueBadge value={value} type={type} />
     );
 
     if (isLoading) {
-        return <Loading />;
+        return (
+            <View
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
+                <View style={styles.header}>
+                    <View style={styles.headerTop}>
+                        <Text style={styles.headerTitle}>Аналитика</Text>
+                    </View>
+                </View>
+                <Loading />;
+            </View>
+        );
     }
 
     return (
@@ -248,20 +133,24 @@ export default function AnalyticsScreen() {
                         router.push("/reports");
                     }}
                 >
-                    {filteredData.metrics.length > 0 && (
+                    {analyticsData?.metrics?.length > 0 && (
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
                                 Общие показатели
                             </Text>
                             <View style={cardStyles.card}>
-                                {filteredData.metrics.map((metric, index) => (
-                                    <React.Fragment key={metric.id}>
-                                        {index > 0 && (
-                                            <View style={cardStyles.divider} />
-                                        )}
-                                        <MetricCard {...metric} />
-                                    </React.Fragment>
-                                ))}
+                                {analyticsData?.metrics?.map(
+                                    (metric, index) => (
+                                        <React.Fragment key={metric.id}>
+                                            {index > 0 && (
+                                                <View
+                                                    style={cardStyles.divider}
+                                                />
+                                            )}
+                                            <MetricCard {...metric} />
+                                        </React.Fragment>
+                                    ),
+                                )}
                             </View>
                         </View>
                     )}
@@ -273,7 +162,7 @@ export default function AnalyticsScreen() {
                     }}
                 >
                     {/* Profit & Loss Report */}
-                    {filteredData.reports.length > 0 && (
+                    {analyticsData?.reports?.length > 0 && (
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
                                 Отчет о прибылях и убытках
@@ -283,7 +172,7 @@ export default function AnalyticsScreen() {
                                     Сегодня
                                 </Text>
                                 <View style={cardStyles.reportsContainer}>
-                                    {filteredData.reports.map((report) => (
+                                    {analyticsData?.reports?.map((report) => (
                                         <ReportCard
                                             key={report.id}
                                             {...report}
@@ -305,13 +194,13 @@ export default function AnalyticsScreen() {
                     }}
                 >
                     {/* Orders Report */}
-                    {filteredData.orders.length > 0 && (
+                    {analyticsData?.orders?.length > 0 && (
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
                                 Отчеты по заказам
                             </Text>
                             <View style={cardStyles.card}>
-                                {filteredData.orders.map((item, index) => (
+                                {analyticsData?.orders?.map((item, index) => (
                                     <React.Fragment key={item.id}>
                                         {index > 0 && (
                                             <View style={cardStyles.divider} />
@@ -339,30 +228,34 @@ export default function AnalyticsScreen() {
                     }}
                 >
                     {/* Financial Reports */}
-                    {filteredData.financial.length > 0 && (
+                    {analyticsData?.financial?.length > 0 && (
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
                                 Денежные отчеты
                             </Text>
                             <View style={cardStyles.card}>
-                                {filteredData.financial.map((item, index) => (
-                                    <React.Fragment key={item.id}>
-                                        {index > 0 && (
-                                            <View style={cardStyles.divider} />
-                                        )}
-                                        <ListItem
-                                            label={item.label}
-                                            value={
-                                                item.type
-                                                    ? renderValueBadge(
-                                                          item.value,
-                                                          item.type,
-                                                      )
-                                                    : item.value
-                                            }
-                                        />
-                                    </React.Fragment>
-                                ))}
+                                {analyticsData?.financial?.map(
+                                    (item, index) => (
+                                        <React.Fragment key={item.id}>
+                                            {index > 0 && (
+                                                <View
+                                                    style={cardStyles.divider}
+                                                />
+                                            )}
+                                            <ListItem
+                                                label={item.label}
+                                                value={
+                                                    item.type
+                                                        ? renderValueBadge(
+                                                              item.value,
+                                                              item.type,
+                                                          )
+                                                        : item.value
+                                                }
+                                            />
+                                        </React.Fragment>
+                                    ),
+                                )}
                             </View>
                         </View>
                     )}
@@ -373,62 +266,70 @@ export default function AnalyticsScreen() {
                     }}
                 >
                     {/* Inventory Reports */}
-                    {filteredData.inventory.length > 0 && (
+                    {analyticsData?.inventory?.length > 0 && (
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
                                 Складские отчеты
                             </Text>
                             <View style={cardStyles.card}>
-                                {filteredData.inventory.map((item, index) => (
-                                    <React.Fragment key={item.id}>
-                                        {index > 0 && (
-                                            <View style={cardStyles.divider} />
-                                        )}
-                                        <ListItem
-                                            label={item.label}
-                                            value={
-                                                item.type
-                                                    ? renderValueBadge(
-                                                          item.value,
-                                                          item.type,
-                                                      )
-                                                    : item.value
-                                            }
-                                        />
-                                    </React.Fragment>
-                                ))}
+                                {analyticsData?.inventory?.map(
+                                    (item, index) => (
+                                        <React.Fragment key={item.id}>
+                                            {index > 0 && (
+                                                <View
+                                                    style={cardStyles.divider}
+                                                />
+                                            )}
+                                            <ListItem
+                                                label={item.label}
+                                                value={
+                                                    item.type
+                                                        ? renderValueBadge(
+                                                              item.value,
+                                                              item.type,
+                                                          )
+                                                        : item.value
+                                                }
+                                            />
+                                        </React.Fragment>
+                                    ),
+                                )}
                             </View>
                         </View>
                     )}
                 </TouchableOpacity>
 
                 {/* Employee Reports */}
-                {filteredData.employees.length > 0 && (
+                {analyticsData?.employees?.length > 0 && (
                     <View style={cardStyles.section}>
                         <Text style={cardStyles.sectionTitle}>
                             Отчеты по персоналу
                         </Text>
                         <View style={cardStyles.card}>
-                            {filteredData.employees.map((employee, index) => (
-                                <React.Fragment key={employee.id}>
-                                    {index > 0 && (
-                                        <View style={cardStyles.divider} />
-                                    )}
-                                    <EmployeeCard
-                                        name={employee.name}
-                                        amount={employee.amount}
-                                        avatar={employee.avatar}
-                                        role={""}
-                                        totalAmount={""}
-                                        shiftTime={""}
-                                        variant="simple"
-                                        showStats={false}
-                                        onPress={() => {
-                                            router.push("/reports/employees");
-                                        }}
-                                    />
-                                </React.Fragment>
-                            ))}
+                            {analyticsData?.employees?.map(
+                                (employee, index) => (
+                                    <React.Fragment key={employee.id}>
+                                        {index > 0 && (
+                                            <View style={cardStyles.divider} />
+                                        )}
+                                        <EmployeeCard
+                                            name={employee.name}
+                                            amount={employee.amount}
+                                            avatar={employee.avatar}
+                                            role={""}
+                                            totalAmount={""}
+                                            shiftTime={""}
+                                            variant="simple"
+                                            showStats={false}
+                                            onPress={() => {
+                                                router.push(
+                                                    "/reports/employees",
+                                                );
+                                            }}
+                                        />
+                                    </React.Fragment>
+                                ),
+                            )}
                             <TouchableOpacity style={styles.button}>
                                 <Text style={styles.buttonText}>
                                     Все сотрудники

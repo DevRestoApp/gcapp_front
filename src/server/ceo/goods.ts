@@ -1,6 +1,6 @@
 import api from "../api";
 
-export async function getMoneyflowData(filters: {
+export async function getGoodsData(filters: {
     date?: string;
     period?: string;
     organization_id?: string;
@@ -10,8 +10,7 @@ export async function getMoneyflowData(filters: {
         period: filters.period,
         organization_id: filters.organization_id,
     };
-
-    const res = await api.get("/reports/moneyflow", { params });
+    const res = await api.get("/goods", { params });
 
     return res.data;
 }

@@ -1,3 +1,4 @@
+// components/ReportHeader.tsx
 import React, { useState } from "react";
 import {
     View,
@@ -13,11 +14,11 @@ import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 
 interface ReportHeaderProps {
     title: string;
-    date?: string;
+    date?: string; // Format: "DD.MM.YYYY"
     period?: string;
     location?: string;
     onBack?: () => void;
-    onDateChange?: (startDate: Date, endDate: Date) => void;
+    onDateChange?: (date: string) => void; // Receives formatted string
     onPeriodChange?: (period: string) => void;
     onLocationChange?: (location: string) => void;
 }
@@ -27,9 +28,9 @@ const LOCATIONS = ["Все ресторан", "Ресторан 1", "Ресто�
 
 export function ReportHeader({
     title,
-    date = "01.09.2025",
-    period = "День",
-    location = "Все ресторан",
+    date = "30.10.2025",
+    period = "",
+    location = "",
     onBack,
     onDateChange,
     onPeriodChange,
@@ -38,7 +39,6 @@ export function ReportHeader({
     const [showCalendar, setShowCalendar] = useState(false);
     const [showPeriodModal, setShowPeriodModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
-    const [dateRangeText, setDateRangeText] = useState(date);
 
     const handlePeriodSelect = (selectedPeriod: string) => {
         onPeriodChange?.(selectedPeriod);
@@ -50,20 +50,8 @@ export function ReportHeader({
         setShowLocationModal(false);
     };
 
-    const handleDateRangeSelect = (startDate: Date, endDate: Date) => {
-        const formatDate = (d: Date) => {
-            const day = d.getDate().toString().padStart(2, "0");
-            const month = (d.getMonth() + 1).toString().padStart(2, "0");
-            const year = d.getFullYear();
-            return `${day}.${month}.${year}`;
-        };
-
-        const start = formatDate(startDate);
-        const end = formatDate(endDate);
-        const rangeText = start === end ? start : `${start} - ${end}`;
-
-        setDateRangeText(rangeText);
-        onDateChange?.(startDate, endDate);
+    const handleDateSelect = (selectedDate: string) => {
+        onDateChange?.(selectedDate);
     };
 
     const renderModal = (
@@ -147,7 +135,7 @@ export function ReportHeader({
                         size={20}
                         color="#FFFFFF"
                     />
-                    <Text style={styles.filterText}>{dateRangeText}</Text>
+                    <Text style={styles.filterText}>{date}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -175,7 +163,8 @@ export function ReportHeader({
             <ReportCalendar
                 visible={showCalendar}
                 onClose={() => setShowCalendar(false)}
-                onDateRangeSelect={handleDateRangeSelect}
+                onDateSelect={handleDateSelect}
+                initialDate={date}
             />
 
             {renderModal(

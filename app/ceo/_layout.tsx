@@ -475,6 +475,7 @@ export default function CeoLayout() {
                                 color={color}
                             />
                         ),
+                        href: "reports",
                     }}
                 />
                 <Tabs.Screen

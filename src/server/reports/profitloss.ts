@@ -1,6 +1,6 @@
 import api from "../api";
 
-export async function getMoneyflowData(filters: {
+export async function getProfitLossData(filters: {
     date?: string;
     period?: string;
     organization_id?: string;
@@ -11,7 +11,7 @@ export async function getMoneyflowData(filters: {
         organization_id: filters.organization_id,
     };
 
-    const res = await api.get("/reports/moneyflow", { params });
+    const res = await api.get("/reports/profit-loss", { params });
 
     return res.data;
 }

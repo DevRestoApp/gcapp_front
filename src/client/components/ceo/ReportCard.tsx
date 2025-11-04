@@ -18,21 +18,21 @@ export default function ReportCard({ title, value, date, type }) {
                             style={[
                                 styles.reportIcon,
                                 isExpense
-                                    ? backgroundsStyles.positiveBg
-                                    : backgroundsStyles.negativeBg,
+                                    ? backgroundsStyles.negativeBg
+                                    : backgroundsStyles.positiveBg,
                             ]}
                         >
                             {isExpense ? (
                                 <AntDesign
-                                    name="arrow-up"
-                                    size={20}
-                                    color="#34C759"
-                                />
-                            ) : (
-                                <AntDesign
                                     name="arrow-down"
                                     size={20}
                                     color="#FF3B30"
+                                />
+                            ) : (
+                                <AntDesign
+                                    name="arrow-up"
+                                    size={20}
+                                    color="#34C759"
                                 />
                             )}
                         </View>

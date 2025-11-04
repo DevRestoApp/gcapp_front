@@ -17,52 +17,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 import ValueBadge from "@/src/client/components/ValueBadge";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import MetricCard from "@/src/client/components/ceo/MetricCard";
-
-// Mock API functions - replace these with your actual API calls
-const fetchOrders = async (filters: ReportFilters) => {
-    // TODO: Replace with actual API call
-    // const response = await api.get('/reports/metrics', { params: filters });
-    // return response.data;
-
-    return {
-        checks: {
-            id: 12332,
-            label: "Средний чек",
-            value: "15 800 тг",
-        },
-        returns: {
-            id: 31341,
-            label: "Сумма возвратов",
-            value: "-15 800 тг",
-            type: "negative",
-        },
-    };
-};
-const fetchAverages = async (filters: ReportFilters) => {
-    // TODO: Replace with actual API call
-    // const response = await api.get('/reports/metrics', { params: filters });
-    // return response.data;
-
-    return [
-        {
-            id: 1,
-            label: "Среднее количество",
-            value: "4 блюда",
-        },
-        {
-            id: 2,
-            label: "Популярные блюда",
-            value: "Самса с какашками",
-            change: { value: "+23%", trend: "up" },
-        },
-        {
-            id: 3,
-            label: "Непопулярные блюда",
-            value: "Казы с мясом оцелота",
-            change: { value: "-15%", trend: "down" },
-        },
-    ];
-};
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 interface ReportFilters {
     date: string;
@@ -72,61 +27,20 @@ interface ReportFilters {
 
 export default function OrderReports() {
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<ReportFilters>({
-        date: "01.09.2025",
-        period: "День",
-        location: "Все ресторан",
-    });
 
-    const [checks, setChecks] = useState({});
-    const [returns, setReturns] = useState({});
-    const [averages, setAverages] = useState([]);
+    const { orders, filters, setDate, setPeriod, setLocation, loading, error } =
+        useReports();
 
-    useEffect(() => {
-        loadReportData();
-    }, [filters]); // Reload data when filters change
-
-    const loadReportData = async () => {
-        try {
-            setLoading(true);
-            // TODO описать входящие переменные после того как буду получать рил данные
-
-            // Fetch all data in parallel with filters
-            const [orders, averages] = await Promise.all([
-                fetchOrders(filters),
-                fetchAverages(filters),
-            ]);
-
-            setChecks(orders.checks);
-            setReturns(orders.returns);
-            setAverages(averages);
-        } catch (error) {
-            console.error("Error loading report data:", error);
-            // TODO: Show error message to user
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDateChange = (date: string) => {
-        setFilters((prev) => ({ ...prev, date }));
-        // TODO: Implement date picker modal
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setFilters((prev) => ({ ...prev, period }));
-    };
-
-    const handleLocationChange = (location: string) => {
-        setFilters((prev) => ({ ...prev, location }));
-    };
+    /*setChecks(orders.data.checks);
+    setReturns(orders.data.returns);
+    setAverages(orders.data.averages);*/
 
     const renderValueBadge = (value, type) => (
         <ValueBadge value={value} type={type} />
     );
 
     const renderAverages = () => {
+        const { averages } = orders;
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Общие показатели</Text>
@@ -143,6 +57,7 @@ export default function OrderReports() {
     };
 
     const renderGeneralCard = () => {
+        const { checks, returns } = orders;
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Сегодня</Text>
@@ -225,11 +140,11 @@ export default function OrderReports() {
             >
                 <ReportHeader
                     title="Общие показатели"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/reports")}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -244,11 +159,11 @@ export default function OrderReports() {
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
             <ReportHeader
                 title="Отчет по заказам"
-                date={getFormattedDateRange()}
+                date={filters.date}
                 period={filters.period}
-                location={filters.location}
-                onBack={() => router.push("/ceo/analytics")}
-                onDateChange={setDateRange}
+                location={filters.organization_id}
+                onBack={() => router.push("/reports")}
+                onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
             />

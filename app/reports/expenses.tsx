@@ -22,32 +22,44 @@ export default function ExpensesReports() {
 
     // Get everything from context
     const {
-        expensesGeneral,
-        expensesList,
-        expensesTable,
+        profitloss,
         filters,
-        setDateRange,
+        setDate,
         setPeriod,
         setLocation,
-        getFormattedDateRange,
         loading,
         error,
     } = useReports();
 
-    const handleDateChange = (date: string) => {
-        setDateRange({ ...filters, date });
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setPeriod({ ...filters, period });
-    };
-
-    const handleLocationChange = (location: string) => {
-        setLocation({ ...filters, location });
-    };
-
     // get data from context provider
     const renderGeneralCard = () => {
+        const { total_expenses, total_revenue, gross_profit } = profitloss;
+
+        // { title, value, date, type }
+        const expensesGeneral = [
+            {
+                id: 1,
+                title: "Итого расходы",
+                value: total_expenses,
+                date: filters.date.slice(0, 5) ?? "",
+                type: "expense",
+            },
+            {
+                id: 2,
+                title: "Итого доходы",
+                value: total_revenue,
+                date: filters.date.slice(0, 5) ?? "",
+                type: "income",
+            },
+            {
+                id: 3,
+                title: "Итого чистая прибыль",
+                value: gross_profit,
+                date: filters.date.slice(0, 5) ?? "",
+                type: "income",
+            },
+        ];
+
         if (!expensesGeneral || expensesGeneral.length === 0) {
             return null;
         }
@@ -66,7 +78,16 @@ export default function ExpensesReports() {
         );
     };
 
-    const renderItemList = () => {
+    const renderItemListExpenses = (items) => {
+        // { title, value, date, type }
+        const expensesList = items.map((item) => {
+            return {
+                title: item.transaction_name,
+                value: item.amount,
+                date: filters.date.slice(0, 5) ?? "",
+                type: "expense",
+            };
+        });
         if (!expensesList || expensesList.length === 0) {
             return null;
         }
@@ -84,8 +105,55 @@ export default function ExpensesReports() {
             </View>
         );
     };
+    const renderItemListRevenues = (items) => {
+        const incomeList = items.map((item) => {
+            return {
+                title: item.category,
+                value: item.amount,
+                date: filters.date.slice(0, 5) ?? "",
+                type: "income",
+            };
+        });
+        if (!incomeList || incomeList.length === 0) {
+            return null;
+        }
 
-    const renderTable = () => {
+        return (
+            <View style={styles.card}>
+                <Text style={cardStyles.subsectionTitle}>Детали доходов</Text>
+                <View style={cardStyles.reportsContainer}>
+                    {incomeList.map((item) => (
+                        <React.Fragment key={item.id}>
+                            <ReportCard {...item} />
+                        </React.Fragment>
+                    ))}
+                </View>
+            </View>
+        );
+    };
+
+    const renderTable = (expenses, incomes) => {
+        const incomeList = incomes.map((item) => {
+            return {
+                name: item.category,
+                revenue: Number(item.amount.toFixed(2)),
+            };
+        });
+        const expensesList = expenses.map((item) => {
+            return {
+                name: item.transaction_name,
+                revenue: Number(item.amount.toFixed(2)),
+            };
+        });
+
+        const expensesTable = {
+            columns: [
+                { key: "name", label: "", flex: 2 },
+                { key: "revenue", label: "ГК Шарль", flex: 1 },
+            ],
+            data: [...incomeList, ...expensesList],
+        };
+
         if (!expensesTable) {
             return null;
         }
@@ -107,11 +175,11 @@ export default function ExpensesReports() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/reports")}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -122,17 +190,21 @@ export default function ExpensesReports() {
         );
     }
 
+    const { expenses_by_type, revenue_by_category } = profitloss;
+
     // Error state
+
+    // TODO добавить везде если ошипка
     if (error) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Расходы и прибыль"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
-                    onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/reports")}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -148,11 +220,11 @@ export default function ExpensesReports() {
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Расходы и прибыль"
-                date={getFormattedDateRange()}
+                date={filters.date}
                 period={filters.period}
-                location={filters.location}
-                onBack={() => router.push("/ceo/analytics")}
-                onDateChange={setDateRange}
+                location={filters.organization_id}
+                onBack={() => router.push("/reports")}
+                onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
             />
@@ -163,8 +235,9 @@ export default function ExpensesReports() {
                 showsVerticalScrollIndicator={false}
             >
                 {renderGeneralCard()}
-                {renderItemList()}
-                {renderTable()}
+                {renderItemListExpenses(expenses_by_type)}
+                {renderItemListRevenues(revenue_by_category)}
+                {renderTable(expenses_by_type, revenue_by_category)}
             </ScrollView>
         </View>
     );

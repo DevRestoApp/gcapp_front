@@ -27,7 +27,6 @@ export default function Login() {
     }, [token]);
 
     const handleLogin = async () => {
-        router.push("/ceo");
         if (!email || !password) {
             Alert.alert("Ошибка", "Введите email и пароль");
             return;
@@ -35,11 +34,9 @@ export default function Login() {
 
         try {
             setLoading(true);
+            const response = await loginRequest({ login: email, password });
 
-            router.replace("/");
-            /*const response = await loginRequest({ login: email, password });*/
-
-            const response = {
+            /*const response = {
                 success: true,
                 user_id: 1,
                 role: "waiter",
@@ -50,7 +47,7 @@ export default function Login() {
                 scope: "read write",
                 jti: "1234567890",
                 user: {},
-            };
+            };*/
             if (response.success) {
                 const userObj = {
                     id: response.user_id,
