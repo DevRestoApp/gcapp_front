@@ -213,9 +213,11 @@ const fetchProfitLossData = async (
 const fetchGeneralOrdersData = async (
     filters: ReportFilters,
 ): Promise<OrdersInterface> => {
-    /*const response = await getGeneralOrders(filters);*/
+    /*const response = await getGeneralOrders(filters);
 
-    return {};
+    return response;*/
+
+    return [];
 };
 
 const fetchEmployeesData = async (

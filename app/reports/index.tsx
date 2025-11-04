@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
     View,
     Text,
@@ -18,45 +18,29 @@ import ValueBadge from "@/src/client/components/ValueBadge";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { useRouter } from "expo-router";
-import { getAnalyticsData } from "@/src/server/ceo/analytics";
 import { useReports } from "@/src/contexts/ReportDataProvider";
 import { ReportHeader } from "@/src/client/components/reports/header";
 
 export default function AnalyticsScreen() {
-    const { filters, setDate, setPeriod, setLocation } = useReports();
-    const [isLoading, setIsLoading] = useState(true);
-    const [analyticsData, setAnalyticsData] = useState<any>(null);
-
     const router = useRouter();
 
-    // Fetch analytics data when filters change
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setIsLoading(true);
-                console.log("Fetching analytics with filters:", filters);
-
-                // Fetch analytics data with current filters
-                const data = await getAnalyticsData(filters);
-
-                console.log("Analytics data received:", data);
-                setAnalyticsData(data);
-            } catch (err) {
-                console.error("Failed to load analytics data:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [filters]); // Re-fetch when filters change
+    // Get analytics data directly from context
+    const {
+        analytics,
+        filters,
+        setDate,
+        setPeriod,
+        setLocation,
+        loading,
+        error,
+    } = useReports();
 
     const renderValueBadge = (value: string, type: string) => (
         <ValueBadge value={value} type={type} />
     );
 
     // Loading state
-    if (isLoading || !analyticsData) {
+    if (loading) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
@@ -69,6 +53,26 @@ export default function AnalyticsScreen() {
                     onLocationChange={setLocation}
                 />
                 <Loading />
+            </View>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Аналитика"
+                    date={filters.date}
+                    period={filters.period}
+                    location={filters.organization_id}
+                    onDateChange={setDate}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
             </View>
         );
     }
@@ -92,7 +96,7 @@ export default function AnalyticsScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* General Metrics */}
-                {analyticsData?.metrics?.length > 0 && (
+                {analytics?.metrics && analytics.metrics.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/analytics")}
                     >
@@ -101,7 +105,7 @@ export default function AnalyticsScreen() {
                                 Общие показатели
                             </Text>
                             <View style={cardStyles.card}>
-                                {analyticsData.metrics.map(
+                                {analytics.metrics.map(
                                     (metric: any, index: number) => (
                                         <React.Fragment key={metric.id}>
                                             {index > 0 && (
@@ -119,7 +123,7 @@ export default function AnalyticsScreen() {
                 )}
 
                 {/* Profit & Loss Report */}
-                {analyticsData?.reports?.length > 0 && (
+                {analytics?.reports && analytics.reports.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/expenses")}
                     >
@@ -132,16 +136,19 @@ export default function AnalyticsScreen() {
                                     Сегодня
                                 </Text>
                                 <View style={cardStyles.reportsContainer}>
-                                    {analyticsData.reports.map(
-                                        (report: any) => (
-                                            <ReportCard
-                                                key={report.id}
-                                                {...report}
-                                            />
-                                        ),
-                                    )}
+                                    {analytics.reports.map((report: any) => (
+                                        <ReportCard
+                                            key={report.id}
+                                            {...report}
+                                        />
+                                    ))}
                                 </View>
-                                <TouchableOpacity style={styles.button}>
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        router.push("/reports/expenses")
+                                    }
+                                    style={styles.button}
+                                >
                                     <Text style={styles.buttonText}>
                                         Посмотреть все
                                     </Text>
@@ -152,7 +159,7 @@ export default function AnalyticsScreen() {
                 )}
 
                 {/* Orders Report */}
-                {analyticsData?.orders?.length > 0 && (
+                {analytics?.orders && analytics.orders.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/orders")}
                     >
@@ -161,7 +168,7 @@ export default function AnalyticsScreen() {
                                 Отчеты по заказам
                             </Text>
                             <View style={cardStyles.card}>
-                                {analyticsData.orders.map(
+                                {analytics.orders.map(
                                     (item: any, index: number) => (
                                         <React.Fragment key={item.id}>
                                             {index > 0 && (
@@ -189,7 +196,7 @@ export default function AnalyticsScreen() {
                 )}
 
                 {/* Financial Reports */}
-                {analyticsData?.financial?.length > 0 && (
+                {analytics?.financial && analytics.financial.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/moneyflow")}
                     >
@@ -198,7 +205,7 @@ export default function AnalyticsScreen() {
                                 Денежные отчеты
                             </Text>
                             <View style={cardStyles.card}>
-                                {analyticsData.financial.map(
+                                {analytics.financial.map(
                                     (item: any, index: number) => (
                                         <React.Fragment key={item.id}>
                                             {index > 0 && (
@@ -226,7 +233,7 @@ export default function AnalyticsScreen() {
                 )}
 
                 {/* Inventory Reports */}
-                {analyticsData?.inventory?.length > 0 && (
+                {analytics?.inventory && analytics.inventory.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/storage")}
                     >
@@ -235,7 +242,7 @@ export default function AnalyticsScreen() {
                                 Складские отчеты
                             </Text>
                             <View style={cardStyles.card}>
-                                {analyticsData.inventory.map(
+                                {analytics.inventory.map(
                                     (item: any, index: number) => (
                                         <React.Fragment key={item.id}>
                                             {index > 0 && (
@@ -263,13 +270,13 @@ export default function AnalyticsScreen() {
                 )}
 
                 {/* Employee Reports */}
-                {analyticsData?.employees?.length > 0 && (
+                {analytics?.employees && analytics.employees.length > 0 && (
                     <View style={cardStyles.section}>
                         <Text style={cardStyles.sectionTitle}>
                             Отчеты по персоналу
                         </Text>
                         <View style={cardStyles.card}>
-                            {analyticsData.employees.map(
+                            {analytics.employees.map(
                                 (employee: any, index: number) => (
                                     <React.Fragment key={employee.id}>
                                         {index > 0 && (
@@ -320,6 +327,17 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingHorizontal: 16,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: "#FF6B6B",
+        textAlign: "center",
     },
     button: {
         height: 44,

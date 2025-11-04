@@ -13,6 +13,8 @@ import { useRouter } from "expo-router";
 
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+
 // ChevronLeft Icon Component
 function ChevronLeftIcon() {
     return (
@@ -31,22 +33,14 @@ function ChevronLeftIcon() {
 export default function OrderHistory() {
     const router = useRouter();
 
-    const orders = [
-        { id: 1, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 2, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 3, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 4, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 5, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 6, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 7, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-    ];
+    const orders = [];
 
     const handleGoBack = () => {
         router.push("/reports/orders");
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+        <SafeAreaView style={[{ flex: 1 }, backgroundsStyles.generalBg]}>
             <StatusBar barStyle="light-content" />
 
             {/* Header */}
@@ -57,7 +51,8 @@ export default function OrderHistory() {
                     paddingHorizontal: 16,
                     justifyContent: "space-between",
                     alignItems: "center",
-                    backgroundColor: "#0A0A0A",
+                    backgroundColor:
+                        backgroundsStyles.generalBg.backgroundColor,
                 }}
             >
                 <TouchableOpacity
