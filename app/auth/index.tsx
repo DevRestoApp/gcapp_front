@@ -22,7 +22,7 @@ export default function Login() {
 
     useEffect(() => {
         if (token) {
-            router.replace("/"); // если токен появился → сразу на главную
+            router.replace("/ceo"); // если токен появился → сразу на главную
         }
     }, [token]);
 
@@ -55,13 +55,14 @@ export default function Login() {
                     role: response.role,
                 };
                 await login(userObj, response.access_token);
+                router.push("/ceo");
             } else {
                 Alert.alert("Ошибка", "Неверные данные");
             }
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
             console.error(err);
-            router.replace("/");
+            router.replace("/ceo");
         } finally {
             setLoading(false);
         }

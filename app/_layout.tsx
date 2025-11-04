@@ -17,7 +17,7 @@ function AuthWrapper() {
         if (!token && !inAuthGroup) {
             router.replace("/auth");
         } else if (token && inAuthGroup) {
-            router.replace("/");
+            router.replace("/ceo");
         }
     }, [token, segments]);
 
