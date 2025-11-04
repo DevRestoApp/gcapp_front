@@ -7,7 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
@@ -41,6 +41,7 @@ export default function OrderReports() {
 
     const renderAverages = () => {
         const { averages } = orders;
+        console.log("orders", orders);
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Общие показатели</Text>
@@ -86,7 +87,7 @@ export default function OrderReports() {
                                 }
                                 icon={
                                     <AntDesign
-                                        name="alibaba"
+                                        name="money-collect"
                                         size={20}
                                         color="white"
                                     />
@@ -118,8 +119,8 @@ export default function OrderReports() {
                                         : returns.value
                                 }
                                 icon={
-                                    <AntDesign
-                                        name="alibaba"
+                                    <Ionicons
+                                        name="receipt"
                                         size={20}
                                         color="white"
                                     />
