@@ -23,12 +23,17 @@ interface ReportHeaderProps {
     onLocationChange?: (location: string) => void;
 }
 
-const PERIODS = ["День", "Неделя", "Месяц", "Год"];
-const LOCATIONS = ["Все ресторан", "Ресторан 1", "Ресторан 2", "Ресторан 3"];
+// TODO переделать место {label: "день", value: "day"}
+const PERIODS = [
+    { label: "День", value: "day" },
+    { label: "Неделя", value: "week" },
+    { label: "Месяц", value: "month" },
+];
+const LOCATIONS = [];
 
 export function ReportHeader({
     title,
-    date = "30.10.2025",
+    date = "29.10.2025",
     period = "",
     location = "",
     onBack,
@@ -54,10 +59,15 @@ export function ReportHeader({
         onDateChange?.(selectedDate);
     };
 
+    type itemsProps = {
+        label: string;
+        value: string;
+    };
+
     const renderModal = (
         visible: boolean,
         onClose: () => void,
-        items: string[],
+        items: itemsProps[],
         selectedItem: string,
         onSelect: (item: string) => void,
     ) => (
@@ -75,26 +85,26 @@ export function ReportHeader({
                 <View style={styles.modalContent}>
                     <FlatList
                         data={items}
-                        keyExtractor={(item) => item}
+                        keyExtractor={(item) => item.value}
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
                                     styles.modalItem,
-                                    item === selectedItem &&
+                                    item.value === selectedItem &&
                                         styles.modalItemSelected,
                                 ]}
-                                onPress={() => onSelect(item)}
+                                onPress={() => onSelect(item.value)}
                             >
                                 <Text
                                     style={[
                                         styles.modalItemText,
-                                        item === selectedItem &&
+                                        item.value === selectedItem &&
                                             styles.modalItemTextSelected,
                                     ]}
                                 >
-                                    {item}
+                                    {item.label}
                                 </Text>
-                                {item === selectedItem && (
+                                {item.value === selectedItem && (
                                     <Ionicons
                                         name="checkmark"
                                         size={20}
