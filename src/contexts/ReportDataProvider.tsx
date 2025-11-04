@@ -7,6 +7,12 @@ import React, {
     ReactNode,
 } from "react";
 import { getMoneyflowData } from "@/src/server/reports/moneyflow";
+import { getOrdersData } from "@/src/server/reports/orders";
+import { getProfitLossData } from "@/src/server/reports/profitloss";
+import { getAnalyticsData } from "@/src/server/ceo/analytics";
+import { getGoodsData } from "@/src/server/ceo/goods";
+import { getGeneralOrders } from "@/src/server/general/generalOrders";
+import { getSalesDynamicsData } from "@/src/server/reports/salesDynamics";
 
 // Define your report data types
 interface MetricData {
@@ -16,10 +22,39 @@ interface MetricData {
     change?: { value: string; trend: "up" | "down" };
 }
 
-interface SalesData {
-    date: string;
-    value: number;
-    label: string;
+type OrdersInterfaceItem = {
+    id: string;
+    tableNumber: string;
+    amount: string;
+    time: string;
+};
+
+interface OrdersInterface {
+    checks: OrdersInterfaceItem[];
+    returns: OrdersInterfaceItem[];
+    averages: OrdersInterfaceItem[];
+}
+
+type expensesByTypeItem = {
+    amount: number;
+    transaction_name: string;
+    transaction_type: string;
+};
+type revenueByCategoryItem = {
+    amount: number;
+    category: string;
+};
+
+interface ProfitlossInterface {
+    bank_commission: number;
+    expenses_by_type: expensesByTypeItem[];
+    gross_profit: number;
+    message: string;
+    profit_margin: number;
+    revenue_by_category: revenueByCategoryItem[];
+    success: boolean;
+    total_expenses: number;
+    total_revenue: number;
 }
 
 interface PaymentData {
@@ -35,18 +70,30 @@ interface CategoryData {
 interface EmployeesData {
     id: string;
     name: string;
-    role: string;
-    avatarUrl: string;
+    role?: string;
+    avatar: string;
     amount: string;
-    shiftTime: string;
-    isActive: boolean;
-    data: { label: string; value: string }[];
+    shiftTime?: string;
+    isActive?: boolean;
+    data?: { label: string; value: string }[];
 }
+type byPayType = {
+    id: number;
+    amount: number;
+    payment_type: string;
+};
+type byCategoryType = {
+    id: number;
+    amount: number;
+    category: string;
+};
 type MoneyflowInterfaceItem = {
     id: string;
     tableNumber: string;
     amount: string;
     time: string;
+    income_by_category?: byCategoryType[];
+    income_by_pay_type?: byPayType[];
 };
 
 interface MoneyflowInterface {
@@ -56,30 +103,50 @@ interface MoneyflowInterface {
     incomes: MoneyflowInterfaceItem[];
 }
 
+// for fast coding
+type generalType = {
+    id: number;
+    label: any;
+    type?: any;
+    value: any;
+};
+
+interface AnalyticsInterface {
+    employees: EmployeesData[];
+    financial: generalType[];
+    metrics: generalType[];
+    inventory: generalType[];
+    orders: generalType[];
+    reports: generalType[];
+}
+
 interface ReportFilters {
-    startDate: Date;
-    endDate: Date;
-    period: string;
-    location: string;
+    date: string; // Format: "DD.MM.YYYY"
+    period?: string;
+    organization_id?: string;
 }
 
 interface ReportsContextType {
     // Data for all report screens
     metrics: MetricData[];
-    sales: SalesData[];
+    orders: OrdersInterface | null;
     payments: PaymentData | null;
     categories: CategoryData | null;
     employees: EmployeesData[];
     moneyflow: MoneyflowInterface | null;
+    profitloss: ProfitlossInterface | null;
+    analytics: AnalyticsInterface | null;
+
+    // TODO прописать пропсы
+    generalOrders: any;
+    salesDynamics: any;
+    goods: any;
 
     // Filters - shared across ALL report screens
     filters: ReportFilters;
-    setDateRange: (startDate: Date, endDate: Date) => void;
+    setDate: (date: string) => void; // Takes formatted string "DD.MM.YYYY"
     setPeriod: (period: string) => void;
-    setLocation: (location: string) => void;
-
-    // Helper to format date range for display in ReportHeader
-    getFormattedDateRange: () => string;
+    setLocation: (organization_id: string) => void;
 
     // State
     loading: boolean;
@@ -128,59 +195,27 @@ const fetchMainMetrics = async (
     ];
 };
 
-const fetchSalesData = async (filters: ReportFilters): Promise<SalesData[]> => {
-    console.log("Fetching sales with filters:", filters);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return [
-        { date: "Пн", value: 45000, label: "45 000" },
-        { date: "Вт", value: 52000, label: "52 000" },
-        { date: "Ср", value: 48000, label: "48 000" },
-        { date: "Чт", value: 61000, label: "61 000" },
-        { date: "Пт", value: 55000, label: "55 000" },
-        { date: "Сб", value: 67000, label: "67 000" },
-        { date: "Вс", value: 58000, label: "58 000" },
-    ];
-};
-
-const fetchPaymentData = async (
+const fetchOrdersData = async (
     filters: ReportFilters,
-): Promise<PaymentData> => {
-    console.log("Fetching payments with filters:", filters);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    return {
-        chartData: [
-            { name: "Наличные", value: 45, color: "#3C82FD" },
-            { name: "Карта", value: 35, color: "#00C48C" },
-            { name: "Kaspi", value: 20, color: "#FF6B6B" },
-        ],
-        listItems: [
-            { label: "Наличные", sublabel: "45%", value: "1 098 549 тг" },
-            { label: "Карта", sublabel: "35%", value: "854 427 тг" },
-            { label: "Kaspi", sublabel: "20%", value: "488 244 тг" },
-        ],
-    };
+): Promise<OrdersInterface> => {
+    const response = await getOrdersData(filters);
+    return response;
 };
-
-const fetchCategoryData = async (
+const fetchProfitLossData = async (
     filters: ReportFilters,
-): Promise<CategoryData> => {
-    console.log("Fetching categories with filters:", filters);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+): Promise<ProfitlossInterface> => {
+    const response = await getProfitLossData({
+        date: "29.10.2025",
+        period: "week",
+    });
+    return response;
+};
+const fetchGeneralOrdersData = async (
+    filters: ReportFilters,
+): Promise<OrdersInterface> => {
+    /*const response = await getGeneralOrders(filters);*/
 
-    return {
-        chartData: [
-            { name: "Еда", value: 60, color: "#3C82FD" },
-            { name: "Напитки", value: 30, color: "#00C48C" },
-            { name: "Другое", value: 10, color: "#FF6B6B" },
-        ],
-        listItems: [
-            { label: "Еда", sublabel: "60%", value: "1 464 733 тг" },
-            { label: "Напитки", sublabel: "30%", value: "732 366 тг" },
-            { label: "Другое", sublabel: "10%", value: "244 122 тг" },
-        ],
-    };
+    return {};
 };
 
 const fetchEmployeesData = async (
@@ -194,8 +229,7 @@ const fetchEmployeesData = async (
             id: "1",
             name: "Аслан Аманов",
             role: "Оффицант",
-            avatarUrl:
-                "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
+            avatar: "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
             amount: "55",
             shiftTime: "15 768 тг",
             isActive: true,
@@ -248,7 +282,7 @@ const fetchMoneyflowData = async (
         const response = await getMoneyflowData(filters);
         return response;
     } catch (e) {
-        console.log(`Error fetchin monetflow data: ${e}`);
+        console.log(`Error fetching moneyflow data: ${e}`);
         return {
             dishes: [],
             writeoffs: [],
@@ -258,23 +292,72 @@ const fetchMoneyflowData = async (
     }
 };
 
+const fetchAnalyticsData = async (
+    filters: ReportFilters,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getAnalyticsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return [];
+    }
+};
+
+const fetchGoodsData = async (
+    filters: ReportFilters,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getGoodsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return [];
+    }
+};
+const fetchSalesDynamicsData = async (
+    filters: ReportFilters,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getSalesDynamicsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return [];
+    }
+};
+
 export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     // Data state
     const [metrics, setMetrics] = useState<MetricData[]>([]);
-    const [sales, setSales] = useState<SalesData[]>([]);
+    const [orders, setOrders] = useState<OrdersInterface | null>(null);
+    const [profitloss, setProfitloss] = useState<ProfitlossInterface | null>(
+        null,
+    );
     const [payments, setPayments] = useState<PaymentData | null>(null);
     const [categories, setCategories] = useState<CategoryData | null>(null);
     const [employees, setEmployees] = useState<EmployeesData[]>([]);
     const [moneyflow, setMoneyflowData] = useState<MoneyflowInterface | null>(
         null,
     );
+    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>();
+    // TODO написать норм пропсы
+    const [goods, setGoods] = useState<any | null>();
+    const [generalOrders, setGeneralOrders] = useState<any | null>(null);
+    const [salesDynamics, setSalesDynamics] = useState<any | null>(null);
+
+    // Helper function to format today's date as DD.MM.YYYY
+    const getTodayFormatted = () => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, "0");
+        const month = (today.getMonth() + 1).toString().padStart(2, "0");
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+    };
 
     // Filter state - shared across ALL report screens
     const [filters, setFilters] = useState<ReportFilters>({
-        startDate: new Date(),
-        endDate: new Date(),
-        period: "День",
-        location: "Все ресторан",
+        date: getTodayFormatted(),
     });
 
     const [loading, setLoading] = useState(true);
@@ -288,26 +371,35 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
             // Fetch all reports in parallel
             const [
                 metricsData,
-                salesData,
-                paymentsData,
-                categoriesData,
+                ordersData,
                 employeesData,
                 moneyflowData,
+                profitlossData,
+                analyticsData,
+                goodsData,
+                generalOrdersData,
+                salesDynamicsData,
             ] = await Promise.all([
                 fetchMainMetrics(filters),
-                fetchSalesData(filters),
-                fetchPaymentData(filters),
-                fetchCategoryData(filters),
+                fetchOrdersData(filters),
                 fetchEmployeesData(filters),
                 fetchMoneyflowData(filters),
+                fetchProfitLossData(filters),
+                fetchAnalyticsData(filters),
+                fetchGoodsData(filters),
+                fetchGeneralOrdersData(filters),
+                fetchSalesDynamicsData(filters),
             ]);
 
             setMetrics(metricsData);
-            setSales(salesData);
-            setPayments(paymentsData);
-            setCategories(categoriesData);
+            setOrders(ordersData);
             setEmployees(employeesData);
             setMoneyflowData(moneyflowData);
+            setProfitloss(profitlossData);
+            setAnalytics(analyticsData);
+            setGoods(goodsData);
+            setGeneralOrders(generalOrdersData);
+            setSalesDynamics(salesDynamicsData);
         } catch (err) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
@@ -322,30 +414,16 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     }, [filters]);
 
     // Filter update methods
-    const setDateRange = (startDate: Date, endDate: Date) => {
-        setFilters((prev) => ({ ...prev, startDate, endDate }));
+    const setDate = (date: string) => {
+        setFilters((prev) => ({ ...prev, date }));
     };
 
     const setPeriod = (period: string) => {
         setFilters((prev) => ({ ...prev, period }));
     };
 
-    const setLocation = (location: string) => {
-        setFilters((prev) => ({ ...prev, location }));
-    };
-
-    // Helper to format date range for ReportHeader
-    const getFormattedDateRange = () => {
-        const formatDate = (date: Date) => {
-            const day = date.getDate().toString().padStart(2, "0");
-            const month = (date.getMonth() + 1).toString().padStart(2, "0");
-            const year = date.getFullYear();
-            return `${day}.${month}.${year}`;
-        };
-
-        const start = formatDate(filters.startDate);
-        const end = formatDate(filters.endDate);
-        return start === end ? start : `${start} - ${end}`;
+    const setLocation = (organization_id: string) => {
+        setFilters((prev) => ({ ...prev, organization_id }));
     };
 
     const refetch = async () => {
@@ -356,16 +434,20 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
         <ReportsContext.Provider
             value={{
                 metrics,
-                sales,
+                orders,
                 payments,
                 categories,
                 employees,
                 moneyflow,
+                profitloss,
+                analytics,
+                generalOrders,
+                goods,
+                salesDynamics,
                 filters,
-                setDateRange,
+                setDate,
                 setPeriod,
                 setLocation,
-                getFormattedDateRange,
                 loading,
                 error,
                 refetch,

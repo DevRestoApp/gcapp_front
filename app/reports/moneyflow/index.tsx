@@ -20,94 +20,58 @@ import { textStyles } from "@/src/client/styles/ui/text.styles";
 import ValueBadge from "@/src/client/components/ValueBadge";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 
-interface ReportFilters {
-    date: string;
-    period: string;
-    location: string;
-}
-
 export default function MoneyflowReports() {
     const router = useRouter();
     const { setMoneyFlowData } = useMoneyFlow();
 
     const {
-        moneyflowData,
+        moneyflow,
         filters,
-        setDateRange,
+        setDate,
         setPeriod,
         setLocation,
-        getFormattedDateRange,
         loading,
         error,
     } = useReports();
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<ReportFilters>({
-        date: "01.09.2025",
-        period: "День",
-        location: "Все ресторан",
-    });
-
-    const [dishes, setDishes] = useState({});
-    const [writeoffs, setWriteoff] = useState({});
-    const [expenses, setExpenses] = useState({});
-    const [incomes, setIncomes] = useState({});
 
     useEffect(() => {
-        loadReportData();
-    }, [filters]); // Reload data when filters change
-
-    const loadReportData = async () => {
-        try {
-            setLoading(true);
-            const data = moneyflowData;
-
-            setDishes(data.dishes);
-            setWriteoff(data.writeoffs);
-            setExpenses(data.expenses);
-            setIncomes(data.incomes);
-
-            // Set data in context for child routes
+        if (moneyflow) {
             setMoneyFlowData({
-                dishes: data.dishes,
-                writeoffs: data.writeoffs,
-                expenses: data.expenses,
-                incomes: data.incomes,
+                dishes: moneyflow.dishes,
+                writeoffs: moneyflow.writeoffs,
+                expenses: moneyflow.expenses,
+                incomes: moneyflow.incomes,
             });
-        } catch (error) {
-            console.error("Error loading report data:", error);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [moneyflow, setMoneyFlowData]);
 
-    const renderValueBadge = (value, type) => (
+    const renderValueBadge = (value: string, type: string) => (
         <ValueBadge value={value} type={type} />
     );
 
     const renderGeneralCard = () => {
+        if (!moneyflow) return null;
+
+        const { dishes, writeoffs, expenses, incomes } = moneyflow;
+
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Сегодня</Text>
-                <View style={{ ...cardStyles.card }}>
+                <View style={cardStyles.card}>
+                    {/* Dishes */}
                     <TouchableOpacity
                         onPress={() => router.push("/reports/moneyflow/dishes")}
                     >
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 12,
-                            }}
-                        >
+                        <View style={styles.listItemContainer}>
                             <ListItemIcon
-                                label={dishes.label}
+                                label={dishes?.label || ""}
                                 value={
-                                    dishes.type
+                                    dishes?.type
                                         ? renderValueBadge(
                                               dishes.value,
                                               dishes.type,
                                           )
-                                        : dishes.value
+                                        : dishes?.value || ""
                                 }
                                 icon={
                                     <Ionicons
@@ -120,27 +84,23 @@ export default function MoneyflowReports() {
                             />
                         </View>
                     </TouchableOpacity>
+
+                    {/* Writeoffs */}
                     <TouchableOpacity
                         onPress={() =>
                             router.push("/reports/moneyflow/writeoffs")
                         }
                     >
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 12,
-                            }}
-                        >
+                        <View style={styles.listItemContainer}>
                             <ListItemIcon
-                                label={writeoffs.label}
+                                label={writeoffs?.label || ""}
                                 value={
-                                    writeoffs.type
+                                    writeoffs?.type
                                         ? renderValueBadge(
                                               writeoffs.value,
                                               writeoffs.type,
                                           )
-                                        : writeoffs.value
+                                        : writeoffs?.value || ""
                                 }
                                 icon={
                                     <Ionicons
@@ -153,27 +113,23 @@ export default function MoneyflowReports() {
                             />
                         </View>
                     </TouchableOpacity>
+
+                    {/* Expenses */}
                     <TouchableOpacity
                         onPress={() =>
                             router.push("/reports/moneyflow/expenses")
                         }
                     >
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 12,
-                            }}
-                        >
+                        <View style={styles.listItemContainer}>
                             <ListItemIcon
-                                label={expenses.label}
+                                label={expenses?.label || ""}
                                 value={
-                                    expenses.type
+                                    expenses?.type
                                         ? renderValueBadge(
                                               expenses.value,
                                               expenses.type,
                                           )
-                                        : expenses.value
+                                        : expenses?.value || ""
                                 }
                                 icon={
                                     <AntDesign
@@ -182,32 +138,28 @@ export default function MoneyflowReports() {
                                         color={textStyles.negative.color}
                                     />
                                 }
-                                iconType={"negative"}
+                                iconType="negative"
                                 withChevron={true}
                             />
                         </View>
                     </TouchableOpacity>
+
+                    {/* Incomes */}
                     <TouchableOpacity
                         onPress={() =>
                             router.push("/reports/moneyflow/incomes")
                         }
                     >
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                gap: 12,
-                            }}
-                        >
+                        <View style={styles.listItemContainer}>
                             <ListItemIcon
-                                label={incomes.label}
+                                label={incomes?.label || ""}
                                 value={
-                                    incomes.type
+                                    incomes?.type
                                         ? renderValueBadge(
                                               incomes.value,
                                               incomes.type,
                                           )
-                                        : incomes.value
+                                        : incomes?.value || ""
                                 }
                                 icon={
                                     <AntDesign
@@ -216,7 +168,7 @@ export default function MoneyflowReports() {
                                         color={textStyles.positive.color}
                                     />
                                 }
-                                iconType={"positive"}
+                                iconType="positive"
                                 withChevron={true}
                             />
                         </View>
@@ -226,37 +178,59 @@ export default function MoneyflowReports() {
         );
     };
 
+    // Loading state
     if (loading) {
         return (
-            <View
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-            >
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Общие показатели"
-                    date={getFormattedDateRange()}
+                    title="Денежные отчеты"
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
+                    location={filters.organization_id}
                     onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
+                    <Text style={styles.loadingText}>Загрузка данных...</Text>
                 </View>
             </View>
         );
     }
 
+    // Error state
+    if (error) {
+        return (
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
+                <ReportHeader
+                    title="Денежные отчеты"
+                    date={filters.date}
+                    period={filters.period}
+                    location={filters.organization_id}
+                    onBack={() => router.push("/ceo/analytics")}
+                    onDateChange={setDate}
+                    onPeriodChange={setPeriod}
+                    onLocationChange={setLocation}
+                />
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>{error}</Text>
+                </View>
+            </View>
+        );
+    }
+
+    // Main content
     return (
-        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
+        <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
                 title="Денежные отчеты"
-                date={getFormattedDateRange()}
+                date={filters.date}
                 period={filters.period}
-                location={filters.location}
+                location={filters.organization_id}
                 onBack={() => router.push("/ceo/analytics")}
-                onDateChange={setDateRange}
+                onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
             />
@@ -288,10 +262,26 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        gap: 12,
     },
-    card: {
-        padding: 12,
-        borderRadius: 20,
-        gap: 8,
+    loadingText: {
+        fontSize: 16,
+        color: "#8E8E93",
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        color: "#FF6B6B",
+        textAlign: "center",
+    },
+    listItemContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
     },
 });

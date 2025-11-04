@@ -15,6 +15,7 @@ import { textStyles } from "@/src/client/styles/ui/text.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { InventoryItemCard } from "@/src/client/components/reports/InventoryItemCard";
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 // InventoryItemCard Component
 interface InventoryItem {
@@ -25,6 +26,8 @@ interface InventoryItem {
 }
 
 export default function Warehouse() {
+    const { goods } = useReports();
+
     const router = useRouter();
     const [activeCategory, setActiveCategory] = useState("Овощи");
     const [searchText, setSearchText] = useState("");
@@ -32,22 +35,17 @@ export default function Warehouse() {
     // TODO написать пойск по категории в инпуте
     // TODO написать апи для получения списка со склада
 
-    const categories = [
-        "Овощи",
-        "Напитки",
-        "Хоз.товары",
-        "Одежды",
-        "Холодные закуски",
-        "Десерты",
-    ];
+    const categories = goods.categories.map((el) => el.category_name);
 
-    const items: InventoryItem[] = [
-        { id: 1, name: "Картошка", price: "Цена : 5 600 тг", quantity: 67 },
-        { id: 2, name: "Картошка", price: "Цена : 5 600 тг", quantity: 25 },
-        { id: 3, name: "Картошка", price: "Цена : 5 600 тг", quantity: 10 },
-        { id: 4, name: "Картошка", price: "Цена : 5 600 тг", quantity: 24 },
-        { id: 5, name: "Картошка", price: "Цена : 5 600 тг", quantity: 300 },
-    ];
+    const items: InventoryItem[] = goods.categories.flatMap((cat) =>
+        cat.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.amount,
+            category: cat.category_name,
+        })),
+    );
 
     return (
         <SafeAreaView style={styles.container}>

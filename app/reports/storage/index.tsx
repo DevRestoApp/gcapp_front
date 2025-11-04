@@ -14,16 +14,16 @@ import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import ListItem from "@/src/client/components/ceo/ListItem";
 import Loading from "@/src/client/components/Loading";
-import { useReports } from "@/app/reports/_layout";
+import { useReports } from "@/src/contexts/ReportDataProvider";
 
 const checks = {
     label: "Товары с критическим остатком",
-    value: "Название товара",
+    value: "Нет данных",
 };
 
 const checks2 = {
-    label: "Товары с критическим остатком",
-    value: "Название товара",
+    label: "Остатки на складе",
+    value: "Нет данных",
 };
 
 // --- TYPES ---
@@ -36,29 +36,6 @@ interface InventoryItem {
 }
 
 type InventoryData = InventoryItem[];
-
-// --- MOCK DATA ---
-const fetchInventoryData = (): InventoryData => {
-    return [
-        {
-            id: 1,
-            label: "Сумма товаров на начало периода",
-            value: "120 568 598 тг",
-        },
-        {
-            id: 2,
-            label: "Сумма товаров на конец периода",
-            value: "256 840 568 тг",
-        },
-        {
-            id: 3,
-            label: "Товары с критическим остатком",
-            value: "-15 800 тг",
-            type: "negative",
-        },
-        { id: 4, label: "Остатки на складе", value: "1 241 163,28 тг" },
-    ];
-};
 
 // --- COMPONENTS ---
 const RenderItemsCard = () => {
@@ -116,31 +93,25 @@ const RenderInventoryData = ({ data }: { data: InventoryData }) => {
 
 export default function Warehouse() {
     const {
-        metrics,
-        sales,
-        payments,
-        categories,
+        analytics,
         filters,
-        setFilters,
+        setDate,
+        setPeriod,
+        setLocation,
         loading,
         error,
     } = useReports();
 
-    const [inventoryData] = useState<InventoryData>(fetchInventoryData());
+    const inventoryData =
+        analytics?.inventory.map((item) => {
+            return {
+                id: item.id,
+                date: "29.10",
+                label: item.label,
+                value: item.value,
+            };
+        }) ?? [];
     const router = useRouter();
-
-    const handleDateChange = (date: string) => {
-        setFilters((prev) => ({ ...prev, date }));
-        // TODO: Implement date picker modal
-    };
-
-    const handlePeriodChange = (period: string) => {
-        setFilters((prev) => ({ ...prev, period }));
-    };
-
-    const handleLocationChange = (location: string) => {
-        setFilters((prev) => ({ ...prev, location }));
-    };
 
     // Loading state
     if (loading) {
@@ -148,11 +119,11 @@ export default function Warehouse() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Общие показатели"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
+                    location={filters.organization_id}
                     onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -169,11 +140,11 @@ export default function Warehouse() {
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
                     title="Общие показатели"
-                    date={getFormattedDateRange()}
+                    date={filters.date}
                     period={filters.period}
-                    location={filters.location}
+                    location={filters.organization_id}
                     onBack={() => router.push("/ceo/analytics")}
-                    onDateChange={setDateRange}
+                    onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
                 />
@@ -190,11 +161,11 @@ export default function Warehouse() {
                 title="Складские отчеты"
                 date={filters.date}
                 period={filters.period}
-                location={filters.location}
+                location={filters.organization_id}
                 onBack={() => router.push("/ceo/analytics")}
-                onDateChange={handleDateChange}
-                onPeriodChange={handlePeriodChange}
-                onLocationChange={handleLocationChange}
+                onDateChange={setDate}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
             />
             <ScrollView
                 style={styles.scrollView}
