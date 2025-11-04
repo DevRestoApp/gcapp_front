@@ -187,7 +187,7 @@ export default function MoneyflowReports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/ceo/analytics")}
+                    onBack={() => router.push("/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -209,7 +209,7 @@ export default function MoneyflowReports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/ceo/analytics")}
+                    onBack={() => router.push("/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -229,7 +229,7 @@ export default function MoneyflowReports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}
-                onBack={() => router.push("/ceo/analytics")}
+                onBack={() => router.push("/reports")}
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
