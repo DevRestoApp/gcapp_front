@@ -36,30 +36,27 @@ export default function AnalyticsScreen() {
         loading,
         error,
     } = useReports();
-    console.log(analytics);
-
-    const { total_expenses, total_revenue, gross_profit } = profitloss;
 
     // { title, value, date, type }
     const expensesGeneral = [
         {
             id: 1,
             title: "Итого расходы",
-            value: total_expenses.toFixed(2),
+            value: profitloss?.total_expenses.toFixed(2),
             date: filters.date.slice(0, 5) ?? "",
             type: "expense",
         },
         {
             id: 2,
             title: "Итого доходы",
-            value: total_revenue.toFixed(2),
+            value: profitloss?.total_revenue.toFixed(2),
             date: filters.date.slice(0, 5) ?? "",
             type: "income",
         },
         {
             id: 3,
             title: "Итого чистая прибыль",
-            value: gross_profit.toFixed(2),
+            value: profitloss?.gross_profit.toFixed(2),
             date: filters.date.slice(0, 5) ?? "",
             type: "income",
         },
