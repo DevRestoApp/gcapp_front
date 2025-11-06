@@ -94,6 +94,7 @@ const RenderInventoryData = ({ data }: { data: InventoryData }) => {
 export default function Warehouse() {
     const {
         analytics,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -166,6 +167,7 @@ export default function Warehouse() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
             <ScrollView
                 style={styles.scrollView}

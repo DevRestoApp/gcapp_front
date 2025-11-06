@@ -26,6 +26,7 @@ export default function MoneyflowReports() {
 
     const {
         moneyflow,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -233,6 +234,7 @@ export default function MoneyflowReports() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             <ScrollView

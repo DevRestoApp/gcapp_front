@@ -61,6 +61,7 @@ export default function Reports() {
         moneyflow,
         analytics,
         salesDynamics,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -136,6 +137,7 @@ export default function Reports() {
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
+                    organizations={organizations}
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
@@ -158,6 +160,7 @@ export default function Reports() {
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
+                    organizations={organizations}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -178,6 +181,7 @@ export default function Reports() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             <ScrollView

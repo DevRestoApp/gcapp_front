@@ -23,6 +23,7 @@ export default function ExpensesReports() {
     // Get everything from context
     const {
         profitloss,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -149,7 +150,7 @@ export default function ExpensesReports() {
         const expensesTable = {
             columns: [
                 { key: "name", label: "", flex: 2 },
-                { key: "revenue", label: "ГК Шарль", flex: 1 },
+                { key: "revenue", label: "Все точки", flex: 1 },
             ],
             data: [...incomeList, ...expensesList],
         };
@@ -227,6 +228,7 @@ export default function ExpensesReports() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             <ScrollView
