@@ -1,5 +1,5 @@
 // components/ReportHeader.tsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
     View,
     Text,
@@ -21,6 +21,12 @@ interface ReportHeaderProps {
     onDateChange?: (date: string) => void; // Receives formatted string
     onPeriodChange?: (period: string) => void;
     onLocationChange?: (location: string) => void;
+    organizations?: {
+        name: string;
+        code: string;
+        id: number;
+        is_active: boolean;
+    }[];
 }
 
 // TODO переделать место {label: "день", value: "day"}
@@ -29,7 +35,6 @@ const PERIODS = [
     { label: "Неделя", value: "week" },
     { label: "Месяц", value: "month" },
 ];
-const LOCATIONS = [];
 
 export function ReportHeader({
     title,
@@ -40,6 +45,7 @@ export function ReportHeader({
     onDateChange,
     onPeriodChange,
     onLocationChange,
+    organizations,
 }: ReportHeaderProps) {
     const [showCalendar, setShowCalendar] = useState(false);
     const [showPeriodModal, setShowPeriodModal] = useState(false);
@@ -50,6 +56,16 @@ export function ReportHeader({
         setShowPeriodModal(false);
     };
 
+    const LOCATIONS = useMemo(() => {
+        if (organizations && organizations.length > 0) {
+            return organizations.map((org) => ({
+                label: org.name,
+                value: org.id,
+            }));
+        }
+        return [];
+    }, [organizations]);
+
     const handleLocationSelect = (selectedLocation: string) => {
         onLocationChange?.(selectedLocation);
         setShowLocationModal(false);
@@ -57,6 +73,19 @@ export function ReportHeader({
 
     const handleDateSelect = (selectedDate: string) => {
         onDateChange?.(selectedDate);
+    };
+
+    // Helper function to get label from value
+    const getPeriodLabel = (value: string) => {
+        if (!value) return "Выбрать...";
+        const item = PERIODS.find((p) => p.value === value);
+        return item ? item.label : value;
+    };
+
+    const getLocationLabel = (value: string) => {
+        if (!value) return "Выбрать...";
+        const item = LOCATIONS.find((l) => l.value === value);
+        return item ? item.label : value;
     };
 
     type itemsProps = {
@@ -152,7 +181,9 @@ export function ReportHeader({
                     style={[styles.filterButton, styles.filterButtonWide]}
                     onPress={() => setShowPeriodModal(true)}
                 >
-                    <Text style={styles.filterText}>{period}</Text>
+                    <Text style={styles.filterText}>
+                        {getPeriodLabel(period)}
+                    </Text>
                     <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
 
@@ -164,7 +195,7 @@ export function ReportHeader({
                         style={[styles.filterText, styles.filterTextTruncate]}
                         numberOfLines={1}
                     >
-                        {location}
+                        {getLocationLabel(location)}
                     </Text>
                     <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
                 </TouchableOpacity>

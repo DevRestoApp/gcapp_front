@@ -18,6 +18,7 @@ import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SimpleHeader } from "@/src/client/components/Header";
+import { icons } from "@/src/client/icons/icons";
 
 // ChevronLeft Icon Component
 function ChevronLeftIcon() {
@@ -39,18 +40,21 @@ export default function MoneyFlowDetail() {
     const { type } = useLocalSearchParams<{ type: string }>();
     const moneyFlowData = useMoneyFlow();
 
+    console.log("moneyFlowData", moneyFlowData);
+
     // Get the appropriate data based on the type parameter
     const data = moneyFlowData[type as keyof typeof moneyFlowData];
 
     // Filter out the setMoneyFlowData function
     const currentData = typeof data === "function" ? null : data;
+    console.log("currentData", currentData);
 
     const handleGoBack = () => {
         router.back();
     };
 
     // Helper function to format data items for OrderHistoryCard
-    const formatDataItem = (item: any, index: number) => {
+    const formatDataItem = (item: any, index: number, itemType: string) => {
         // Extract the display name
         const tableNumber =
             item.name ||
@@ -67,18 +71,18 @@ export default function MoneyFlowDetail() {
                 : rawAmount;
 
         // Extract time if available, otherwise use current time or empty
-        const time =
-            item.time ||
-            new Date().toLocaleTimeString("ru-RU", {
-                hour: "2-digit",
-                minute: "2-digit",
-            });
+        const time = item.time || "";
+        let formattedType = "positive";
+        if (itemType === "negative") {
+            formattedType = "negative";
+        }
 
         return {
             id: item.id || index,
             tableNumber,
             amount: formattedAmount,
             time,
+            type: formattedType,
         };
     };
 
@@ -129,20 +133,19 @@ export default function MoneyFlowDetail() {
                 {currentData.data && currentData.data.length > 0 ? (
                     <View style={styles.listContainer}>
                         {currentData.data.map((item, index) => {
-                            const formattedItem = formatDataItem(item, index);
+                            const formattedItem = formatDataItem(
+                                item,
+                                index,
+                                currentData.type,
+                            );
                             return (
                                 <OrderHistoryCard
                                     key={formattedItem.id}
                                     tableNumber={formattedItem.tableNumber}
                                     amount={formattedItem.amount}
                                     time={formattedItem.time}
-                                    icon={
-                                        <MaterialCommunityIcons
-                                            name="food-variant"
-                                            size={20}
-                                            color={textStyles.white.color}
-                                        />
-                                    }
+                                    icon={icons[type]}
+                                    type={formattedItem.type}
                                 />
                             );
                         })}

@@ -15,6 +15,7 @@ import { getGoodsData } from "@/src/server/ceo/goods";
 import { getGeneralOrders } from "@/src/server/general/generalOrders";
 import { getSalesDynamicsData } from "@/src/server/reports/salesDynamics";
 import { storage } from "@/src/server/storage";
+import { getOrganizationsData } from "@/src/server/general/organizations";
 
 // Define your report data types
 interface MetricData {
@@ -128,6 +129,13 @@ interface ReportFilters {
     organization_id?: string;
 }
 
+interface OrganizationsInterface {
+    name: string;
+    id: number;
+    is_active: boolean;
+    code: string;
+}
+
 interface ReportsContextType {
     // Data for all report screens
     metrics: MetricData[];
@@ -138,6 +146,7 @@ interface ReportsContextType {
     moneyflow: MoneyflowInterface | null;
     profitloss: ProfitlossInterface | null;
     analytics: AnalyticsInterface | null;
+    organizations: OrganizationsInterface | null;
 
     // TODO прописать пропсы
     generalOrders: any;
@@ -207,10 +216,7 @@ const fetchOrdersData = async (
 const fetchProfitLossData = async (
     filters: ReportFilters,
 ): Promise<ProfitlossInterface> => {
-    const response = await getProfitLossData({
-        date: "29.10.2025",
-        period: "week",
-    });
+    const response = await getProfitLossData(filters);
     return response;
 };
 
@@ -330,6 +336,15 @@ const fetchSalesDynamicsData = async (filters: ReportFilters): Promise<any> => {
         return null;
     }
 };
+const fetchOrganizations = async (): Promise<any> => {
+    try {
+        const response = await getOrganizationsData();
+        return response.organizations;
+    } catch (e) {
+        console.log(e);
+        return null;
+    }
+};
 
 export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     // ✅ useRouter must be called at the top level
@@ -351,6 +366,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [goods, setGoods] = useState<any | null>(null);
     const [generalOrders, setGeneralOrders] = useState<any | null>(null);
     const [salesDynamics, setSalesDynamics] = useState<any | null>(null);
+    const [organizations, setOrganizations] = useState<any | null>(null);
 
     // Helper function to format today's date as DD.MM.YYYY
     const getTodayFormatted = () => {
@@ -364,6 +380,8 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     // Filter state - shared across ALL report screens
     const [filters, setFilters] = useState<ReportFilters>({
         date: "29.10.2025",
+        period: "",
+        organization_id: "",
     });
 
     const [loading, setLoading] = useState(true);
@@ -385,6 +403,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 goodsData,
                 generalOrdersData,
                 salesDynamicsData,
+                organizationsData,
             ] = await Promise.all([
                 fetchMainMetrics(filters),
                 fetchOrdersData(filters),
@@ -395,6 +414,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 fetchGoodsData(filters),
                 fetchGeneralOrdersData(filters),
                 fetchSalesDynamicsData(filters),
+                fetchOrganizations(),
             ]);
 
             setMetrics(metricsData);
@@ -406,6 +426,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
             setGoods(goodsData);
             setGeneralOrders(generalOrdersData);
             setSalesDynamics(salesDynamicsData);
+            setOrganizations(organizationsData);
         } catch (err: any) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
@@ -455,6 +476,7 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 generalOrders,
                 goods,
                 salesDynamics,
+                organizations,
                 filters,
                 setDate,
                 setPeriod,

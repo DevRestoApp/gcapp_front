@@ -10,7 +10,11 @@ interface ChartData {
 
 interface ReportSalesChartProps {
     title: string;
-    data: ChartData[];
+    data: {
+        revenue: ChartData[];
+        checks: ChartData[];
+        average: ChartData[];
+    };
 }
 
 type TabType = "revenue" | "checks" | "average";
@@ -18,7 +22,9 @@ type TabType = "revenue" | "checks" | "average";
 export function ReportSalesChart({ title, data }: ReportSalesChartProps) {
     const [activeTab, setActiveTab] = useState<TabType>("revenue");
 
-    const maxValue = Math.max(...data.map((d) => d.value));
+    const resultData = data[activeTab];
+
+    const maxValue = Math.max(...resultData.map((d) => d.value));
     const chartHeight = 120;
 
     const renderBar = (item: ChartData, index: number, barWidth: number) => {
@@ -55,7 +61,7 @@ export function ReportSalesChart({ title, data }: ReportSalesChartProps) {
         );
     };
 
-    const barWidth = 400 / data.length;
+    const barWidth = 400 / resultData.length;
 
     return (
         <View style={styles.container}>
@@ -116,7 +122,9 @@ export function ReportSalesChart({ title, data }: ReportSalesChartProps) {
             </View>
 
             <View style={styles.chartContainer}>
-                {data.map((item, index) => renderBar(item, index, barWidth))}
+                {resultData.map((item, index) =>
+                    renderBar(item, index, barWidth),
+                )}
             </View>
         </View>
     );

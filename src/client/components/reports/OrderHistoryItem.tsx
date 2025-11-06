@@ -1,10 +1,11 @@
 import React, { ReactNode } from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleProp, TextStyle, ViewStyle } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import IconCard from "@/src/client/components/IconCard";
 
 import { textStyles } from "@/src/client/styles/ui/text.styles";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface OrderHistoryCardProps {
     key?: string;
@@ -12,6 +13,7 @@ interface OrderHistoryCardProps {
     amount: string;
     time: string;
     icon?: ReactNode;
+    type?: "positive" | "negative" | "default";
 }
 
 export function OrderHistoryCard({
@@ -20,7 +22,26 @@ export function OrderHistoryCard({
     amount,
     time,
     icon,
+    type,
 }: OrderHistoryCardProps) {
+    let textStyle: StyleProp<TextStyle>;
+    let bgStyle: StyleProp<TextStyle>;
+
+    switch (type) {
+        case "positive":
+            textStyle = textStyles.positive;
+            bgStyle = backgroundsStyles.positiveBg;
+            break;
+        case "negative":
+            textStyle = textStyles.negative;
+            bgStyle = backgroundsStyles.negativeBg;
+            break;
+        default:
+            textStyle = textStyles.white;
+            bgStyle = backgroundsStyles.generalBg;
+            break;
+    }
+    console.log(type);
     return (
         <View
             style={{
@@ -61,20 +82,21 @@ export function OrderHistoryCard({
                             {tableNumber}
                         </Text>
                         <View
-                            style={{
-                                alignSelf: "flex-start",
-                                paddingHorizontal: 4,
-                                paddingVertical: 2,
-                                borderRadius: 12,
-                                backgroundColor: "rgba(52, 199, 89, 0.15)",
-                            }}
+                            style={[
+                                bgStyle,
+                                {
+                                    alignSelf: "flex-start",
+                                    paddingHorizontal: 4,
+                                    paddingVertical: 2,
+                                    borderRadius: 12,
+                                },
+                            ]}
                         >
                             <Text
-                                style={{
-                                    color: "#34C759",
-                                    fontSize: 14,
-                                    lineHeight: 18,
-                                }}
+                                style={[
+                                    textStyle,
+                                    { fontSize: 14, lineHeight: 18 },
+                                ]}
                             >
                                 {amount}
                             </Text>

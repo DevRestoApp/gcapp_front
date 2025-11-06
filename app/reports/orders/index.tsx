@@ -28,8 +28,16 @@ interface ReportFilters {
 export default function OrderReports() {
     const router = useRouter();
 
-    const { orders, filters, setDate, setPeriod, setLocation, loading, error } =
-        useReports();
+    const {
+        orders,
+        organizations,
+        filters,
+        setDate,
+        setPeriod,
+        setLocation,
+        loading,
+        error,
+    } = useReports();
 
     /*setChecks(orders.data.checks);
     setReturns(orders.data.returns);
@@ -167,6 +175,7 @@ export default function OrderReports() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             <ScrollView

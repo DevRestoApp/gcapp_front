@@ -33,8 +33,7 @@ const getAnalyticsDataFunc = async () => {
 
         const formattedDate = `${day}.${month}.${year}`;
 
-        /*return await getAnalyticsData({ date: formattedDate });*/
-        return await getAnalyticsData({ date: "29.10.2025" });
+        return await getAnalyticsData({ date: formattedDate });
     } catch (error) {
         return error;
     }

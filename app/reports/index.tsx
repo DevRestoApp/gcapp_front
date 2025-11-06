@@ -27,6 +27,8 @@ export default function AnalyticsScreen() {
     // Get analytics data directly from context
     const {
         analytics,
+        profitloss,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -34,6 +36,31 @@ export default function AnalyticsScreen() {
         loading,
         error,
     } = useReports();
+
+    // { title, value, date, type }
+    const expensesGeneral = [
+        {
+            id: 1,
+            title: "Итого расходы",
+            value: profitloss?.total_expenses.toFixed(2),
+            date: filters.date.slice(0, 5) ?? "",
+            type: "expense",
+        },
+        {
+            id: 2,
+            title: "Итого доходы",
+            value: profitloss?.total_revenue.toFixed(2),
+            date: filters.date.slice(0, 5) ?? "",
+            type: "income",
+        },
+        {
+            id: 3,
+            title: "Итого чистая прибыль",
+            value: profitloss?.gross_profit.toFixed(2),
+            date: filters.date.slice(0, 5) ?? "",
+            type: "income",
+        },
+    ];
 
     const renderValueBadge = (value: string, type: string) => (
         <ValueBadge value={value} type={type} />
@@ -85,9 +112,11 @@ export default function AnalyticsScreen() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}
+                onBack={() => router.push("/ceo")}
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             {/* Scrollable Content */}
@@ -136,7 +165,7 @@ export default function AnalyticsScreen() {
                                     Сегодня
                                 </Text>
                                 <View style={cardStyles.reportsContainer}>
-                                    {analytics.reports.map((report: any) => (
+                                    {expensesGeneral.map((report: any) => (
                                         <ReportCard
                                             key={report.id}
                                             {...report}

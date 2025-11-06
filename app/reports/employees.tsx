@@ -34,6 +34,7 @@ export default function ExpensesReports() {
 
     const {
         analytics,
+        organizations,
         filters,
         setDate,
         setPeriod,
@@ -125,6 +126,7 @@ export default function ExpensesReports() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={organizations}
             />
 
             <ScrollView
