@@ -37,11 +37,35 @@ export default function MoneyflowReports() {
 
     useEffect(() => {
         if (moneyflow) {
+            const incomes = (data) => {
+                const paytypes = data.income_by_pay_type.map((el) => {
+                    return {
+                        id: el.id,
+                        name: el.payment_type,
+                        amount: el.amount,
+                    };
+                });
+                const categories = data.income_by_category.map((el) => {
+                    return {
+                        id: el.id,
+                        name: el.category,
+                        amount: el.amount,
+                    };
+                });
+
+                return {
+                    id: data.id,
+                    label: data.label,
+                    type: data.type,
+                    value: data.value,
+                    data: [...paytypes, ...categories],
+                };
+            };
             setMoneyFlowData({
                 dishes: moneyflow.dishes,
                 writeoffs: moneyflow.writeoffs,
                 expenses: moneyflow.expenses,
-                incomes: moneyflow.incomes,
+                incomes: incomes(moneyflow.incomes),
             });
         }
     }, [moneyflow, setMoneyFlowData]);

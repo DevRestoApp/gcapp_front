@@ -380,6 +380,8 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     // Filter state - shared across ALL report screens
     const [filters, setFilters] = useState<ReportFilters>({
         date: "29.10.2025",
+        period: "",
+        organization_id: "",
     });
 
     const [loading, setLoading] = useState(true);

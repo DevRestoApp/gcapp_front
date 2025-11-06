@@ -78,30 +78,29 @@ export default function Reports() {
         moneyflow?.incomes?.income_by_pay_type,
         "payment_type",
     );
-
-    /*[
-        {
-            date: "29.10",
-            value: 150,
-            label: "150",
-        },{
-        date: "30.10",
-        value: 532,
-        label: "532",
-    },{
-        date: "31.10",
-        value: 664,
-        label: "664",
-    },
-    ]*/
-    const sales =
-        salesDynamics?.daily_data?.map((el) => {
+    const sales = {
+        revenue: salesDynamics?.daily_data.map((el) => {
             return {
                 date: el.date.slice(0, 5),
                 value: el.revenue,
                 label: formatNumberShort(el.revenue),
             };
-        }) ?? [];
+        }),
+        checks: salesDynamics?.daily_data.map((el) => {
+            return {
+                date: el.date.slice(0, 5),
+                value: el.checks_count,
+                label: formatNumberShort(el.checks_count),
+            };
+        }),
+        average: salesDynamics?.daily_data.map((el) => {
+            return {
+                date: el.date.slice(0, 5),
+                value: el.average_check,
+                label: formatNumberShort(el.average_check),
+            };
+        }),
+    };
 
     const renderMainMetrics = () => {
         const metrics = analytics?.metrics;
@@ -191,7 +190,7 @@ export default function Reports() {
             >
                 {renderMainMetrics()}
 
-                {sales && sales.length > 0 && (
+                {sales && (
                     <ReportSalesChart title="Динамика продаж" data={sales} />
                 )}
 

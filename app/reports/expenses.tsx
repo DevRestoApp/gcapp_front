@@ -41,21 +41,21 @@ export default function ExpensesReports() {
             {
                 id: 1,
                 title: "Итого расходы",
-                value: total_expenses,
+                value: total_expenses.toFixed(2),
                 date: filters.date.slice(0, 5) ?? "",
                 type: "expense",
             },
             {
                 id: 2,
                 title: "Итого доходы",
-                value: total_revenue,
+                value: total_revenue.toFixed(2),
                 date: filters.date.slice(0, 5) ?? "",
                 type: "income",
             },
             {
                 id: 3,
                 title: "Итого чистая прибыль",
-                value: gross_profit,
+                value: gross_profit.toFixed(2),
                 date: filters.date.slice(0, 5) ?? "",
                 type: "income",
             },
@@ -147,10 +147,16 @@ export default function ExpensesReports() {
             };
         });
 
+        const location = organizations.find(
+            (el) => el.id === filters.organization_id,
+        );
+
+        const locationName = location ? location.name : "Все точки";
+
         const expensesTable = {
             columns: [
                 { key: "name", label: "", flex: 2 },
-                { key: "revenue", label: "Все точки", flex: 1 },
+                { key: "revenue", label: locationName, flex: 1 },
             ],
             data: [...incomeList, ...expensesList],
         };

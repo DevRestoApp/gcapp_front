@@ -77,11 +77,13 @@ export function ReportHeader({
 
     // Helper function to get label from value
     const getPeriodLabel = (value: string) => {
+        if (!value) return "Выбрать...";
         const item = PERIODS.find((p) => p.value === value);
         return item ? item.label : value;
     };
 
     const getLocationLabel = (value: string) => {
+        if (!value) return "Выбрать...";
         const item = LOCATIONS.find((l) => l.value === value);
         return item ? item.label : value;
     };
