@@ -48,7 +48,7 @@ export default function ExpensesReports() {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Расходы и прибыль"
+                    title="Отчёты по персоналу"
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
@@ -69,7 +69,7 @@ export default function ExpensesReports() {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Расходы и прибыль"
+                    title="Отчёты по персоналу"
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
@@ -118,7 +118,7 @@ export default function ExpensesReports() {
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
-                title="Расходы и прибыль"
+                title="Отчёты по персоналу"
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}

@@ -1,116 +1,383 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
     Text,
     TextInput,
-    Button,
+    TouchableOpacity,
+    ScrollView,
     StyleSheet,
+    StatusBar,
     ActivityIndicator,
     Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 import { login as loginRequest } from "@/src/server/auth";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface LoginFormData {
+    nickname: string;
+    email: string;
+    password: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const INITIAL_FORM_DATA: LoginFormData = {
+    nickname: "",
+    email: "",
+    password: "",
+};
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function Login() {
     const router = useRouter();
     const { login, token } = useAuth();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [formData, setFormData] = useState<LoginFormData>(INITIAL_FORM_DATA);
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    // ========================================================================
+    // Effects
+    // ========================================================================
 
     useEffect(() => {
         if (token) {
-            router.replace("/ceo"); // если токен появился → сразу на главную
+            router.replace("/ceo");
         }
-    }, [token]);
+    }, [token, router]);
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert("Ошибка", "Введите email и пароль");
-            return;
+    // ========================================================================
+    // Form Handlers
+    // ========================================================================
+
+    const updateFormField = useCallback(
+        (field: keyof LoginFormData, value: string) => {
+            setFormData((prev) => ({ ...prev, [field]: value }));
+        },
+        [],
+    );
+
+    const togglePasswordVisibility = useCallback(() => {
+        setShowPassword((prev) => !prev);
+    }, []);
+
+    const validateForm = useCallback((): boolean => {
+        if (!formData.email || !formData.password) {
+            Alert.alert("Ошибка", "Введите логин и пароль");
+            return false;
         }
+        return true;
+    }, [formData]);
+
+    const handleLogin = useCallback(async () => {
+        if (!validateForm()) return;
 
         try {
             setLoading(true);
-            const response = await loginRequest({ login: email, password });
+            const response = await loginRequest({
+                login: formData.email,
+                password: formData.password,
+            });
 
-            /*const response = {
-                success: true,
-                user_id: 1,
-                role: "waiter",
-                access_token: "<KEY>",
-                refresh_token: "<KEY>",
-                token_type: "Bearer",
-                expires_in: 3600,
-                scope: "read write",
-                jti: "1234567890",
-                user: {},
-            };*/
             if (response.success) {
                 const userObj = {
                     id: response.user_id,
-                    email,
+                    email: formData.email,
                     role: response.role,
                 };
                 await login(userObj, response.access_token);
-                router.push("/ceo");
+                router.replace("/");
             } else {
                 Alert.alert("Ошибка", "Неверные данные");
             }
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
             console.error(err);
-            router.replace("/ceo");
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, validateForm, login, router]);
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Вход</Text>
+    const handleForgotPassword = useCallback(() => {
+        // Navigate to forgot password screen
+        console.log("Navigate to forgot password");
+        // router.push("/forgot-password");
+    }, []);
 
-            <TextInput
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-                autoCapitalize="none"
-                keyboardType="email-address"
-            />
+    // ========================================================================
+    // Render Functions
+    // ========================================================================
 
-            <TextInput
-                placeholder="Пароль"
-                value={password}
-                onChangeText={setPassword}
-                style={styles.input}
-                secureTextEntry
-            />
-
-            {loading ? (
-                <ActivityIndicator size="large" color="#2196f3" />
-            ) : (
-                <Button title="Войти" onPress={handleLogin} />
-            )}
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <Text style={styles.headerTitle}>Войти</Text>
+            <Text style={styles.headerSubtitle}>
+                Введите данные чтобы войти
+            </Text>
         </View>
     );
+
+    const renderInputField = (
+        label: string,
+        value: string,
+        onChangeText: (text: string) => void,
+        options?: {
+            secureTextEntry?: boolean;
+            keyboardType?: "default" | "email-address";
+            autoCapitalize?: "none" | "sentences" | "words" | "characters";
+            rightElement?: React.ReactNode;
+        },
+    ) => (
+        <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>{label}</Text>
+            <View style={styles.inputWrapper}>
+                <TextInput
+                    value={value}
+                    onChangeText={onChangeText}
+                    style={styles.input}
+                    placeholderTextColor="#797A80"
+                    secureTextEntry={options?.secureTextEntry}
+                    keyboardType={options?.keyboardType || "default"}
+                    autoCapitalize={options?.autoCapitalize || "none"}
+                />
+                {options?.rightElement}
+            </View>
+        </View>
+    );
+
+    const renderPasswordToggle = () => (
+        <TouchableOpacity
+            style={styles.passwordToggle}
+            onPress={togglePasswordVisibility}
+            activeOpacity={0.7}
+        >
+            <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#fff"
+            />
+        </TouchableOpacity>
+    );
+
+    const renderForm = () => (
+        <View style={styles.formContainer}>
+            {renderInputField(
+                "Логин",
+                formData.email,
+                (text) => updateFormField("email", text),
+                {
+                    keyboardType: "email-address",
+                    autoCapitalize: "none",
+                },
+            )}
+
+            {renderInputField(
+                "Пароль",
+                formData.password,
+                (text) => updateFormField("password", text),
+                {
+                    secureTextEntry: !showPassword,
+                    rightElement: renderPasswordToggle(),
+                },
+            )}
+
+            <TouchableOpacity
+                style={styles.forgotPasswordButton}
+                onPress={handleForgotPassword}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.forgotPasswordText}>Забыли пароль?</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    const renderLoginButton = () => (
+        <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.8}
+        >
+            {loading ? (
+                <ActivityIndicator size="small" color="#2C2D2E" />
+            ) : (
+                <Text style={styles.loginButtonText}>Войти</Text>
+            )}
+        </TouchableOpacity>
+    );
+
+    const renderBottomSection = () => (
+        <View style={styles.bottomSection}>{renderLoginButton()}</View>
+    );
+
+    // ========================================================================
+    // Main Render
+    // ========================================================================
+
+    return (
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor="rgba(25, 25, 26, 1)"
+            />
+
+            <View style={styles.mainContainer}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {renderHeader()}
+                    {renderForm()}
+                </ScrollView>
+
+                {renderBottomSection()}
+            </View>
+        </SafeAreaView>
+    );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    mainContainer: {
+        flex: 1,
+        justifyContent: "space-between",
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingTop: 24,
+    },
+
+    // Header
+    header: {
+        paddingHorizontal: 16,
+        paddingBottom: 24,
+        gap: 4,
+    },
+    headerTitle: {
+        color: "#fff",
+        fontSize: 32,
+        fontWeight: "600",
+        letterSpacing: -0.24,
+    },
+    headerSubtitle: {
+        color: "#797A80",
+        fontSize: 16,
+        fontWeight: "400",
+        lineHeight: 20,
+    },
+
+    // Form
+    formContainer: {
+        paddingHorizontal: 16,
+        gap: 16,
+    },
+    inputContainer: {
+        gap: 8,
+    },
+    inputLabel: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "400",
+        lineHeight: 18,
+        letterSpacing: -0.15,
+    },
+    inputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 44,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        backgroundColor: "rgba(35, 35, 36, 1)",
+    },
+    input: {
+        flex: 1,
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "400",
+        lineHeight: 20,
+        letterSpacing: -0.32,
+    },
+    passwordToggle: {
+        width: 44,
+        height: 44,
         justifyContent: "center",
         alignItems: "center",
-        padding: 20,
+        marginRight: -12,
     },
-    title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-    input: {
+    forgotPasswordButton: {
+        alignSelf: "flex-end",
+    },
+    forgotPasswordText: {
+        color: "#fff",
+        fontSize: 13,
+        fontWeight: "400",
+        lineHeight: 16,
+        letterSpacing: -0.08,
+        textAlign: "right",
+    },
+
+    // Bottom Section
+    bottomSection: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        gap: 16,
+        alignItems: "center",
+    },
+    loginButton: {
         width: "100%",
-        padding: 10,
-        marginVertical: 10,
-        borderWidth: 1,
-        borderRadius: 8,
+        maxWidth: 358,
+        height: 44,
+        borderRadius: 20,
+        backgroundColor: "#fff",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loginButtonDisabled: {
+        opacity: 0.5,
+    },
+    loginButtonText: {
+        color: "#2C2D2E",
+        fontSize: 16,
+        fontWeight: "600",
+        lineHeight: 24,
+        textAlign: "center",
+    },
+
+    // Home Indicator
+    homeIndicatorContainer: {
+        width: "100%",
+        height: 34,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    homeIndicator: {
+        width: 131,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: "#fff",
     },
 });

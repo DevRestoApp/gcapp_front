@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "expo-router";
 import {
     View,
@@ -13,159 +13,262 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-// Example usage of the updated OrderSelection component
+// ============================================================================
+// Types
+// ============================================================================
+
+interface OrderItem {
+    dishId: string;
+    quantity: number;
+    price: number;
+}
+
+interface Order {
+    id: string;
+    table: string;
+    location: string;
+    room: string;
+    items: OrderItem[];
+    status: "draft" | "completed" | "cancelled";
+    createdAt: Date;
+    completedAt?: Date;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const INITIAL_ORDER: Order = {
+    id: "order-123",
+    table: "12",
+    location: 'Ресторан "Дастархан"',
+    room: "Общий зал",
+    items: [
+        { dishId: "1", quantity: 2, price: 5600 },
+        { dishId: "2", quantity: 1, price: 3200 },
+        { dishId: "4", quantity: 1, price: 2400 },
+    ],
+    status: "draft",
+    createdAt: new Date(),
+};
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
 export default function OrderSelectionScreen() {
     const router = useRouter();
+    const [currentOrder, setCurrentOrder] = useState<Order>(INITIAL_ORDER);
 
-    // Example order data - this would come from your state management/API
-    const [currentOrder, setCurrentOrder] = useState({
-        id: "order-123",
-        table: "12", // Pre-filled table value
-        location: 'Ресторан "Дастархан"', // Pre-filled location
-        room: "Общий зал",
-        items: [
-            { dishId: "1", quantity: 2, price: 5600 }, // 2x Бесбармак
-            { dishId: "2", quantity: 1, price: 3200 }, // 1x Манты
-            { dishId: "4", quantity: 1, price: 2400 }, // 1x Борщ
-        ],
-        status: "draft",
-        createdAt: new Date(),
-    });
+    // ========================================================================
+    // Computed Values
+    // ========================================================================
 
-    // Handle order updates
-    const handleOrderUpdate = (updatedOrder: any) => {
+    const totalAmount = currentOrder.items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+    );
+
+    const totalItems = currentOrder.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+    );
+
+    const hasItems = currentOrder.items.length > 0;
+
+    // ========================================================================
+    // Event Handlers
+    // ========================================================================
+
+    const handleOrderUpdate = useCallback((updatedOrder: Order) => {
         setCurrentOrder(updatedOrder);
         console.log("Order updated:", updatedOrder);
 
-        // Here you would typically:
-        // 1. Update your state management (Redux, Context, etc.)
-        // 2. Save to local storage/cache
-        // 3. Sync with backend API
-    };
+        // API Integration Point:
+        // - Update state management (Redux, Context, etc.)
+        // - Save to local storage/cache
+        // - Sync with backend API
+    }, []);
 
-    // Handle table change
-    const handleTableChange = (table: string) => {
+    const handleTableChange = useCallback((table: string) => {
         console.log("Table changed to:", table);
-        // Additional logic if needed beyond the order update
-    };
+    }, []);
 
-    // Handle room change
-    const handleRoomChange = (room: string) => {
+    const handleRoomChange = useCallback((room: string) => {
         console.log("Room changed to:", room);
-        // Additional logic if needed beyond the order update
-    };
+    }, []);
 
-    // Handle dish press (view details)
-    const handleDishPress = (dish: any) => {
+    const handleDishPress = useCallback((dish: any) => {
         Alert.alert(dish.name, `${dish.description}\n\n${dish.price}`, [
             { text: "Закрыть", style: "cancel" },
             {
                 text: "Добавить в заказ",
                 onPress: () => {
                     console.log("Adding dish to order:", dish.id);
-                    // Navigate to menu or add dish logic
                 },
             },
         ]);
-    };
+    }, []);
 
-    // Handle add dish navigation
-    const handleAddDish = () => {
+    const handleAddDish = useCallback(() => {
         console.log("Navigate to menu to add dishes");
-        // This would navigate to the menu screen
         // router.push('/waiter/menu');
-    };
+    }, []);
 
-    // Handle cancel order
-    const handleCancelOrder = () => {
-        console.log("Order cancelled");
+    const handleCancelOrder = useCallback(() => {
+        Alert.alert(
+            "Отменить заказ",
+            "Вы уверены, что хотите отменить заказ?",
+            [
+                { text: "Нет", style: "cancel" },
+                {
+                    text: "Да, отменить",
+                    style: "destructive",
+                    onPress: () => {
+                        console.log("Order cancelled");
 
-        // Clear the order
-        setCurrentOrder({
-            ...currentOrder,
-            table: "",
-            items: [],
-            status: "cancelled",
-        });
+                        setCurrentOrder({
+                            ...currentOrder,
+                            table: "",
+                            items: [],
+                            status: "cancelled",
+                        });
 
-        router.push("/waiter/cancel");
-    };
-
-    // Handle complete order
-    const handleCompleteOrder = () => {
-        const totalAmount = currentOrder.items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0,
+                        router.push("/waiter/cancel");
+                    },
+                },
+            ],
         );
-        const totalItems = currentOrder.items.reduce(
-            (sum, item) => sum + item.quantity,
-            0,
-        );
+    }, [currentOrder, router]);
 
-        // Update order status
-        const completedOrder = {
+    const handleCompleteOrder = useCallback(() => {
+        if (!hasItems) {
+            Alert.alert("Ошибка", "Добавьте блюда в заказ");
+            return;
+        }
+
+        const completedOrder: Order = {
             ...currentOrder,
             status: "completed",
             completedAt: new Date(),
         };
 
         setCurrentOrder(completedOrder);
+        console.log("Order completed:", {
+            totalAmount,
+            totalItems,
+        });
 
         router.push("/waiter/payment");
-    };
+    }, [currentOrder, hasItems, totalAmount, totalItems, router]);
 
-    // Render action buttons
+    // ========================================================================
+    // Render Functions
+    // ========================================================================
+
     const renderActionButtons = () => (
-        <View style={styles.actionsSection}>
+        <View
+            style={[
+                styles.actionsSection,
+                backgroundsStyles.generalBgTransparent,
+            ]}
+        >
             <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={handleCancelOrder}
+                disabled={!hasItems}
                 activeOpacity={0.8}
             >
                 <Text style={styles.cancelButtonText}>Отменить заказ</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-                style={[styles.completeButton]}
+                style={[
+                    styles.completeButton,
+                    !hasItems && styles.completeButtonDisabled,
+                ]}
                 onPress={handleCompleteOrder}
+                disabled={!hasItems}
                 activeOpacity={0.8}
             >
-                <Text style={[styles.completeButtonText]}>Завершить</Text>
+                <Text
+                    style={[
+                        styles.completeButtonText,
+                        !hasItems && styles.completeButtonTextDisabled,
+                    ]}
+                >
+                    Завершить
+                </Text>
             </TouchableOpacity>
         </View>
     );
 
-    return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
-            <StatusBar barStyle="light-content" backgroundColor="#000" />
+    // ========================================================================
+    // Main Render
+    // ========================================================================
 
-            <OrderSelection
-                order={currentOrder}
-                onOrderUpdate={handleOrderUpdate}
-                onTableChange={handleTableChange}
-                onRoomChange={handleRoomChange}
-                onDishPress={handleDishPress}
-                onAddDish={handleAddDish}
-                onCancelOrder={handleCancelOrder}
-                onCompleteOrder={handleCompleteOrder}
+    return (
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
+            <StatusBar
+                barStyle="light-content"
+                backgroundColor="rgba(25, 25, 26, 1)"
             />
 
-            {renderActionButtons()}
+            <View style={styles.content}>
+                <OrderSelection
+                    order={currentOrder}
+                    onOrderUpdate={handleOrderUpdate}
+                    onTableChange={handleTableChange}
+                    onRoomChange={handleRoomChange}
+                    onDishPress={handleDishPress}
+                    onAddDish={handleAddDish}
+                    onCancelOrder={handleCancelOrder}
+                    onCompleteOrder={handleCompleteOrder}
+                />
+
+                {renderActionButtons()}
+            </View>
         </SafeAreaView>
     );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    // Action buttons styles
+    content: {
+        flex: 1,
+        width: "100%",
+        alignSelf: "center",
+    },
+
+    // Action Buttons
     actionsSection: {
         flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 16,
         gap: 12,
-        marginTop: 8,
+    },
+    cancelButton: {
+        flex: 1,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "rgba(237, 10, 52, 0.08)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(237, 10, 52, 0.2)",
+    },
+    cancelButtonText: {
+        color: "#EE1E44",
+        fontSize: 16,
+        fontWeight: "600",
+        textAlign: "center",
+        lineHeight: 24,
     },
     completeButton: {
         flex: 1,
@@ -192,23 +295,5 @@ const styles = StyleSheet.create({
     },
     completeButtonTextDisabled: {
         color: "rgba(255, 255, 255, 0.4)",
-    },
-    cancelButton: {
-        flex: 1,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "#FF4444",
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#FF4444",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    cancelButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
     },
 });

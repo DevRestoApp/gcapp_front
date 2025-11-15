@@ -58,7 +58,7 @@ export default function AnalyticsScreen() {
             title: "Итого чистая прибыль",
             value: profitloss?.gross_profit.toFixed(2),
             date: filters.date.slice(0, 5) ?? "",
-            type: "income",
+            type: profitloss?.gross_profit > 0 ? "income" : "expense",
         },
     ];
 
@@ -75,6 +75,7 @@ export default function AnalyticsScreen() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
+                    onBack={() => router.push("/ceo")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -93,6 +94,7 @@ export default function AnalyticsScreen() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
+                    onBack={() => router.push("/ceo")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}

@@ -47,7 +47,9 @@ export default function NewOrderSelection({
         <View style={styles.container}>
             {/* Table Selection */}
             <View style={styles.section}>
-                <Text style={styles.title}>Выберите стол</Text>
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Смена</Text>
+                </View>
                 <TextInput
                     value={selectedTable}
                     onChangeText={handleTableChange}
@@ -182,5 +184,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "rgba(255,255,255,0.75)",
         textAlign: "center",
+    },
+    header: {
+        paddingHorizontal: 16,
+        height: 56,
+        justifyContent: "center",
+    },
+    headerTitle: {
+        color: "#fff",
+        fontSize: 32,
+        fontWeight: "600",
+        letterSpacing: -0.24,
     },
 });

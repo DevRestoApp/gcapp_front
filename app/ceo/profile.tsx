@@ -1,419 +1,438 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View,
     Text,
+    Image,
     TouchableOpacity,
     ScrollView,
     StyleSheet,
     StatusBar,
-    Image,
-    ActivityIndicator,
+    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useRouter } from "expo-router";
+import Loading from "@/src/client/components/Loading";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
+import LogoutConfirmationModal, {
+    LogoutConfirmationModalRef,
+} from "@/src/client/components/modals/LogoutModal";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-export default function IndexScreen() {
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ProfileData {
+    id: string;
+    name: string;
+    role: string;
+    avatar: string;
+    shiftStartTime: string;
+    todaysEarnings: number;
+}
+
+interface ProfileScreenProps {
+    userId?: string;
+}
+
+type MenuItemType = "references" | "faq" | "about";
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const TIME_UPDATE_INTERVAL = 1000; // 1 second
+const MOCK_DELAY = 800;
+
+const MENU_ITEMS = [
+    { id: "references" as MenuItemType, icon: "📚", label: "Справки" },
+    { id: "faq" as MenuItemType, icon: "💬", label: "Частые вопросы" },
+    { id: "about" as MenuItemType, icon: "ℹ️", label: "О приложении" },
+] as const;
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export default function ProfileScreen({
+    userId = "user-123",
+}: ProfileScreenProps) {
     const router = useRouter();
+    const logoutModalRef = useRef<LogoutConfirmationModalRef>(null);
 
-    const [days, setDays] = useState<Day[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
-    const [openEmployees, setOpenEmployees] = useState(0);
-    const [totalAmount, setTotalAmount] = useState(0);
-    const [finesCount, setFinesCount] = useState(0);
-    const [motivationCount, setMotivationCount] = useState(0);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Initialize calendar
+    // ========================================================================
+    // Data Fetching
+    // ========================================================================
+
+    const fetchProfileData = useCallback(async () => {
+        setLoading(true);
+
+        try {
+            // Replace with your actual API endpoint
+            // const response = await fetch(`YOUR_API_URL/api/waiter/${userId}/profile`);
+            // const data = await response.json();
+
+            // Simulated API response
+            await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
+
+            const mockData: ProfileData = {
+                id: userId,
+                name: "Адилет Дегитаев",
+                role: "Владелец",
+                avatar: "https://api.builder.io/api/v1/image/assets/TEMP/e0e80a9a8e34ae933a9711def284c06ceaaf5c18?width=144",
+                shiftStartTime: "09:00",
+                todaysEarnings: 53000,
+            };
+
+            setProfileData(mockData);
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+            Alert.alert("Ошибка", "Не удалось загрузить данные профиля");
+        } finally {
+            setLoading(false);
+        }
+    }, [userId]);
+
     useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
+        fetchProfileData();
 
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
+        const interval = setInterval(fetchProfileData, REFRESH_INTERVAL);
+        return () => clearInterval(interval);
+    }, [fetchProfileData]);
 
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6, // Last day is active by default
-            });
+    // ========================================================================
+    // Time Calculation
+    // ========================================================================
+
+    const calculateElapsedTime = useCallback((): string => {
+        if (!profileData) return "00:00:00";
+
+        const [startHours, startMinutes] = profileData.shiftStartTime
+            .split(":")
+            .map(Number);
+
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
+
+        let elapsedSeconds =
+            (currentHours - startHours) * 3600 +
+            (currentMinutes - startMinutes) * 60 +
+            currentSeconds;
+
+        if (elapsedSeconds < 0) {
+            elapsedSeconds += 24 * 3600;
         }
 
-        setDays(weekDays);
+        const hours = Math.floor(elapsedSeconds / 3600);
+        const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+        const seconds = elapsedSeconds % 60;
 
-        // Set today's date as selected
-        const todayStr = today.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        });
-        setSelectedDate(todayStr);
-    }, []);
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }, [profileData]);
 
-    // Update elapsed time
     useEffect(() => {
+        if (!profileData) return;
+
         const updateTime = () => {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, "0");
-            const minutes = now.getMinutes().toString().padStart(2, "0");
-            const seconds = now.getSeconds().toString().padStart(2, "0");
-            setElapsedTime(`${hours}:${minutes}:${seconds}`);
+            setElapsedTime(calculateElapsedTime());
         };
 
         updateTime();
-        const interval = setInterval(updateTime, 1000);
+        const interval = setInterval(updateTime, TIME_UPDATE_INTERVAL);
+
         return () => clearInterval(interval);
+    }, [profileData, calculateElapsedTime]);
+
+    // ========================================================================
+    // Event Handlers
+    // ========================================================================
+
+    const handleMenuItemPress = useCallback((item: MenuItemType) => {
+        switch (item) {
+            case "references":
+                console.log("Navigate to references");
+                // router.push("/references");
+                break;
+            case "faq":
+                console.log("Navigate to FAQ");
+                // router.push("/faq");
+                break;
+            case "about":
+                console.log("Navigate to about");
+                // router.push("/about");
+                break;
+        }
     }, []);
 
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
+    const handleLogout = useCallback(() => {
+        logoutModalRef.current?.open();
+    }, []);
 
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
+    const handleConfirmLogout = useCallback(() => {
+        console.log("User logged out");
+        // Clear user session/token here
+        router.replace("/");
+    }, [router]);
 
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
+    // ========================================================================
+    // Render Functions
+    // ========================================================================
 
-            setSelectedDate(dateStr);
-        },
-        [days],
+    const renderLoadingState = () => (
+        <View style={loadingStyles.loadingContainer}>
+            <Loading />
+            <Text style={loadingStyles.loadingText}>Загрузка профиля...</Text>
+        </View>
     );
 
-    // Navigation handlers
-    const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
-    }, [router]);
-
-    const handlePenaltiesPress = useCallback(() => {
-        router.push("/ceo/penalties");
-    }, [router]);
-
-    const handleMotivationPress = useCallback(() => {
-        router.push("/ceo/motivation");
-    }, [router]);
-
-    // Render header
     const renderHeader = () => (
-        <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Смена</Text>
-                <View style={styles.timerBadge}>
-                    <Text style={styles.timerIcon}>⏰</Text>
-                    <Text style={styles.timerText}>{elapsedTime}</Text>
+        <View style={styles.header}>
+            <Text style={styles.headerTitle}>Профиль</Text>
+        </View>
+    );
+
+    const renderProfileInfo = () => {
+        if (!profileData) return null;
+
+        return (
+            <View style={styles.profileSection}>
+                <View style={styles.avatarContainer}>
+                    <View style={styles.avatarBorder}>
+                        <Image
+                            source={{ uri: profileData.avatar }}
+                            style={styles.avatar}
+                            resizeMode="cover"
+                        />
+                    </View>
+                </View>
+
+                <View style={styles.nameSection}>
+                    <Text style={styles.name}>{profileData.name}</Text>
+                    <Text style={styles.role}>{profileData.role}</Text>
                 </View>
             </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
-        </View>
-    );
+        );
+    };
 
-    // Render employees section
-    const renderEmployeesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Сотрудники</Text>
-            <View style={styles.card}>
-                {/* Open Employees Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
-                        <Text style={styles.infoValue}>
-                            {openEmployees} официанта
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-
-                {/* Total Amount Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Общая сумма</Text>
-                        <Text style={styles.infoValue}>
-                            {totalAmount.toLocaleString()} тг
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы <Text style={styles.countBadge}>({finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет список штрафов</Text>
+    const renderMenuItem = (item: (typeof MENU_ITEMS)[number]) => (
+        <TouchableOpacity
+            key={item.id}
+            style={styles.menuItem}
+            onPress={() => handleMenuItemPress(item.id)}
+            activeOpacity={0.7}
+        >
+            <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}>
+                    <Text style={styles.menuIconText}>{item.icon}</Text>
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
+                <Text style={styles.menuItemText}>{item.label}</Text>
             </View>
-        </View>
+            <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
     );
 
-    // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
-                <Text style={styles.countBadge}>({motivationCount})</Text>
-            </Text>
+    const renderMenuItems = () => (
+        <View style={styles.menuSection}>{MENU_ITEMS.map(renderMenuItem)}</View>
+    );
+
+    const renderLogoutButton = () => (
+        <View style={styles.logoutSection}>
             <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
+                style={styles.logoutButton}
+                onPress={handleLogout}
                 activeOpacity={0.8}
             >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
+                <Text style={styles.logoutButtonText}>Выйти</Text>
             </TouchableOpacity>
         </View>
     );
 
-    const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
-        </View>
-    );
+    // ========================================================================
+    // Main Render
+    // ========================================================================
+
+    if (loading) {
+        return (
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
+                <StatusBar
+                    barStyle="light-content"
+                    backgroundColor="rgba(25, 25, 26, 1)"
+                />
+                {renderLoadingState()}
+            </SafeAreaView>
+        );
+    }
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
             />
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
-                ) : (
-                    <>
-                        {loading ? (
-                            renderLoadingState()
-                        ) : (
-                            <>
-                                {renderHeader()}
-                                {renderEmployeesSection()}
-                                {renderFinesSection()}
-                                {renderMotivationSection()}
-                            </>
-                        )}
-                    </>
-                )}
-            </ScrollView>
+            <View style={styles.mainContainer}>
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {renderHeader()}
+                    {renderProfileInfo()}
+                    {renderMenuItems()}
+                </ScrollView>
+
+                {renderLogoutButton()}
+            </View>
+
+            <LogoutConfirmationModal
+                ref={logoutModalRef}
+                userName={profileData?.name}
+                onConfirmLogout={handleConfirmLogout}
+            />
         </SafeAreaView>
     );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
+    mainContainer: {
+        flex: 1,
+        justifyContent: "space-between",
+    },
     scrollView: {
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 128,
-        gap: 28,
+        gap: 40,
     },
 
-    // Header Section
-    headerSection: {
-        gap: 16,
-    },
-    headerRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        height: 56,
+    // Header
+    header: {
         paddingHorizontal: 16,
+        height: 56,
+        justifyContent: "center",
     },
     headerTitle: {
         color: "#fff",
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.24,
-        flex: 1,
-    },
-    timerBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: "rgba(255, 158, 0, 0.08)",
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    timerIcon: {
-        fontSize: 16,
-    },
-    timerText: {
-        color: "#FF9E00",
-        fontSize: 16,
-        fontWeight: "600",
-        letterSpacing: -0.064,
-        lineHeight: 20,
     },
 
-    // Section
-    section: {
+    // Profile Section
+    profileSection: {
+        alignItems: "center",
+        gap: 20,
         paddingHorizontal: 16,
-        gap: 16,
     },
-    sectionTitle: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
-    },
-    countBadge: {
-        color: "#797A80",
-    },
-
-    // Card
-    card: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
-        padding: 12,
-        gap: 16,
-    },
-
-    // Info Row
-    infoRow: {
-        flexDirection: "row",
+    avatarContainer: {
         alignItems: "center",
-        gap: 8,
     },
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 16,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+    avatarBorder: {
+        width: 88,
+        height: 88,
+        borderRadius: 44,
+        borderWidth: 4,
+        borderColor: "#4DEF8E",
+        padding: 4,
         justifyContent: "center",
         alignItems: "center",
     },
-    iconText: {
-        fontSize: 20,
+    avatar: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
     },
-    infoContent: {
-        flex: 1,
-        gap: 4,
+    nameSection: {
+        alignItems: "center",
+        gap: 8,
+        width: "100%",
     },
-    infoLabel: {
+    name: {
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "600",
+        letterSpacing: -0.24,
+        textAlign: "center",
+    },
+    role: {
         color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        lineHeight: 16,
+        fontSize: 16,
+        letterSpacing: -0.24,
+        textAlign: "center",
     },
-    infoValue: {
+
+    // Menu Section
+    menuSection: {
+        paddingHorizontal: 16,
+        gap: 16,
+    },
+    menuItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+    },
+    menuItemLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 16,
+        flex: 1,
+    },
+    menuIcon: {
+        width: 20,
+        height: 20,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    menuIconText: {
+        fontSize: 16,
+    },
+    menuItemText: {
         color: "#fff",
         fontSize: 16,
-        fontWeight: "600",
+        letterSpacing: -0.24,
         lineHeight: 20,
     },
     chevron: {
-        color: "#fff",
+        color: "rgba(255, 255, 255, 0.75)",
         fontSize: 24,
         fontWeight: "300",
     },
 
-    // Divider
-    divider: {
-        height: 1,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+    // Logout Section
+    logoutSection: {
+        backgroundColor: "rgba(25, 25, 26, 0.85)",
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 16,
     },
-
-    // Empty State
-    emptyState: {
-        alignItems: "center",
-        gap: 8,
-    },
-    emptyIcon: {
-        width: 80,
-        height: 80,
-    },
-    emptyText: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 16,
-        textAlign: "center",
-        lineHeight: 20,
-    },
-
-    // Add Button
-    addButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
+    logoutButton: {
         height: 44,
         borderRadius: 20,
-        backgroundColor: "#fff",
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        justifyContent: "center",
+        alignItems: "center",
     },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
-        fontWeight: "600",
-    },
-    addButtonText: {
-        color: "#2C2D2E",
+    logoutButtonText: {
+        color: "#fff",
         fontSize: 16,
         fontWeight: "600",
         textAlign: "center",

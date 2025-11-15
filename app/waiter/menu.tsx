@@ -1,4 +1,10 @@
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import React, {
+    useState,
+    useRef,
+    useCallback,
+    useMemo,
+    useEffect,
+} from "react";
 import {
     View,
     Text,
@@ -7,12 +13,20 @@ import {
     ScrollView,
     StyleSheet,
     Alert,
+    ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import DishItem from "@/src/client/components/waiter/DishItem";
 import DishDetailModal, {
     DishDetailModalRef,
 } from "@/src/client/components/modals/DishDetailModal";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface Dish {
     id: string;
@@ -23,8 +37,30 @@ interface Dish {
     category: string;
 }
 
-// Better sample data with variety
-const dishes: Dish[] = [
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface MenuScreenProps {
+    restaurantId?: string;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const MOCK_CATEGORIES: Category[] = [
+    { id: "1", name: "Завтраки" },
+    { id: "2", name: "Горячие блюда" },
+    { id: "3", name: "Супы" },
+    { id: "4", name: "Гарниры" },
+    { id: "5", name: "Холодные закуски" },
+    { id: "6", name: "Десерты" },
+    { id: "7", name: "Напитки" },
+];
+
+const MOCK_DISHES: Dish[] = [
     {
         id: "1",
         name: "Бесбармак по-казахски",
@@ -90,27 +126,78 @@ const dishes: Dish[] = [
     },
 ];
 
-const categories = [
-    "Завтраки",
-    "Горячие блюда",
-    "Супы",
-    "Гарниры",
-    "Холодные закуски",
-    "Десерты",
-    "Напитки",
-];
+const MOCK_DELAY = 800;
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-export default function MenuScreen() {
-    // State management
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export default function MenuScreen({
+    restaurantId = "restaurant-123",
+}: MenuScreenProps = {}) {
+    // ========================================================================
+    // State Management
+    // ========================================================================
+
+    const [dishes, setDishes] = useState<Dish[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("Горячие блюда");
     const [quantities, setQuantities] = useState<Record<string, number>>({});
     const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
+    // ========================================================================
     // Refs
+    // ========================================================================
+
     const modalRef = useRef<DishDetailModalRef>(null);
 
-    // Memoized filtered dishes for performance
+    // ========================================================================
+    // Data Fetching
+    // ========================================================================
+
+    const fetchMenuData = useCallback(async () => {
+        setLoading(true);
+
+        try {
+            // API Integration Point: Fetch menu data
+            // Example:
+            // const [dishesResponse, categoriesResponse] = await Promise.all([
+            //   fetch(`YOUR_API_URL/api/restaurant/${restaurantId}/dishes`),
+            //   fetch(`YOUR_API_URL/api/restaurant/${restaurantId}/categories`),
+            // ]);
+            // const dishesData = await dishesResponse.json();
+            // const categoriesData = await categoriesResponse.json();
+            // setDishes(dishesData.dishes);
+            // setCategories(categoriesData.categories);
+
+            // Simulate API call
+            await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
+
+            setDishes(MOCK_DISHES);
+            setCategories(MOCK_CATEGORIES);
+        } catch (error) {
+            console.error("Error fetching menu data:", error);
+            Alert.alert("Ошибка", "Не удалось загрузить меню");
+        } finally {
+            setLoading(false);
+        }
+    }, [restaurantId]);
+
+    useEffect(() => {
+        fetchMenuData();
+
+        // Refresh data periodically
+        const interval = setInterval(fetchMenuData, REFRESH_INTERVAL);
+        return () => clearInterval(interval);
+    }, [fetchMenuData]);
+
+    // ========================================================================
+    // Computed Values
+    // ========================================================================
+
     const filteredDishes = useMemo(() => {
         return dishes.filter((dish) => {
             const matchesSearch =
@@ -124,25 +211,28 @@ export default function MenuScreen() {
             const matchesCategory = dish.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
-    }, [searchQuery, selectedCategory]);
+    }, [dishes, searchQuery, selectedCategory]);
 
-    // Get total items in cart
     const totalCartItems = useMemo(() => {
         return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
     }, [quantities]);
 
-    // Get dishes count for current category
-    const categoryDishCount = useMemo(() => {
-        return dishes.filter((dish) => dish.category === selectedCategory)
-            .length;
-    }, [selectedCategory]);
+    const getCategoryDishCount = useCallback(
+        (category: string) => {
+            return dishes.filter((dish) => dish.category === category).length;
+        },
+        [dishes],
+    );
 
-    // Handlers with useCallback for performance
+    // ========================================================================
+    // Event Handlers
+    // ========================================================================
+
     const handleQuantityChange = useCallback(
         (dishId: string, quantity: number) => {
             setQuantities((prev) => ({
                 ...prev,
-                [dishId]: Math.max(0, quantity), // Ensure quantity is never negative
+                [dishId]: Math.max(0, quantity),
             }));
         },
         [],
@@ -158,12 +248,15 @@ export default function MenuScreen() {
 
     const handleCategoryChange = useCallback((category: string) => {
         setSelectedCategory(category);
-        setSearchQuery(""); // Clear search when changing category
+        setSearchQuery("");
     }, []);
 
     const handleDishPress = useCallback((dish: Dish) => {
         setSelectedDish(dish);
-        modalRef.current?.open();
+        // Use setTimeout to ensure state is updated before opening modal
+        setTimeout(() => {
+            modalRef.current?.open();
+        }, 0);
     }, []);
 
     const handleModalClose = useCallback(() => {
@@ -175,7 +268,6 @@ export default function MenuScreen() {
             if (selectedDish && quantity > 0) {
                 handleQuantityChange(selectedDish.id, quantity);
 
-                // Show success feedback
                 Alert.alert(
                     "Добавлено в заказ",
                     `${selectedDish.name} (${quantity} шт.) добавлено в заказ`,
@@ -183,9 +275,8 @@ export default function MenuScreen() {
                     { cancelable: true },
                 );
 
-                // Close modal
-                setSelectedDish(null);
                 modalRef.current?.close();
+                setSelectedDish(null);
             }
         },
         [selectedDish, handleQuantityChange],
@@ -193,10 +284,21 @@ export default function MenuScreen() {
 
     const handleViewCart = useCallback(() => {
         // TODO: Navigate to cart screen
+        // router.push('/cart');
         Alert.alert("Корзина", `В корзине ${totalCartItems} товаров`);
     }, [totalCartItems]);
 
-    // Render methods
+    // ========================================================================
+    // Render Functions
+    // ========================================================================
+
+    const renderLoadingState = () => (
+        <View style={loadingStyles.loadingContainer}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={loadingStyles.loadingText}>Загрузка меню...</Text>
+        </View>
+    );
+
     const renderSearchSection = () => (
         <View style={styles.searchWrapper}>
             <TextInput
@@ -206,7 +308,7 @@ export default function MenuScreen() {
                 placeholderTextColor="#797A80"
                 style={styles.searchInput}
                 returnKeyType="search"
-                clearButtonMode="while-editing" // iOS only
+                clearButtonMode="while-editing"
             />
             {searchQuery.length > 0 && (
                 <TouchableOpacity
@@ -220,6 +322,49 @@ export default function MenuScreen() {
         </View>
     );
 
+    const renderCategoryButton = (category: Category) => {
+        const isSelected = selectedCategory === category.name;
+        const dishCount = getCategoryDishCount(category.name);
+
+        return (
+            <TouchableOpacity
+                key={category.id}
+                onPress={() => handleCategoryChange(category.name)}
+                style={[
+                    styles.categoryButton,
+                    isSelected && styles.categoryButtonActive,
+                ]}
+                activeOpacity={0.7}
+            >
+                <Text
+                    style={[
+                        styles.categoryText,
+                        isSelected && styles.categoryTextActive,
+                    ]}
+                >
+                    {category.name}
+                </Text>
+                {dishCount > 0 && (
+                    <View
+                        style={[
+                            styles.categoryBadge,
+                            isSelected && styles.categoryBadgeActive,
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.categoryBadgeText,
+                                isSelected && styles.categoryBadgeTextActive,
+                            ]}
+                        >
+                            {dishCount}
+                        </Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    };
+
     const renderCategoriesSection = () => (
         <View style={styles.categoriesSection}>
             <ScrollView
@@ -227,59 +372,49 @@ export default function MenuScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.categoriesScrollContent}
             >
-                {categories.map((category) => {
-                    const isSelected = selectedCategory === category;
-                    const dishCount = dishes.filter(
-                        (dish) => dish.category === category,
-                    ).length;
-
-                    return (
-                        <TouchableOpacity
-                            key={category}
-                            onPress={() => handleCategoryChange(category)}
-                            style={[
-                                styles.categoryButton,
-                                isSelected && styles.categoryButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.categoryText,
-                                    isSelected && styles.categoryTextActive,
-                                ]}
-                            >
-                                {category}
-                            </Text>
-                            {dishCount > 0 && (
-                                <View
-                                    style={[
-                                        styles.categoryBadge,
-                                        isSelected &&
-                                            styles.categoryBadgeActive,
-                                    ]}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.categoryBadgeText,
-                                            isSelected &&
-                                                styles.categoryBadgeTextActive,
-                                        ]}
-                                    >
-                                        {dishCount}
-                                    </Text>
-                                </View>
-                            )}
-                        </TouchableOpacity>
-                    );
-                })}
+                {categories.map(renderCategoryButton)}
             </ScrollView>
+        </View>
+    );
+
+    const renderDishItem = (dish: Dish) => (
+        <DishItem
+            key={dish.id}
+            id={dish.id}
+            name={dish.name}
+            description={dish.description}
+            price={dish.price}
+            image={dish.image}
+            variant="interactive"
+            initialQuantity={quantities[dish.id] || 0}
+            onQuantityChange={handleQuantityChange}
+            onPress={() => handleDishPress(dish)}
+        />
+    );
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+                {searchQuery
+                    ? "По вашему запросу ничего не найдено"
+                    : `В категории "${selectedCategory}" пока нет блюд`}
+            </Text>
+            {searchQuery && (
+                <TouchableOpacity
+                    onPress={handleClearSearch}
+                    style={styles.clearSearchButton}
+                >
+                    <Text style={styles.clearSearchButtonText}>
+                        Очистить поиск
+                    </Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 
     const renderDishesSection = () => (
         <View style={styles.dishesSection}>
-            {searchQuery && (
+            {searchQuery.trim() !== "" && (
                 <Text style={styles.searchResultsText}>
                     {filteredDishes.length > 0
                         ? `Найдено ${filteredDishes.length} блюд`
@@ -287,41 +422,12 @@ export default function MenuScreen() {
                 </Text>
             )}
 
-            <View style={styles.dishesList}>
-                {filteredDishes.map((dish) => (
-                    <DishItem
-                        key={dish.id}
-                        id={dish.id}
-                        name={dish.name}
-                        description={dish.description}
-                        price={dish.price}
-                        image={dish.image}
-                        variant="interactive"
-                        initialQuantity={quantities[dish.id] || 0}
-                        onQuantityChange={handleQuantityChange}
-                        onPress={() => handleDishPress(dish)} // Pass the handler here
-                    />
-                ))}
-            </View>
-
-            {filteredDishes.length === 0 && (
-                <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>
-                        {searchQuery
-                            ? "По вашему запросу ничего не найдено"
-                            : `В категории "${selectedCategory}" пока нет блюд`}
-                    </Text>
-                    {searchQuery && (
-                        <TouchableOpacity
-                            onPress={handleClearSearch}
-                            style={styles.clearSearchButton}
-                        >
-                            <Text style={styles.clearSearchButtonText}>
-                                Очистить поиск
-                            </Text>
-                        </TouchableOpacity>
-                    )}
+            {filteredDishes.length > 0 ? (
+                <View style={styles.dishesList}>
+                    {filteredDishes.map(renderDishItem)}
                 </View>
+            ) : (
+                renderEmptyState()
             )}
         </View>
     );
@@ -342,8 +448,22 @@ export default function MenuScreen() {
         );
     };
 
+    // ========================================================================
+    // Main Render
+    // ========================================================================
+
+    if (loading) {
+        return (
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
+                {renderLoadingState()}
+            </SafeAreaView>
+        );
+    }
+
     return (
-        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -355,7 +475,6 @@ export default function MenuScreen() {
 
             {renderCartButton()}
 
-            {/* Modal for dish details */}
             {selectedDish && (
                 <DishDetailModal
                     ref={modalRef}
@@ -368,9 +487,13 @@ export default function MenuScreen() {
                     onAddToOrder={handleAddToOrder}
                 />
             )}
-        </View>
+        </SafeAreaView>
     );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     container: {
@@ -379,11 +502,11 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 16,
         paddingTop: 20,
-        paddingBottom: 100, // Space for cart button
+        paddingBottom: 100,
         flexGrow: 1,
     },
 
-    // Search section
+    // Search Section
     searchWrapper: {
         position: "relative",
         marginBottom: 20,
@@ -392,7 +515,7 @@ const styles = StyleSheet.create({
         height: 48,
         borderRadius: 24,
         paddingHorizontal: 20,
-        paddingRight: 50, // Space for clear button
+        paddingRight: 50,
         backgroundColor: "rgba(35, 35, 36, 1)",
         color: "#fff",
         fontSize: 16,
@@ -416,7 +539,7 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
     },
 
-    // Categories section
+    // Categories Section
     categoriesSection: {
         marginBottom: 24,
     },
@@ -455,6 +578,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginLeft: 6,
+        paddingHorizontal: 6,
     },
     categoryBadgeActive: {
         backgroundColor: "rgba(0, 0, 0, 0.1)",
@@ -468,7 +592,7 @@ const styles = StyleSheet.create({
         color: "#000",
     },
 
-    // Search results
+    // Search Results
     searchResultsText: {
         color: "#797A80",
         fontSize: 14,
@@ -476,19 +600,15 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
 
-    // Dishes section
+    // Dishes Section
     dishesSection: {
         flex: 1,
     },
     dishesList: {
         gap: 12,
     },
-    dishItemWrapper: {
-        borderRadius: 12,
-        overflow: "hidden",
-    },
 
-    // Empty state
+    // Empty State
     emptyState: {
         flex: 1,
         justifyContent: "center",
@@ -516,7 +636,7 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
 
-    // Cart button
+    // Cart Button
     cartButton: {
         position: "absolute",
         bottom: 20,

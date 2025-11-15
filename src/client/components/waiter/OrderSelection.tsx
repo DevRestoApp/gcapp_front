@@ -200,7 +200,6 @@ export default function OrderSelection({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
     },
     content: {
         gap: 28,
@@ -208,7 +207,6 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         paddingBottom: 40,
         width: "100%",
-        maxWidth: 390,
         alignSelf: "center",
     },
 });
