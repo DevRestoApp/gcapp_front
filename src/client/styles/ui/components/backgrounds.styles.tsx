@@ -10,4 +10,7 @@ export const backgroundsStyles = StyleSheet.create({
     generalBg: {
         backgroundColor: "#19191A",
     },
+    generalBgTransparent: {
+        backgroundColor: "rgba(25,25,26,0.5)",
+    },
 });
