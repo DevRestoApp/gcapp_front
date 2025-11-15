@@ -58,7 +58,7 @@ export default function AnalyticsScreen() {
             title: "Итого чистая прибыль",
             value: profitloss?.gross_profit.toFixed(2),
             date: filters.date.slice(0, 5) ?? "",
-            type: "income",
+            type: profitloss?.gross_profit > 0 ? "income" : "expense",
         },
     ];
 
