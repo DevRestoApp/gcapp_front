@@ -100,7 +100,7 @@ export default function Login() {
                     role: response.role,
                 };
                 await login(userObj, response.access_token);
-                router.replace("/ceo");
+                router.replace("/");
             } else {
                 Alert.alert("Ошибка", "Неверные данные");
             }
