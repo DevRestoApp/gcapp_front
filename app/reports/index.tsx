@@ -75,6 +75,7 @@ export default function AnalyticsScreen() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
+                    onBack={() => router.push("/ceo")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -93,6 +94,7 @@ export default function AnalyticsScreen() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
+                    onBack={() => router.push("/ceo")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
