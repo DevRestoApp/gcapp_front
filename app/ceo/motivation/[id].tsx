@@ -19,7 +19,7 @@ import QuestCardEmployees, {
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { useCeo } from "../_layout";
+import { useCeo } from "@/src/contexts/CeoProvider";
 
 interface EmployeeQuestProgress {
     id: string;

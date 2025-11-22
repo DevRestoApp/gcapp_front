@@ -17,13 +17,15 @@ import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "./_layout";
+import { useCeo } from "@/src/contexts/CeoProvider";
 
 export default function IndexScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
-    const { shiftData, loading, error, refetch } = useCeo();
+    const { employees, shiftData, loading, error, refetch } = useCeo();
+
+    console.log("emps", employees);
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -66,7 +68,7 @@ export default function IndexScreen() {
             });
 
             // Update selected date in context
-            // updateShiftData({ selectedDate: dateStr });
+            // updateshiftData?({ selectedDate: dateStr });
         },
         [days],
     );
@@ -92,7 +94,7 @@ export default function IndexScreen() {
                 <View style={styles.timerBadge}>
                     <Text style={styles.timerIcon}>⏰</Text>
                     <Text style={styles.timerText}>
-                        {shiftData.elapsedTime}
+                        {shiftData?.elapsedTime}
                     </Text>
                 </View>
             </View>
@@ -119,7 +121,7 @@ export default function IndexScreen() {
                             Открытых сотрудники
                         </Text>
                         <Text style={styles.infoValue}>
-                            {shiftData.openEmployees} официанта
+                            {shiftData?.openEmployees} официанта
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -139,7 +141,7 @@ export default function IndexScreen() {
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {shiftData.totalAmount.toLocaleString()} тг
+                            {shiftData?.totalAmount.toLocaleString()} тг
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -153,7 +155,7 @@ export default function IndexScreen() {
         <View style={styles.section}>
             <Text style={styles.sectionTitle}>
                 Штрафы{" "}
-                <Text style={styles.countBadge}>({shiftData.finesCount})</Text>
+                <Text style={styles.countBadge}>({shiftData?.finesCount})</Text>
             </Text>
             <View style={styles.card}>
                 <View style={styles.emptyState}>
@@ -183,7 +185,7 @@ export default function IndexScreen() {
             <Text style={styles.sectionTitle}>
                 Мотивация{" "}
                 <Text style={styles.countBadge}>
-                    ({shiftData.motivationCount})
+                    ({shiftData?.motivationCount})
                 </Text>
             </Text>
             <TouchableOpacity
