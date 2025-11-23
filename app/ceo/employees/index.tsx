@@ -15,90 +15,21 @@ import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 
 import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-
-const employeesData: Employee[] = [
-    {
-        id: "1",
-        name: "Аслан Аманов",
-        role: "Оффицант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/3a1a0f795dd6cebc375ac2f7fbeab6a0d791efc8?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "2",
-        name: "Аида Таманова",
-        role: "Оффицант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/4bd88d9313f5402e21d3f064a4ad85d264b177bb?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "3",
-        name: "Арман Ашимов",
-        role: "Бармен",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/4a47f1eee62770da0326efa94f2187fd2ec7547d?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "4",
-        name: "Тима Янь",
-        role: "Хостес",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "5",
-        name: "Асылай Арнатова",
-        role: "Официант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: true,
-    },
-    {
-        id: "7",
-        name: "Тима Янь",
-        role: "Хостес",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/b97cb7d8a6a91ffcc6568eea52ade41a7e8dec91?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: false,
-    },
-    {
-        id: "8",
-        name: "Асылай Арнатова",
-        role: "Официант",
-        avatarUrl:
-            "https://api.builder.io/api/v1/image/assets/TEMP/da6152e88e4a02dca62dd7161b21651c66d6c6ce?width=80",
-        totalAmount: "56 897 тг",
-        shiftTime: "00:56:25",
-        isActive: false,
-    },
-];
+import { useCeo } from "@/src/contexts/CeoProvider";
 
 export default function EmployeesScreen() {
     const router = useRouter();
+    const { employees, shifts, loading, error, refetch } = useCeo();
+    console.log("em", employees);
+
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
 
     const { setSelectedEmployee } = useEmployee();
 
     const filteredEmployees =
         activeTab === "open"
-            ? employeesData.filter((emp) => emp.isActive)
-            : employeesData;
+            ? employees.filter((emp) => emp.isActive)
+            : employees;
 
     return (
         <SafeAreaView
@@ -201,7 +132,7 @@ export default function EmployeesScreen() {
                                     setSelectedEmployee(employee);
                                     // Navigate to employee detail page
                                     router.push({
-                                        pathname: `/employees/${employee.id}`,
+                                        pathname: `ceo/employees/${employee.id}`,
                                     });
                                 }}
                             />

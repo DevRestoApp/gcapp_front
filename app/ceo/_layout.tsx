@@ -13,15 +13,12 @@ const TAB_BAR_STYLE = {
     borderTopWidth: 0,
     elevation: 0,
     shadowOpacity: 0,
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 8,
 };
 
 const SCREEN_OPTIONS = {
     headerShown: false,
     tabBarStyle: TAB_BAR_STYLE,
-    tabBarActiveTintColor: "#4CAF50", // Or your brand color
+    tabBarActiveTintColor: "#ffffff", // Or your brand color
     tabBarInactiveTintColor: "#8E8E93",
     tabBarLabelStyle: {
         fontSize: 12,
@@ -55,6 +52,7 @@ export default function CeoLayout() {
                 <Tabs.Screen
                     name="analytics"
                     options={{
+                        href: "/reports",
                         title: "Аналитика",
                         tabBarIcon: ({ color, size }) => (
                             <AntDesign
@@ -98,6 +96,20 @@ export default function CeoLayout() {
                     options={{
                         href: null,
                         title: "Детали мотивации",
+                    }}
+                />
+                <Tabs.Screen
+                    name="employees"
+                    options={{
+                        href: null,
+                        title: "Сотрудники",
+                    }}
+                />
+                <Tabs.Screen
+                    name="employees/[id]"
+                    options={{
+                        href: null,
+                        title: "Детали сотрудников",
                     }}
                 />
             </Tabs>

@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
+import { createFine } from "@/src/server/ceo/generals";
 import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 import TableNumberGrid from "@/src/client/components/TableNumberGrid";
@@ -185,7 +186,7 @@ export default function EmployeeDetailScreen() {
                             disabledTables={[3, 7, 12]} // These tables will be grayed out
                             onTableSelect={(tableNumber) => {
                                 router.push(
-                                    `/employees/${id}/table/${tableNumber}`,
+                                    `ceo/employees/${id}/table/${tableNumber}`,
                                 );
                             }}
                         />
@@ -204,6 +205,16 @@ export default function EmployeeDetailScreen() {
             {/* Bottom Fixed Section */}
             <View style={styles.bottomSection}>
                 <TouchableOpacity
+                    onPress={async () => {
+                        // TODO put proper inputs afterwards
+                        await createFine({
+                            employeeId: "1",
+                            employeeName: "Аслан Аманов",
+                            reason: "Опоздание на работу",
+                            amount: 5000,
+                            date: "15.01.2025",
+                        });
+                    }}
                     style={styles.penaltyButton}
                     activeOpacity={0.9}
                 >

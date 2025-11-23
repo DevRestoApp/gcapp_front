@@ -8,6 +8,7 @@ import React, {
 } from "react";
 
 import { getEmployeesData } from "@/src/server/general/employees";
+import { getQuests, getShifts } from "@/src/server/ceo/generals";
 
 // ============================================================================
 // Types
@@ -26,9 +27,52 @@ interface Employee {
     // Add other employee properties
 }
 
+interface Shift {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    elapsedTime: string;
+    openEmployees: number;
+    totalAmount: number;
+    finesCount: number;
+    motivationCount: number;
+    questsCount: number;
+    status: string;
+}
+
+type EmployeeProgress = {
+    employeeId: string;
+    employeeName: string;
+    progress: number;
+    completed: true;
+    points: number;
+    rank: number;
+};
+
+interface Quest {
+    id: string;
+    title: string;
+    description: string;
+    reward: number;
+    current: number;
+    target: number;
+    unit: string;
+    completed: true;
+    progress: number;
+    expiresAt: string;
+    totalEmployees: number;
+    completedEmployees: number;
+    employeeNames: string[];
+    date: string;
+    employeeProgress: EmployeeProgress[];
+}
+
 interface CeoContextType {
     // Data
     employees: Employee[] | null;
+    shifts: Shift | null;
+    quests: Quest | null;
 
     // State
     loading: boolean;
@@ -78,6 +122,27 @@ const fetchEmployeesData = async (): Promise<Employee[] | null> => {
         throw error; // Re-throw to handle in fetchAll
     }
 };
+const fetchShiftsData = async (): Promise<Shift | null> => {
+    try {
+        const response = await getShifts({});
+        console.log("asd", response);
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching shifts:", error);
+        throw error; // Re-throw to handle in fetchAll
+    }
+};
+const fetchQuestsData = async (): Promise<Quest | null> => {
+    try {
+        const response = await getQuests(1, {});
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching quests:", error);
+        throw error; // Re-throw to handle in fetchAll
+    }
+};
 
 // Add more fetch functions here as needed
 // const fetchOtherData = async (): Promise<OtherData | null> => { ... }
@@ -91,7 +156,9 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     // State Management
     // ========================================================================
 
-    const [employees, setEmployees] = useState<Employee[] | null>(null);
+    const [employees, setEmployees] = useState<Employee[] | null>([]);
+    const [shifts, setShifts] = useState<Shift | null>(null);
+    const [quests, setQuests] = useState<Quest | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -105,14 +172,16 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setError(null);
 
             // Fetch all data in parallel
-            const [employeesData] = await Promise.all([
+            const [employeesData, shiftsData, questsData] = await Promise.all([
                 fetchEmployeesData(),
-                // Add more fetches here:
-                // fetchOtherData(),
+                fetchShiftsData(),
+                // fetchQuestsData()
             ]);
 
             // Update state only if component is still mounted
             setEmployees(employeesData);
+            setShifts(shiftsData);
+            // setQuests(questsData);
 
             // Set other data:
             // setOtherData(otherData);
@@ -154,6 +223,8 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const value: CeoContextType = {
         // Data
         employees,
+        shifts,
+        quests,
 
         // State
         loading,
