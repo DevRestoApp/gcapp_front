@@ -21,8 +21,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 export default function PenaltiesScreen() {
     const router = useRouter();
-    const { employees, addFine, shiftData } = useCeo();
-    console.log("em", employees);
+    const { employees, shifts, createFineAction } = useCeo();
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
     const [selectedEmployeeForPenalty, setSelectedEmployeeForPenalty] =
         useState<any>(null);
@@ -42,22 +41,28 @@ export default function PenaltiesScreen() {
 
     // Handle penalty submission
     const handleAddPenalty = useCallback(
-        (data: {
+        async (data: {
             employeeId: string;
             employeeName: string;
             reason: string;
             amount: number;
+            date: string;
         }) => {
-            addFine({
-                employeeId: data.employeeId,
-                employeeName: data.employeeName,
-                reason: data.reason,
-                amount: data.amount,
-                date: new Date().toISOString(),
-            });
-            setSelectedEmployeeForPenalty(null);
+            try {
+                await createFineAction({
+                    employeeId: String(data.employeeId),
+                    employeeName: data.employeeName,
+                    reason: data.reason,
+                    amount: data.amount,
+                    date: data.date,
+                });
+            } catch (error) {
+                console.error("Failed to create fine:", error);
+                // Error is already shown in the modal
+                throw error; // Re-throw so modal knows it failed
+            }
         },
-        [addFine],
+        [createFineAction],
     );
 
     // Handle modal cancel
@@ -99,7 +104,7 @@ export default function PenaltiesScreen() {
                         </Svg>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>
-                        Штрафы ({shiftData.finesCount})
+                        Штрафы ({shifts.finesCount})
                     </Text>
                     <View style={styles.headerSpacer} />
                 </View>
@@ -177,7 +182,7 @@ export default function PenaltiesScreen() {
                 ref={addPenaltyModalRef}
                 employees={employees}
                 onAddPenalty={handleAddPenalty}
-                onCancel={handleModalCancel}
+                onCancel={() => setSelectedEmployeeForPenalty(null)}
             />
         </SafeAreaView>
     );

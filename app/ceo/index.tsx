@@ -23,10 +23,14 @@ export default function IndexScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
-    const { employees, shifts, loading, error, refetch } = useCeo();
-
-    console.log("useCeo", useCeo());
-    console.log("emps", shifts);
+    const {
+        employees,
+        shifts,
+        loading,
+        error,
+        refetch,
+        setDate: setInputDate,
+    } = useCeo();
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -67,6 +71,8 @@ export default function IndexScreen() {
                 month: "2-digit",
                 year: "numeric",
             });
+
+            setInputDate(dateStr);
 
             // Update selected date in context
             // updateshiftData?({ selectedDate: dateStr });

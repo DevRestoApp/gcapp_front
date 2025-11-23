@@ -1,15 +1,9 @@
 import api from "../api";
 import { checkFilters } from "@/src/utils/serverUtils";
+import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
 
-export async function createFine(inputs: {
-    employeeId: string;
-    employeeName: string;
-    reason: string;
-    amount: number;
-    date: string;
-}) {
+export async function createFine(inputs: FineInputsType) {
     const params = checkFilters(inputs);
-    console.log(params);
 
     const res = await api.post("/fines", params);
 
@@ -41,16 +35,7 @@ export async function getQuests(
     return res.data;
 }
 
-export async function createQuest(inputs: {
-    title: string;
-    description: string;
-    reward: number;
-    target: number;
-    unit: string;
-    date: string;
-    employeeIds: string[];
-    organization_id: number;
-}) {
+export async function createQuest(inputs: QuestInputsType) {
     const params = checkFilters(inputs);
 
     const res = await api.post("/quests", params);

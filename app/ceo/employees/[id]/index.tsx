@@ -201,28 +201,6 @@ export default function EmployeeDetailScreen() {
                     </View>
                 )}
             </ScrollView>
-
-            {/* Bottom Fixed Section */}
-            <View style={styles.bottomSection}>
-                <TouchableOpacity
-                    onPress={async () => {
-                        // TODO put proper inputs afterwards
-                        await createFine({
-                            employeeId: "1",
-                            employeeName: "Аслан Аманов",
-                            reason: "Опоздание на работу",
-                            amount: 5000,
-                            date: "15.01.2025",
-                        });
-                    }}
-                    style={styles.penaltyButton}
-                    activeOpacity={0.9}
-                >
-                    <Text style={styles.penaltyButtonText}>Написать штраф</Text>
-                </TouchableOpacity>
-                {/* Bottom Navigation Placeholder - 94px height */}
-                <View style={styles.bottomNavPlaceholder} />
-            </View>
         </SafeAreaView>
     );
 }
