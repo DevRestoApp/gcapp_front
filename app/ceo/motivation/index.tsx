@@ -28,14 +28,17 @@ import { useCeo } from "@/src/contexts/CeoProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
-    const {
-        quests,
-        employees,
-        shiftData,
-        loading,
-        fetchQuestsForDate,
-        addQuest,
-    } = useCeo();
+    const { quests, employees, shifts, loading, createQuestAction } = useCeo();
+
+    // Add null checks and default values
+    const safeQuests = quests || [];
+    const safeEmployees = employees || [];
+    const safeShifts = shifts || { questsCount: 0 };
+
+    console.log("loading", loading);
+    console.log("quests", quests);
+    console.log("shifts", shifts);
+    console.log("employees", employees);
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -95,7 +98,8 @@ export default function QuestManagementScreen() {
             // Fetch quests for the selected date
             setQuestsLoading(true);
             try {
-                await fetchQuestsForDate(dateStr);
+                // change to getQuests api point
+                // await fetchQuestsForDate(dateStr);
             } catch (error) {
                 console.error("Error fetching quests:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить квесты");
@@ -103,21 +107,26 @@ export default function QuestManagementScreen() {
                 setQuestsLoading(false);
             }
         },
-        [days, fetchQuestsForDate],
+        [days],
     );
 
     // Handle quest creation
     const handleAddQuest = useCallback(
         async (data: { name: string; amount: number; reward: string }) => {
+            if (!createQuestAction) {
+                Alert.alert("Ошибка", "Функция создания квеста недоступна");
+                return;
+            }
+
             try {
                 // Add quest to context
-                addQuest({
+                createQuestAction({
                     title: data.name,
                     description: data.reward,
                     reward: data.amount,
                     target: data.amount,
                     unit: "единиц", // Default unit
-                    totalEmployees: employees.length,
+                    totalEmployees: safeEmployees.length,
                     completedEmployees: 0,
                     employeeNames: [],
                     date: selectedDate,
@@ -126,9 +135,10 @@ export default function QuestManagementScreen() {
                 console.log("Quest created successfully:", data);
             } catch (error) {
                 console.error("Failed to create quest:", error);
+                Alert.alert("Ошибка", "Не удалось создать квест");
             }
         },
-        [selectedDate, employees.length, addQuest],
+        [selectedDate, safeEmployees.length, createQuestAction],
     );
 
     // Render header with back button and add quest button
@@ -148,7 +158,7 @@ export default function QuestManagementScreen() {
             </TouchableOpacity>
 
             <Text style={styles.headerTitle}>
-                Квесты ({shiftData.questsCount})
+                Квесты ({safeShifts.questsCount || 0})
             </Text>
 
             <TouchableOpacity
@@ -166,7 +176,8 @@ export default function QuestManagementScreen() {
         <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Квесты на {selectedDate}</Text>
             <Text style={styles.sectionSubtitle}>
-                {quests.length} {quests.length === 1 ? "квест" : "квестов"}
+                {safeQuests.length}{" "}
+                {safeQuests.length === 1 ? "квест" : "квестов"}
             </Text>
         </View>
     );
@@ -204,6 +215,22 @@ export default function QuestManagementScreen() {
     // Item separator
     const ItemSeparator = () => <View style={styles.itemSeparator} />;
 
+    // Show loading if context is still loading
+    if (loading && safeQuests.length === 0) {
+        return (
+            <SafeAreaView
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
+                <StatusBar
+                    barStyle="light-content"
+                    backgroundColor="rgba(25, 25, 26, 1)"
+                />
+                {renderHeader()}
+                {renderLoadingState()}
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView
             style={{ ...styles.container, ...backgroundsStyles.generalBg }}
@@ -217,11 +244,11 @@ export default function QuestManagementScreen() {
 
             <Calendar days={days} onDayPress={handleDayPress} />
 
-            {loading || questsLoading ? (
+            {questsLoading ? (
                 renderLoadingState()
             ) : (
                 <FlatList
-                    data={quests}
+                    data={safeQuests}
                     renderItem={renderQuestItem}
                     keyExtractor={keyExtractor}
                     ListHeaderComponent={renderSectionTitle}

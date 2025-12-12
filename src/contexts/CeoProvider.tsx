@@ -154,9 +154,32 @@ const fetchShiftsData = async (inputs: QueryInputs): Promise<Shift | null> => {
 };
 const fetchQuestsData = async (inputs: QueryInputs): Promise<Quest | null> => {
     try {
-        const response = await getQuests(1, {});
+        // TODO change to input while there be quests
+        const response = await getQuests(2, {});
 
-        return response;
+        console.log("quests", response);
+        // TODO Добавить нормальный запрос на списко квестов
+
+        return [
+            response,
+            {
+                id: "1",
+                title: "title",
+                description: "description",
+                reward: 5,
+                current: 2,
+                target: 10,
+                unit: "unit",
+                completed: true,
+                progress: 3,
+                expiresAt: "25.12.2025",
+                totalEmployees: 5,
+                completedEmployees: 3,
+                employeeNames: ["ASD", "zxc", "zzz"],
+                date: "12.12.2025",
+                employeeProgress: [1, 2, 3],
+            },
+        ];
     } catch (error) {
         console.error("Error fetching quests:", error);
         throw error; // Re-throw to handle in fetchAll
@@ -194,12 +217,12 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             const [employeesData, shiftsData, questsData] = await Promise.all([
                 fetchEmployeesData(inputs),
                 fetchShiftsData(inputs),
-                // fetchQuestsData(inputs),
+                fetchQuestsData(inputs),
             ]);
 
             setEmployees(employeesData);
             setShifts(shiftsData);
-            // setQuests(questsData);
+            setQuests(questsData);
         } catch (err: any) {
             console.error("❌ Error fetching CEO data:", err);
             setError(

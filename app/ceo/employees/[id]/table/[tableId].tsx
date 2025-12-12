@@ -156,11 +156,10 @@ export default function TableDetailScreen() {
                 contentContainerStyle={styles.contentContainer}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.headerButton}
+                        onPress={() => router.push("/ceo")}
+                        style={styles.backButton}
                         activeOpacity={0.7}
                     >
                         <Svg
@@ -175,8 +174,8 @@ export default function TableDetailScreen() {
                             />
                         </Svg>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>{tableId}</Text>
-                    <View></View>
+                    <Text style={styles.headerTitle}>Сотрудники</Text>
+                    <View style={styles.headerSpacer} />
                 </View>
 
                 <LocationDisplay location={mockData.order.location} />
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         backgroundColor: "rgba(25, 25, 26, 1)",
     },
-    headerButton: {
+    backButton: {
         width: 28,
         height: 28,
         alignItems: "center",
@@ -244,18 +243,9 @@ const styles = StyleSheet.create({
         lineHeight: 28,
         letterSpacing: -0.24,
     },
-    headerMenuItem: {
-        flexDirection: "row",
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        alignItems: "center",
-        justifyContent: "space-between",
-        borderRadius: 12,
-        gap: 6,
-    },
-    headerMenuTitle: {
-        color: "#FFFFFF",
-        fontSize: 16,
+    headerSpacer: {
+        width: 28,
+        height: 28,
     },
     segmentedControlContainer: {
         paddingHorizontal: 16,
@@ -294,7 +284,6 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         paddingHorizontal: 16,
-        paddingTop: 28,
         gap: 28,
         paddingBottom: 200,
     },
