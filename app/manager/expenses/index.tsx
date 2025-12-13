@@ -150,6 +150,7 @@ export default function ExpensesScreen() {
     const renderItemList = () => {
         if (activeTab === "expense") {
             // TODO add real data api
+
             const currentData = {
                 data: [],
                 type: "negative",
