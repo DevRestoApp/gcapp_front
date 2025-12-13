@@ -28,6 +28,7 @@ function AuthWrapper() {
                     flex: 1,
                     justifyContent: "center",
                     alignItems: "center",
+                    backgroundColor: "#242424",
                 }}
             >
                 <ActivityIndicator size="large" />

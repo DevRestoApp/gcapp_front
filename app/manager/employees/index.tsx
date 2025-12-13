@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -8,67 +8,28 @@ import {
     StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
-
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
-import AddPenaltyModal, {
-    AddPenaltyModalRef,
-} from "@/src/client/components/modals/AddPenaltyModal";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
+import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useCeo } from "@/src/contexts/CeoProvider";
 
-export default function PenaltiesScreen() {
+export default function EmployeesScreen() {
     const router = useRouter();
-    const { employees, shifts, createFineAction } = useCeo();
-    const [activeTab, setActiveTab] = useState<"open" | "all">("open");
-    const [selectedEmployeeForPenalty, setSelectedEmployeeForPenalty] =
-        useState<any>(null);
+    const { employees, shifts, loading, error, refetch } = useCeo();
+    console.log("em", employees);
 
-    const addPenaltyModalRef = useRef<AddPenaltyModalRef>(null);
+    const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+
+    const { setSelectedEmployee } = useEmployee();
 
     const filteredEmployees =
         activeTab === "open"
             ? employees.filter((emp) => emp.isActive)
             : employees;
-
-    // Handle employee card press to open penalty modal
-    const handleEmployeePress = useCallback((employee: any) => {
-        setSelectedEmployeeForPenalty(employee);
-        addPenaltyModalRef.current?.open();
-    }, []);
-
-    // Handle penalty submission
-    const handleAddPenalty = useCallback(
-        async (data: {
-            employeeId: string;
-            employeeName: string;
-            reason: string;
-            amount: number;
-            date: string;
-        }) => {
-            try {
-                await createFineAction({
-                    employeeId: String(data.employeeId),
-                    employeeName: data.employeeName,
-                    reason: data.reason,
-                    amount: data.amount,
-                    date: data.date,
-                });
-            } catch (error) {
-                console.error("Failed to create fine:", error);
-                // Error is already shown in the modal
-                throw error; // Re-throw so modal knows it failed
-            }
-        },
-        [createFineAction],
-    );
-
-    // Handle modal cancel
-    const handleModalCancel = useCallback(() => {
-        setSelectedEmployeeForPenalty(null);
-    }, []);
 
     return (
         <SafeAreaView
@@ -103,9 +64,7 @@ export default function PenaltiesScreen() {
                             />
                         </Svg>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>
-                        Штрафы ({shifts.finesCount})
-                    </Text>
+                    <Text style={styles.headerTitle}>Сотрудники</Text>
                     <View style={styles.headerSpacer} />
                 </View>
 
@@ -128,7 +87,7 @@ export default function PenaltiesScreen() {
                                         styles.segmentTextActive,
                                 ]}
                             >
-                                Открытые
+                                Открытий
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -156,8 +115,7 @@ export default function PenaltiesScreen() {
                 {/* Employees Section */}
                 <View style={styles.employeesSection}>
                     <Text style={styles.sectionTitle}>
-                        Выберите сотрудника для штрафа (
-                        {filteredEmployees.length})
+                        Сотрудники ({filteredEmployees.length})
                     </Text>
 
                     <View style={styles.employeesList}>
@@ -170,20 +128,18 @@ export default function PenaltiesScreen() {
                                 totalAmount={employee.totalAmount}
                                 shiftTime={employee.shiftTime}
                                 showStats={activeTab === "open"}
-                                onPress={() => handleEmployeePress(employee)}
+                                onPress={() => {
+                                    setSelectedEmployee(employee);
+                                    // Navigate to employee detail page
+                                    router.push({
+                                        pathname: `ceo/employees/${employee.id}`,
+                                    });
+                                }}
                             />
                         ))}
                     </View>
                 </View>
             </ScrollView>
-
-            {/* Add Penalty Modal */}
-            <AddPenaltyModal
-                ref={addPenaltyModalRef}
-                employees={employees}
-                onAddPenalty={handleAddPenalty}
-                onCancel={() => setSelectedEmployeeForPenalty(null)}
-            />
         </SafeAreaView>
     );
 }

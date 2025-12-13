@@ -189,17 +189,8 @@ export default function RolePicker({
         </TouchableOpacity>
     );
 
-    const renderHomeIndicator = () => (
-        <View style={styles.homeIndicatorContainer}>
-            <View style={styles.homeIndicator} />
-        </View>
-    );
-
     const renderBottomSection = () => (
-        <View style={styles.bottomSection}>
-            {renderLoginButton()}
-            {renderHomeIndicator()}
-        </View>
+        <View style={styles.bottomSection}>{renderLoginButton()}</View>
     );
 
     // ========================================================================

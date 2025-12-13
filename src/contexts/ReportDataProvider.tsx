@@ -7,6 +7,9 @@ import React, {
     ReactNode,
 } from "react";
 import { useRouter } from "expo-router";
+
+import { getTodayFormatted } from "@/src/utils/utils";
+
 import { getMoneyflowData } from "@/src/server/reports/moneyflow";
 import { getOrdersData } from "@/src/server/reports/orders";
 import { getProfitLossData } from "@/src/server/reports/profitloss";
@@ -181,7 +184,6 @@ export const useReports = () => {
 const fetchMainMetrics = async (
     filters: ReportFilters,
 ): Promise<MetricData[]> => {
-    console.log("Fetching metrics with filters:", filters);
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     return [
@@ -368,18 +370,9 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [salesDynamics, setSalesDynamics] = useState<any | null>(null);
     const [organizations, setOrganizations] = useState<any | null>(null);
 
-    // Helper function to format today's date as DD.MM.YYYY
-    const getTodayFormatted = () => {
-        const today = new Date();
-        const day = today.getDate().toString().padStart(2, "0");
-        const month = (today.getMonth() + 1).toString().padStart(2, "0");
-        const year = today.getFullYear();
-        return `${day}.${month}.${year}`;
-    };
-
     // Filter state - shared across ALL report screens
     const [filters, setFilters] = useState<ReportFilters>({
-        date: "29.10.2025",
+        date: getTodayFormatted(),
         period: "",
         organization_id: "",
     });

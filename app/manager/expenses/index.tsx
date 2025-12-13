@@ -18,8 +18,47 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import SegmentedControl from "@/src/client/components/Tabs";
+import { Ionicons } from "@expo/vector-icons";
+import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
+import ValueBadge from "@/src/client/components/ValueBadge";
+import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
+import { icons } from "@/src/client/icons/icons";
 
-export default function IndexScreen() {
+// Helper function to format data items for OrderHistoryCard
+const formatDataItem = (item: any, index: number, itemType: string) => {
+    // Extract the display name
+    const tableNumber =
+        item.name ||
+        item.item ||
+        item.reason ||
+        item.source ||
+        `Элемент ${index + 1}`;
+
+    // Extract and format the amount
+    const rawAmount = item.amount || item.quantity || 0;
+    const formattedAmount =
+        typeof rawAmount === "number"
+            ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
+            : rawAmount;
+
+    // Extract time if available, otherwise use current time or empty
+    const time = item.time || "";
+    let formattedType = "positive";
+    if (itemType === "negative") {
+        formattedType = "negative";
+    }
+
+    return {
+        id: item.id || index,
+        tableNumber,
+        amount: formattedAmount,
+        time,
+        type: formattedType,
+    };
+};
+
+export default function ExpensesScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
@@ -33,6 +72,7 @@ export default function IndexScreen() {
     } = useCeo();
 
     const [days, setDays] = useState<Day[]>([]);
+    const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
 
     // Initialize calendar
     useEffect(() => {
@@ -80,129 +120,103 @@ export default function IndexScreen() {
         [days],
     );
 
-    // Navigation handlers
-    const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
-    }, [router]);
-
-    const handlePenaltiesPress = useCallback(() => {
-        router.push("/ceo/penalties");
-    }, [router]);
-
-    const handleMotivationPress = useCallback(() => {
-        router.push("/ceo/motivation");
-    }, [router]);
-
     // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Смена</Text>
-                <View style={styles.timerBadge}>
-                    <Text style={styles.timerIcon}>⏰</Text>
-                    <Text style={styles.timerText}>{shifts?.elapsedTime}</Text>
-                </View>
+                <Text style={styles.headerTitle}>Расходы</Text>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
         </View>
     );
 
-    // Render employees section
-    const renderEmployeesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Сотрудники</Text>
-            <View style={styles.card}>
-                {/* Open Employees Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
-                        <Text style={styles.infoValue}>
-                            {shifts?.openEmployees} официанта
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
+    const renderTabs = () => {
+        const tabs = [
+            { label: "Расход", value: "expense" },
+            { label: "Доход", value: "income" },
+        ];
 
-                <View style={styles.divider} />
-
-                {/* Total Amount Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Общая сумма</Text>
-                        <Text style={styles.infoValue}>
-                            {shifts?.totalAmount.toLocaleString()} тг
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
+        return (
+            <View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                ></SegmentedControl>
             </View>
-        </View>
-    );
+        );
+    };
 
-    // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы{" "}
-                <Text style={styles.countBadge}>({shifts?.finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет списка штрафов</Text>
+    const renderItemList = () => {
+        if (activeTab === "expense") {
+            // TODO add real data api
+
+            const currentData = {
+                data: [],
+                type: "negative",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["dishes"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
-                <Text style={styles.countBadge}>
-                    ({shifts?.motivationCount})
-                </Text>
-            </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
-        </View>
-    );
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        } else {
+            // TODO add real data api
+            const currentData = {
+                data: [],
+                type: "positive",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["writeoffs"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
+                </View>
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        }
+    };
 
     return (
         <SafeAreaView
@@ -228,9 +242,9 @@ export default function IndexScreen() {
                 ) : (
                     <>
                         {renderHeader()}
-                        {renderEmployeesSection()}
-                        {renderFinesSection()}
-                        {renderMotivationSection()}
+                        {renderTabs()}
+
+                        {renderItemList()}
                     </>
                 )}
             </ScrollView>
@@ -249,7 +263,6 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 128,
-        gap: 28,
     },
 
     // Header Section
@@ -269,28 +282,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    },
-    timerBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: "rgba(255, 158, 0, 0.08)",
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    timerIcon: {
-        fontSize: 16,
-    },
-    timerText: {
-        color: "#FF9E00",
-        fontSize: 16,
-        fontWeight: "600",
-        letterSpacing: -0.064,
-        lineHeight: 20,
-    },
-
-    // Section
+    }, // Section
     section: {
         paddingHorizontal: 16,
         gap: 16,
@@ -394,5 +386,17 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
         lineHeight: 24,
+    },
+    listContainer: {
+        gap: 12,
+    },
+    noDataContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    noDataText: {
+        color: "#666",
+        fontSize: 16,
+        textAlign: "center",
     },
 });

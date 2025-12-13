@@ -1,4 +1,3 @@
-// AddPenaltyModal.tsx
 import React, { useRef, useCallback, useState } from "react";
 import {
     View,
@@ -11,20 +10,27 @@ import {
 } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 
+// ============================================================================
+// Types
+// ============================================================================
+
 interface Employee {
     id: string;
     name: string;
     role: string;
 }
 
+interface PenaltyFormData {
+    employeeId: string;
+    employeeName: string;
+    reason: string;
+    amount: number;
+    date: string;
+}
+
 interface AddPenaltyModalProps {
     employees: Employee[];
-    onAddPenalty?: (data: {
-        employeeId: string;
-        employeeName: string;
-        reason: string;
-        amount: number;
-    }) => void;
+    onAddPenalty?: (data: PenaltyFormData) => Promise<void> | void;
     onCancel?: () => void;
 }
 
@@ -34,11 +40,22 @@ export type AddPenaltyModalRef = {
     isVisible: () => boolean;
 };
 
+// ============================================================================
+// Component
+// ============================================================================
+
 const AddPenaltyModal = React.forwardRef<
     AddPenaltyModalRef,
     AddPenaltyModalProps
 >(({ employees, onAddPenalty, onCancel }, ref) => {
+    // ====================================================================
+    // Refs
+    // ====================================================================
     const modalRef = useRef<ModalWrapperRef>(null);
+
+    // ====================================================================
+    // State
+    // ====================================================================
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
         null,
@@ -47,15 +64,20 @@ const AddPenaltyModal = React.forwardRef<
     const [amount, setAmount] = useState("");
     const [showEmployeePicker, setShowEmployeePicker] = useState(false);
 
-    // Imperative handle for parent control
+    // ====================================================================
+    // Imperative Handle
+    // ====================================================================
     React.useImperativeHandle(ref, () => ({
         open: () => modalRef.current?.open(),
         close: () => modalRef.current?.close(),
         isVisible: () => modalRef.current?.isVisible() || false,
     }));
 
-    // Reset form when modal opens
-    const handleOpen = useCallback(() => {
+    // ====================================================================
+    // Handlers
+    // ====================================================================
+
+    const resetForm = useCallback(() => {
         setSelectedEmployee(null);
         setReason("");
         setAmount("");
@@ -63,67 +85,75 @@ const AddPenaltyModal = React.forwardRef<
         setIsSubmitting(false);
     }, []);
 
-    // Handle modal close
+    const handleOpen = useCallback(() => {
+        resetForm();
+    }, [resetForm]);
+
     const handleClose = useCallback(() => {
-        setSelectedEmployee(null);
-        setReason("");
-        setAmount("");
-        setShowEmployeePicker(false);
-        setIsSubmitting(false);
+        resetForm();
         onCancel?.();
         modalRef.current?.close();
-    }, [onCancel]);
+    }, [resetForm, onCancel]);
 
-    // Handle employee selection
     const handleEmployeeSelect = useCallback((employee: Employee) => {
         setSelectedEmployee(employee);
         setShowEmployeePicker(false);
     }, []);
 
-    // Handle penalty submission
-    const handleSubmit = useCallback(async () => {
-        // Validation
+    const validateForm = useCallback((): boolean => {
         if (!selectedEmployee) {
             Alert.alert("Ошибка", "Пожалуйста, выберите сотрудника");
-            return;
+            return false;
         }
         if (!reason.trim()) {
             Alert.alert("Ошибка", "Пожалуйста, укажите причину штрафа");
-            return;
+            return false;
         }
         if (!amount.trim() || isNaN(Number(amount)) || Number(amount) <= 0) {
             Alert.alert(
                 "Ошибка",
                 "Пожалуйста, укажите корректную сумму штрафа",
             );
-            return;
+            return false;
         }
+        return true;
+    }, [selectedEmployee, reason, amount]);
+
+    const handleSubmit = useCallback(async () => {
+        if (!validateForm()) return;
 
         setIsSubmitting(true);
 
         try {
-            // Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            onAddPenalty?.({
-                employeeId: selectedEmployee.id,
-                employeeName: selectedEmployee.name,
+            await onAddPenalty?.({
+                employeeId: selectedEmployee!.id,
+                employeeName: selectedEmployee!.name,
                 reason: reason.trim(),
                 amount: Number(amount),
+                date: new Date().toISOString(),
             });
 
-            Alert.alert("Успешно", "Штраф успешно добавлен", [
-                { text: "OK", onPress: handleClose },
-            ]);
+            // Close modal after successful submission
+            handleClose();
         } catch (error) {
-            console.log(error);
+            console.error("Error adding penalty:", error);
             Alert.alert("Ошибка", "Не удалось добавить штраф");
         } finally {
             setIsSubmitting(false);
         }
-    }, [selectedEmployee, reason, amount, onAddPenalty, handleClose]);
+    }, [
+        validateForm,
+        selectedEmployee,
+        reason,
+        amount,
+        onAddPenalty,
+        handleClose,
+    ]);
 
-    // Render close button
+    // ====================================================================
+    // Render Functions
+    // ====================================================================
+
     const renderCloseButton = () => (
         <TouchableOpacity
             style={styles.closeButton}
@@ -135,7 +165,6 @@ const AddPenaltyModal = React.forwardRef<
         </TouchableOpacity>
     );
 
-    // Render header
     const renderHeader = () => (
         <View style={styles.header}>
             <View style={styles.headerContent}>
@@ -145,7 +174,6 @@ const AddPenaltyModal = React.forwardRef<
         </View>
     );
 
-    // Render employee picker
     const renderEmployeePicker = () => (
         <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Сотрудник</Text>
@@ -196,7 +224,6 @@ const AddPenaltyModal = React.forwardRef<
         </View>
     );
 
-    // Render reason input
     const renderReasonInput = () => (
         <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Причина штрафа</Text>
@@ -210,12 +237,12 @@ const AddPenaltyModal = React.forwardRef<
                 numberOfLines={3}
                 textAlignVertical="top"
                 maxLength={200}
+                editable={!isSubmitting}
             />
             <Text style={styles.characterCount}>{reason.length}/200</Text>
         </View>
     );
 
-    // Render amount input
     const renderAmountInput = () => (
         <View style={styles.inputSection}>
             <Text style={styles.inputLabel}>Сумма штрафа</Text>
@@ -227,14 +254,14 @@ const AddPenaltyModal = React.forwardRef<
                     placeholder="0"
                     placeholderTextColor="rgba(121, 122, 128, 1)"
                     keyboardType="numeric"
-                    maxLength={10}
+                    maxLength={20}
+                    editable={!isSubmitting}
                 />
                 <Text style={styles.currencyLabel}>тг</Text>
             </View>
         </View>
     );
 
-    // Render actions
     const renderActions = () => (
         <View style={styles.actions}>
             <TouchableOpacity
@@ -267,6 +294,10 @@ const AddPenaltyModal = React.forwardRef<
         </View>
     );
 
+    // ====================================================================
+    // Main Render
+    // ====================================================================
+
     return (
         <ModalWrapper
             ref={modalRef}
@@ -291,6 +322,10 @@ const AddPenaltyModal = React.forwardRef<
 AddPenaltyModal.displayName = "AddPenaltyModal";
 export default AddPenaltyModal;
 
+// ============================================================================
+// Styles
+// ============================================================================
+
 const styles = StyleSheet.create({
     modalContent: {
         padding: 0,
@@ -301,7 +336,7 @@ const styles = StyleSheet.create({
         gap: 24,
     },
 
-    // Header styles
+    // Header
     header: {
         gap: 8,
     },
@@ -332,7 +367,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
 
-    // Form section styles
+    // Form
     formSection: {
         gap: 20,
     },
@@ -346,7 +381,7 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
 
-    // Employee picker styles
+    // Employee Picker
     pickerButton: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -396,7 +431,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
 
-    // Text input styles
+    // Text Input
     textInput: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -413,7 +448,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
 
-    // Amount input styles
+    // Amount Input
     amountInputContainer: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -434,7 +469,7 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
 
-    // Actions styles
+    // Actions
     actions: {
         flexDirection: "row",
         gap: 12,
