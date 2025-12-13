@@ -19,7 +19,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useCeo } from "@/src/contexts/CeoProvider";
 
-export default function IndexScreen() {
+export default function StorageScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
@@ -80,123 +80,13 @@ export default function IndexScreen() {
         [days],
     );
 
-    // Navigation handlers
-    const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
-    }, [router]);
-
-    const handlePenaltiesPress = useCallback(() => {
-        router.push("/ceo/penalties");
-    }, [router]);
-
-    const handleMotivationPress = useCallback(() => {
-        router.push("/ceo/motivation");
-    }, [router]);
-
     // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Смена</Text>
+                <Text style={styles.headerTitle}>Склад</Text>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
-        </View>
-    );
-
-    // Render employees section
-    const renderEmployeesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Сотрудники</Text>
-            <View style={styles.card}>
-                {/* Open Employees Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
-                        <Text style={styles.infoValue}>
-                            {shifts?.openEmployees} официанта
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-
-                {/* Total Amount Row */}
-                <TouchableOpacity
-                    style={styles.infoRow}
-                    onPress={handleEmployeesPress}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
-                    </View>
-                    <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>Общая сумма</Text>
-                        <Text style={styles.infoValue}>
-                            {shifts?.totalAmount.toLocaleString()} тг
-                        </Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы{" "}
-                <Text style={styles.countBadge}>({shifts?.finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет списка штрафов</Text>
-                </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
-                <Text style={styles.countBadge}>
-                    ({shifts?.motivationCount})
-                </Text>
-            </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
         </View>
     );
 
@@ -222,12 +112,7 @@ export default function IndexScreen() {
                         </Text>
                     </View>
                 ) : (
-                    <>
-                        {renderHeader()}
-                        {renderEmployeesSection()}
-                        {renderFinesSection()}
-                        {renderMotivationSection()}
-                    </>
+                    <>{renderHeader()}</>
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -264,9 +149,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    },
-
-    // Section
+    }, // Section
     section: {
         paddingHorizontal: 16,
         gap: 16,
