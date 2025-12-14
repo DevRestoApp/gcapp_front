@@ -18,76 +18,18 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
-import { FormContainer } from "@/src/client/components/form/FormContainer";
-import { FormField } from "@/src/client/components/form/FormFields";
-import { OptionPicker } from "@/src/client/components/form/OptionPicker";
-import { CommentInput } from "@/src/client/components/form/Comment";
-import { NumberInput } from "@/src/client/components/form/NumberInput";
 import { Ionicons } from "@expo/vector-icons";
+import StorageForm from "./forms";
 
-export default function IncomeScreen() {
+export default function AddScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
     const { loading, setDate: setInputDate } = useCeo();
 
-    const [days, setDays] = useState<Day[]>([]);
-
-    // Form states
-    const [category, setCategory] = useState("");
-    const [amount, setAmount] = useState("");
-    const [date, setDate] = useState("");
-    const [comment, setComment] = useState("");
-    const [showCalendar, setShowCalendar] = useState(false);
-
-    // Initialize calendar
-    useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            });
-        }
-
-        setDays(weekDays);
-    }, []);
-
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setInputDate(dateStr);
-
-            // Update selected date in context
-            // updateshiftData?({ selectedDate: dateStr });
-        },
-        [days],
-    );
-
-    // Render header
+    // ... keep calendar initialization and handleDayPress ...
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
@@ -100,59 +42,8 @@ export default function IncomeScreen() {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Поступления</Text>
             </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
         </View>
     );
-
-    const renderForm = () => {
-        const categoryOptions = [
-            { label: "Аренда", value: "rent" },
-            { label: "Зарплата", value: "salary" },
-            { label: "Ком. услуга", value: "asd" },
-            { label: "Товары", value: "stuff" },
-            { label: "Другое", value: "other" },
-        ];
-
-        const handleSubmit = () => {
-            console.log({ category, date, comment });
-            // TODO implement proper save handle
-        };
-
-        return (
-            <FormContainer
-                title="Добавить поступления"
-                description="Заполните нужную информацию"
-                onSubmit={handleSubmit}
-                submitText="Сохранить"
-            >
-                <FormField label="Категория">
-                    <OptionPicker
-                        options={categoryOptions}
-                        value={category}
-                        onChange={setCategory}
-                        placeholder="Выберите статью"
-                    />
-                </FormField>
-                <FormField label="Сумма">
-                    <NumberInput
-                        value={amount}
-                        onChange={setAmount}
-                        placeholder="Выберите сумму"
-                        currency={"тг"}
-                        maxLength={20}
-                    />
-                </FormField>
-
-                <FormField label="Коментарий">
-                    <CommentInput
-                        value={comment}
-                        onChange={setComment}
-                        placeholder="Напишите коментарий"
-                    />
-                </FormField>
-            </FormContainer>
-        );
-    };
 
     return (
         <SafeAreaView
@@ -179,7 +70,7 @@ export default function IncomeScreen() {
                     <>
                         {renderHeader()}
 
-                        {renderForm()}
+                        {StorageForm()}
                     </>
                 )}
             </ScrollView>
@@ -218,16 +109,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    }, // Section
-    section: {
-        paddingHorizontal: 16,
-        gap: 16,
-    },
-    sectionTitle: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
     },
     countBadge: {
         color: "#797A80",

@@ -18,12 +18,12 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 import SegmentedControl from "@/src/client/components/Tabs";
-import { Ionicons } from "@expo/vector-icons";
-import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
-import ValueBadge from "@/src/client/components/ValueBadge";
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
+import Entypo from "@expo/vector-icons/Entypo";
+import { useEmployee } from "@/src/contexts/EmployeeContext";
 
 // Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
@@ -58,23 +58,20 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
     };
 };
 
-export default function ExpensesScreen() {
+export default function StorageScreen() {
     const router = useRouter();
 
+    const { setSelectedStorageTab } = useManager();
+
     // Get data from context instead of local state
-    const {
-        employees,
-        shifts,
-        loading,
-        error,
-        refetch,
-        setDate: setInputDate,
-    } = useCeo();
+    const { loading, setDate: setInputDate } = useCeo();
 
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<
         "receipts" | "inventory" | "writeoffs"
     >("receipts");
+    // initial valur for provider state
+    setSelectedStorageTab("receipts");
 
     // Initialize calendar
     useEffect(() => {
@@ -132,6 +129,18 @@ export default function ExpensesScreen() {
         </View>
     );
 
+    const renderAddButton = () => {
+        return (
+            <TouchableOpacity
+                onPress={() => router.push("/manager/storage/add")}
+                style={styles.addButton}
+                activeOpacity={0.7}
+            >
+                <Entypo name="plus" size={40} color="black" />
+            </TouchableOpacity>
+        );
+    };
+
     const renderTabs = () => {
         const tabs = [
             { label: "Поступления", value: "receipts" },
@@ -140,13 +149,16 @@ export default function ExpensesScreen() {
         ];
 
         return (
-            <View>
-                <SegmentedControl
-                    tabs={tabs}
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                ></SegmentedControl>
-            </View>
+            <SegmentedControl
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={(value) => {
+                    setActiveTab(
+                        value as "receipts" | "inventory" | "writeoffs",
+                    );
+                    setSelectedStorageTab(value);
+                }}
+            />
         );
     };
 
@@ -251,6 +263,7 @@ export default function ExpensesScreen() {
                     </>
                 )}
             </ScrollView>
+            {renderAddButton()}
         </SafeAreaView>
     );
 }
@@ -370,24 +383,20 @@ const styles = StyleSheet.create({
 
     // Add Button
     addButton: {
-        flexDirection: "row",
-        alignItems: "center",
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: "#ffffff",
         justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
-        fontWeight: "600",
+        alignItems: "center",
+        position: "absolute",
+        bottom: 16,
+        right: 16,
     },
     addButtonText: {
-        color: "#2C2D2E",
-        fontSize: 16,
+        color: "#000000",
+        fontSize: 20,
         fontWeight: "600",
-        textAlign: "center",
         lineHeight: 24,
     },
     listContainer: {

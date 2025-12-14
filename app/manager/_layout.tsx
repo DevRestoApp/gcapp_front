@@ -144,7 +144,13 @@ export default function ManagerLayout() {
                         }}
                     />
                     <Tabs.Screen
-                        name="storage/receipts"
+                        name="storage/add"
+                        options={{
+                            href: null,
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="storage/forms"
                         options={{
                             href: null,
                         }}

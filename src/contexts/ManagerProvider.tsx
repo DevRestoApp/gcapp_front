@@ -22,11 +22,15 @@ interface ManagerContextType {
     loading: boolean;
     error: string | null;
     queryInputs: QueryInputs;
+    selectedStorageTab: string;
+    selectedExpenseTab: string;
 
     // Actions
     refetch: () => Promise<void>;
     clearError: () => void;
     setDate: (date: string) => void;
+    setSelectedStorageTab: (tab: string) => void;
+    setSelectedExpenseTab: (tab: string) => void;
 }
 
 // ============================================================================
@@ -48,18 +52,17 @@ export const useManager = () => {
 };
 
 // ============================================================================
-// Helper Functions
-// ============================================================================
-
-// ============================================================================
 // Provider Component
 // ============================================================================
 
 export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     // State Management
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedStorageTab, setSelectedStorageTab] =
+        useState<string>("open"); // Set default value
+    const [selectedExpenseTab, setSelectedExpenseTab] =
+        useState<string>("open"); // Added this
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -114,6 +117,10 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const value: ManagerContextType = {
         loading,
         error,
+        selectedStorageTab,
+        selectedExpenseTab,
+        setSelectedStorageTab,
+        setSelectedExpenseTab,
         queryInputs: inputs,
         refetch,
         clearError,

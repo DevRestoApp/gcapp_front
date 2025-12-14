@@ -18,6 +18,7 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { FormContainer } from "@/src/client/components/form/FormContainer";
 import { FormField } from "@/src/client/components/form/FormFields";
@@ -31,6 +32,7 @@ export default function IncomeScreen() {
 
     // Get data from context instead of local state
     const { loading, setDate: setInputDate } = useCeo();
+    const { selectedExpenseTab } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -98,7 +100,7 @@ export default function IncomeScreen() {
                 >
                     <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Расходы</Text>
+                <Text style={styles.headerTitle}>Доходы</Text>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
         </View>
@@ -120,7 +122,7 @@ export default function IncomeScreen() {
 
         return (
             <FormContainer
-                title="Добавить расходы"
+                title="Добавить доходы"
                 description="Заполните нужную информацию"
                 onSubmit={handleSubmit}
                 submitText="Сохранить"

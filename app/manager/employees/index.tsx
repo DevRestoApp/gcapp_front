@@ -132,7 +132,7 @@ export default function EmployeesScreen() {
                                     setSelectedEmployee(employee);
                                     // Navigate to employee detail page
                                     router.push({
-                                        pathname: `ceo/employees/${employee.id}`,
+                                        pathname: `manager/employees/${employee.id}`,
                                     });
                                 }}
                             />
