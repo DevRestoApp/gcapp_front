@@ -30,15 +30,12 @@ export default function QuestManagementScreen() {
     const router = useRouter();
     const { quests, employees, shifts, loading, createQuestAction } = useCeo();
 
+    console.log(employees);
+
     // Add null checks and default values
     const safeQuests = quests || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
-
-    console.log("loading", loading);
-    console.log("quests", quests);
-    console.log("shifts", shifts);
-    console.log("employees", employees);
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -145,7 +142,7 @@ export default function QuestManagementScreen() {
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => router.push("/ceo")}
+                onPress={() => router.push("/manager")}
                 style={styles.backButton}
                 activeOpacity={0.7}
             >
@@ -205,7 +202,7 @@ export default function QuestManagementScreen() {
     const renderQuestItem = ({ item }: { item: QuestEmployees }) => (
         <QuestCardEmployees
             quest={item}
-            onPress={() => router.push(`/ceo/motivation/${item.id}`)}
+            onPress={() => router.push(`/manager/motivation/${item.id}`)}
         />
     );
 

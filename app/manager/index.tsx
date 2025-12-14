@@ -31,6 +31,7 @@ export default function IndexScreen() {
         refetch,
         setDate: setInputDate,
     } = useCeo();
+    console.log("employees", employees);
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -82,15 +83,15 @@ export default function IndexScreen() {
 
     // Navigation handlers
     const handleEmployeesPress = useCallback(() => {
-        router.push("/ceo/employees");
+        router.push("/manager/employees");
     }, [router]);
 
     const handlePenaltiesPress = useCallback(() => {
-        router.push("/ceo/penalties");
+        router.push("/manager/penalties");
     }, [router]);
 
     const handleMotivationPress = useCallback(() => {
-        router.push("/ceo/motivation");
+        router.push("/manager/motivation");
     }, [router]);
 
     // Render header

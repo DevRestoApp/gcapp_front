@@ -92,13 +92,13 @@ export default function IncomeScreen() {
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
                 <TouchableOpacity
-                    onPress={() => router.push("/manager/expenses")}
+                    onPress={() => router.push("/manager/storage")}
                     style={styles.backButton}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                     <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Расходы</Text>
+                <Text style={styles.headerTitle}>Поступления</Text>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
         </View>
@@ -120,7 +120,7 @@ export default function IncomeScreen() {
 
         return (
             <FormContainer
-                title="Добавить расходы"
+                title="Добавить поступления"
                 description="Заполните нужную информацию"
                 onSubmit={handleSubmit}
                 submitText="Сохранить"

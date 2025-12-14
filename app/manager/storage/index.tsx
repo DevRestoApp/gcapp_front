@@ -18,8 +18,47 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import SegmentedControl from "@/src/client/components/Tabs";
+import { Ionicons } from "@expo/vector-icons";
+import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
+import ValueBadge from "@/src/client/components/ValueBadge";
+import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
+import { icons } from "@/src/client/icons/icons";
 
-export default function StorageScreen() {
+// Helper function to format data items for OrderHistoryCard
+const formatDataItem = (item: any, index: number, itemType: string) => {
+    // Extract the display name
+    const tableNumber =
+        item.name ||
+        item.item ||
+        item.reason ||
+        item.source ||
+        `Элемент ${index + 1}`;
+
+    // Extract and format the amount
+    const rawAmount = item.amount || item.quantity || 0;
+    const formattedAmount =
+        typeof rawAmount === "number"
+            ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
+            : rawAmount;
+
+    // Extract time if available, otherwise use current time or empty
+    const time = item.time || "";
+    let formattedType = "positive";
+    if (itemType === "negative") {
+        formattedType = "negative";
+    }
+
+    return {
+        id: item.id || index,
+        tableNumber,
+        amount: formattedAmount,
+        time,
+        type: formattedType,
+    };
+};
+
+export default function ExpensesScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
@@ -33,6 +72,9 @@ export default function StorageScreen() {
     } = useCeo();
 
     const [days, setDays] = useState<Day[]>([]);
+    const [activeTab, setActiveTab] = useState<
+        "receipts" | "inventory" | "writeoffs"
+    >("receipts");
 
     // Initialize calendar
     useEffect(() => {
@@ -90,6 +132,95 @@ export default function StorageScreen() {
         </View>
     );
 
+    const renderTabs = () => {
+        const tabs = [
+            { label: "Поступления", value: "receipts" },
+            { label: "Инвентаризация", value: "inventory" },
+            { label: "Списания", value: "writeoffs" },
+        ];
+
+        return (
+            <View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                ></SegmentedControl>
+            </View>
+        );
+    };
+
+    const renderItemList = () => {
+        if (activeTab === "expense") {
+            // TODO add real data api
+
+            const currentData = {
+                data: [],
+                type: "negative",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["dishes"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
+                </View>
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        } else {
+            // TODO add real data api
+            const currentData = {
+                data: [],
+                type: "positive",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["writeoffs"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
+                </View>
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        }
+    };
+
     return (
         <SafeAreaView
             style={{ ...styles.container, ...backgroundsStyles.generalBg }}
@@ -112,7 +243,12 @@ export default function StorageScreen() {
                         </Text>
                     </View>
                 ) : (
-                    <>{renderHeader()}</>
+                    <>
+                        {renderHeader()}
+                        {renderTabs()}
+
+                        {renderItemList()}
+                    </>
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -253,5 +389,17 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
         lineHeight: 24,
+    },
+    listContainer: {
+        gap: 12,
+    },
+    noDataContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    noDataText: {
+        color: "#666",
+        fontSize: 16,
+        textAlign: "center",
     },
 });
