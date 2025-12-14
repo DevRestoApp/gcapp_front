@@ -48,7 +48,7 @@ export default function EmployeesScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
-                        onPress={() => router.push("/ceo")}
+                        onPress={() => router.push("/manager")}
                         style={styles.backButton}
                         activeOpacity={0.7}
                     >
@@ -132,7 +132,7 @@ export default function EmployeesScreen() {
                                     setSelectedEmployee(employee);
                                     // Navigate to employee detail page
                                     router.push({
-                                        pathname: `ceo/employees/${employee.id}`,
+                                        pathname: `manager/employees/${employee.id}`,
                                     });
                                 }}
                             />

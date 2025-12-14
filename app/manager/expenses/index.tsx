@@ -19,11 +19,12 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useCeo } from "@/src/contexts/CeoProvider";
 import SegmentedControl from "@/src/client/components/Tabs";
-import { Ionicons } from "@expo/vector-icons";
+import Entypo from "@expo/vector-icons/Entypo";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import ValueBadge from "@/src/client/components/ValueBadge";
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 // Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
@@ -63,16 +64,17 @@ export default function ExpensesScreen() {
 
     // Get data from context instead of local state
     const {
-        employees,
-        shifts,
+        setSelectedExpenseTab,
         loading,
         error,
         refetch,
         setDate: setInputDate,
-    } = useCeo();
+    } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
+    // initial value for provider state
+    setSelectedExpenseTab("expense");
 
     // Initialize calendar
     useEffect(() => {
@@ -144,6 +146,18 @@ export default function ExpensesScreen() {
                     onTabChange={setActiveTab}
                 ></SegmentedControl>
             </View>
+        );
+    };
+
+    const renderAddButton = () => {
+        return (
+            <TouchableOpacity
+                onPress={() => router.push(`/manager/expenses/${activeTab}`)}
+                style={styles.addButton}
+                activeOpacity={0.7}
+            >
+                <Entypo name="plus" size={40} color="black" />
+            </TouchableOpacity>
         );
     };
 
@@ -248,6 +262,7 @@ export default function ExpensesScreen() {
                     </>
                 )}
             </ScrollView>
+            {renderAddButton()}
         </SafeAreaView>
     );
 }
@@ -365,26 +380,21 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 
-    // Add Button
     addButton: {
-        flexDirection: "row",
-        alignItems: "center",
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: "#ffffff",
         justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
-        fontWeight: "600",
+        alignItems: "center",
+        position: "absolute",
+        bottom: 16,
+        right: 16,
     },
     addButtonText: {
-        color: "#2C2D2E",
-        fontSize: 16,
+        color: "#000000",
+        fontSize: 20,
         fontWeight: "600",
-        textAlign: "center",
         lineHeight: 24,
     },
     listContainer: {

@@ -19,29 +19,59 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import SegmentedControl from "@/src/client/components/Tabs";
+import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
+import { icons } from "@/src/client/icons/icons";
+import Entypo from "@expo/vector-icons/Entypo";
+import { useEmployee } from "@/src/contexts/EmployeeContext";
 
-import { FormContainer } from "@/src/client/components/form/FormContainer";
-import { FormField } from "@/src/client/components/form/FormFields";
-import { OptionPicker } from "@/src/client/components/form/OptionPicker";
-import { CommentInput } from "@/src/client/components/form/Comment";
-import { NumberInput } from "@/src/client/components/form/NumberInput";
-import { Ionicons } from "@expo/vector-icons";
+// Helper function to format data items for OrderHistoryCard
+const formatDataItem = (item: any, index: number, itemType: string) => {
+    // Extract the display name
+    const tableNumber =
+        item.name ||
+        item.item ||
+        item.reason ||
+        item.source ||
+        `Элемент ${index + 1}`;
 
-export default function IncomeScreen() {
+    // Extract and format the amount
+    const rawAmount = item.amount || item.quantity || 0;
+    const formattedAmount =
+        typeof rawAmount === "number"
+            ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
+            : rawAmount;
+
+    // Extract time if available, otherwise use current time or empty
+    const time = item.time || "";
+    let formattedType = "positive";
+    if (itemType === "negative") {
+        formattedType = "negative";
+    }
+
+    return {
+        id: item.id || index,
+        tableNumber,
+        amount: formattedAmount,
+        time,
+        type: formattedType,
+    };
+};
+
+export default function StorageScreen() {
     const router = useRouter();
+
+    const { setSelectedStorageTab } = useManager();
 
     // Get data from context instead of local state
     const { loading, setDate: setInputDate } = useCeo();
-    const { selectedExpenseTab } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
-
-    // Form states
-    const [category, setCategory] = useState("");
-    const [amount, setAmount] = useState("");
-    const [date, setDate] = useState("");
-    const [comment, setComment] = useState("");
-    const [showCalendar, setShowCalendar] = useState(false);
+    const [activeTab, setActiveTab] = useState<
+        "receipts" | "inventory" | "writeoffs"
+    >("receipts");
+    // initial valur for provider state
+    setSelectedStorageTab("receipts");
 
     // Initialize calendar
     useEffect(() => {
@@ -93,67 +123,114 @@ export default function IncomeScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
-                <TouchableOpacity
-                    onPress={() => router.push("/manager/expenses")}
-                    style={styles.backButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Доходы</Text>
+                <Text style={styles.headerTitle}>Склад</Text>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
         </View>
     );
 
-    const renderForm = () => {
-        const categoryOptions = [
-            { label: "Аренда", value: "rent" },
-            { label: "Зарплата", value: "salary" },
-            { label: "Ком. услуга", value: "asd" },
-            { label: "Товары", value: "stuff" },
-            { label: "Другое", value: "other" },
+    const renderAddButton = () => {
+        return (
+            <TouchableOpacity
+                onPress={() => router.push("/manager/storage/add")}
+                style={styles.addButton}
+                activeOpacity={0.7}
+            >
+                <Entypo name="plus" size={40} color="black" />
+            </TouchableOpacity>
+        );
+    };
+
+    const renderTabs = () => {
+        const tabs = [
+            { label: "Поступления", value: "receipts" },
+            { label: "Инвентаризация", value: "inventory" },
+            { label: "Списания", value: "writeoffs" },
         ];
 
-        const handleSubmit = () => {
-            console.log({ category, date, comment });
-            // TODO implement proper save handle
-        };
-
         return (
-            <FormContainer
-                title="Добавить доходы"
-                description="Заполните нужную информацию"
-                onSubmit={handleSubmit}
-                submitText="Сохранить"
-            >
-                <FormField label="Категория">
-                    <OptionPicker
-                        options={categoryOptions}
-                        value={category}
-                        onChange={setCategory}
-                        placeholder="Выберите статью"
-                    />
-                </FormField>
-                <FormField label="Сумма">
-                    <NumberInput
-                        value={amount}
-                        onChange={setAmount}
-                        placeholder="Выберите сумму"
-                        currency={"тг"}
-                        maxLength={20}
-                    />
-                </FormField>
-
-                <FormField label="Коментарий">
-                    <CommentInput
-                        value={comment}
-                        onChange={setComment}
-                        placeholder="Напишите коментарий"
-                    />
-                </FormField>
-            </FormContainer>
+            <SegmentedControl
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={(value) => {
+                    setActiveTab(
+                        value as "receipts" | "inventory" | "writeoffs",
+                    );
+                    setSelectedStorageTab(value);
+                }}
+            />
         );
+    };
+
+    const renderItemList = () => {
+        if (activeTab === "expense") {
+            // TODO add real data api
+
+            const currentData = {
+                data: [],
+                type: "negative",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["dishes"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
+                </View>
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        } else {
+            // TODO add real data api
+            const currentData = {
+                data: [],
+                type: "positive",
+            };
+            return currentData.data && currentData.data.length > 0 ? (
+                <View style={styles.listContainer}>
+                    {currentData.data.map((item, index) => {
+                        const formattedItem = formatDataItem(
+                            item,
+                            index,
+                            currentData.type,
+                        );
+                        return (
+                            <OrderHistoryCard
+                                key={formattedItem.id}
+                                tableNumber={formattedItem.tableNumber}
+                                amount={formattedItem.amount}
+                                time={formattedItem.time}
+                                icon={icons["writeoffs"]}
+                                type={currentData.type}
+                            />
+                        );
+                    })}
+                </View>
+            ) : (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
+        }
     };
 
     return (
@@ -180,11 +257,13 @@ export default function IncomeScreen() {
                 ) : (
                     <>
                         {renderHeader()}
+                        {renderTabs()}
 
-                        {renderForm()}
+                        {renderItemList()}
                     </>
                 )}
             </ScrollView>
+            {renderAddButton()}
         </SafeAreaView>
     );
 }
@@ -212,7 +291,6 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         height: 56,
         paddingHorizontal: 16,
-        gap: 16,
     },
     headerTitle: {
         color: "#fff",
@@ -305,24 +383,20 @@ const styles = StyleSheet.create({
 
     // Add Button
     addButton: {
-        flexDirection: "row",
-        alignItems: "center",
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: "#ffffff",
         justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
-        fontWeight: "600",
+        alignItems: "center",
+        position: "absolute",
+        bottom: 16,
+        right: 16,
     },
     addButtonText: {
-        color: "#2C2D2E",
-        fontSize: 16,
+        color: "#000000",
+        fontSize: 20,
         fontWeight: "600",
-        textAlign: "center",
         lineHeight: 24,
     },
     listContainer: {
@@ -336,11 +410,5 @@ const styles = StyleSheet.create({
         color: "#666",
         fontSize: 16,
         textAlign: "center",
-    },
-    backButton: {
-        width: 28,
-        height: 28,
-        justifyContent: "center",
-        alignItems: "center",
     },
 });

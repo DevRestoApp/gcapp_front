@@ -83,9 +83,9 @@ export default function ProfileScreen({
 
             const mockData: ProfileData = {
                 id: userId,
-                name: "Адилет Дегитаев",
+                name: "Амиржан Амир",
                 role: "Владелец",
-                avatar: "https://api.builder.io/api/v1/image/assets/TEMP/e0e80a9a8e34ae933a9711def284c06ceaaf5c18?width=144",
+                avatar: "",
                 shiftStartTime: "09:00",
                 todaysEarnings: 53000,
             };

@@ -18,75 +18,30 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
-export default function StorageScreen() {
+import { Ionicons } from "@expo/vector-icons";
+import StorageForm from "./forms";
+
+export default function AddScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
-    const {
-        employees,
-        shifts,
-        loading,
-        error,
-        refetch,
-        setDate: setInputDate,
-    } = useCeo();
+    const { loading, setDate: setInputDate } = useCeo();
 
-    const [days, setDays] = useState<Day[]>([]);
-
-    // Initialize calendar
-    useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            });
-        }
-
-        setDays(weekDays);
-    }, []);
-
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setInputDate(dateStr);
-
-            // Update selected date in context
-            // updateshiftData?({ selectedDate: dateStr });
-        },
-        [days],
-    );
-
-    // Render header
+    // ... keep calendar initialization and handleDayPress ...
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Склад</Text>
+                <TouchableOpacity
+                    onPress={() => router.push("/manager/storage")}
+                    style={styles.backButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Поступления</Text>
             </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
         </View>
     );
 
@@ -112,7 +67,11 @@ export default function StorageScreen() {
                         </Text>
                     </View>
                 ) : (
-                    <>{renderHeader()}</>
+                    <>
+                        {renderHeader()}
+
+                        {StorageForm()}
+                    </>
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -142,6 +101,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         height: 56,
         paddingHorizontal: 16,
+        gap: 16,
     },
     headerTitle: {
         color: "#fff",
@@ -149,16 +109,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    }, // Section
-    section: {
-        paddingHorizontal: 16,
-        gap: 16,
-    },
-    sectionTitle: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
     },
     countBadge: {
         color: "#797A80",
@@ -253,5 +203,23 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
         lineHeight: 24,
+    },
+    listContainer: {
+        gap: 12,
+    },
+    noDataContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    noDataText: {
+        color: "#666",
+        fontSize: 16,
+        textAlign: "center",
+    },
+    backButton: {
+        width: 28,
+        height: 28,
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
