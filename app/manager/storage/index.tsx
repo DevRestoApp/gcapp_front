@@ -61,7 +61,7 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
 export default function StorageScreen() {
     const router = useRouter();
 
-    const { setSelectedStorageTab } = useManager();
+    const { selectedStorageTab, setSelectedStorageTab } = useManager();
 
     // Get data from context instead of local state
     const { loading, setDate: setInputDate } = useCeo();
@@ -70,8 +70,9 @@ export default function StorageScreen() {
     const [activeTab, setActiveTab] = useState<
         "receipts" | "inventory" | "writeoffs"
     >("receipts");
-    // initial valur for provider state
-    setSelectedStorageTab("receipts");
+    useEffect(() => {
+        setSelectedStorageTab(activeTab);
+    }, [activeTab, setSelectedStorageTab]);
 
     // Initialize calendar
     useEffect(() => {
@@ -157,6 +158,8 @@ export default function StorageScreen() {
                         value as "receipts" | "inventory" | "writeoffs",
                     );
                     setSelectedStorageTab(value);
+                    console.log(value);
+                    console.log("a", selectedStorageTab);
                 }}
             />
         );
