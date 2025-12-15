@@ -24,6 +24,12 @@ import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryIt
 import { icons } from "@/src/client/icons/icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useEmployee } from "@/src/contexts/EmployeeContext";
+import DocumentCard, {
+    DetailRow,
+    CommentRow,
+} from "@/src/client/components/DocumentCard";
+
+// TODO при смене табов, получать данные
 
 // Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
@@ -231,6 +237,19 @@ export default function StorageScreen() {
                     <Text style={styles.noDataText}>
                         Нет данных для отображения
                     </Text>
+
+                    {/*// TODO убрать и положить когда будут данные*/}
+                    <DocumentCard
+                        documentNumber="Поступление №123"
+                        timestamp="14:30"
+                        category="Продукты"
+                        onPress={() => console.log("Pressed")}
+                    >
+                        <DetailRow label="Себестоимость" value="150,000 тг" />
+                        <DetailRow label="Учетная сумма" value="180,000 тг" />
+                        <DetailRow label="Сумма" value="200,000 тг" />
+                        <CommentRow comment="Закупка для нового меню" />
+                    </DocumentCard>
                 </View>
             );
         }
