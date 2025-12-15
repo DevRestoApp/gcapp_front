@@ -26,24 +26,39 @@ import StorageForm from "./forms";
 export default function AddScreen() {
     const router = useRouter();
 
+    const { selectedStorageTab } = useManager();
+
     // Get data from context instead of local state
     const { loading, setDate: setInputDate } = useCeo();
 
     // ... keep calendar initialization and handleDayPress ...
-    const renderHeader = () => (
-        <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity
-                    onPress={() => router.push("/manager/storage")}
-                    style={styles.backButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Поступления</Text>
+    const renderHeader = () => {
+        const names = {
+            receipts: "Поступления",
+            inventory: "Инвентаризация",
+            writeoffs: "Списания",
+        };
+        return (
+            <View style={styles.headerSection}>
+                <View style={styles.headerRow}>
+                    <TouchableOpacity
+                        onPress={() => router.push("/manager/storage")}
+                        style={styles.backButton}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons
+                            name="chevron-back"
+                            size={28}
+                            color="#FFFFFF"
+                        />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>
+                        {names[selectedStorageTab]}
+                    </Text>
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView
