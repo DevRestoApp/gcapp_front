@@ -5,7 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 interface EarningsCardProps {
     amount: string;
 }
-
 export default function EarningsCard({ amount }: EarningsCardProps) {
     return (
         <View style={styles.card}>
