@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollContent: {
-        paddingTop: 78,
+        paddingTop: 16,
     },
 
     // Header
