@@ -78,8 +78,11 @@ export default function ExpensesScreen() {
 
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
-    // initial value for provider state
-    setSelectedExpenseTab("expense");
+
+    // Set initial value in useEffect instead of during render
+    useEffect(() => {
+        setSelectedExpenseTab("expense");
+    }, []); // Empty dependency array = runs once on mount
 
     // Render header
     const renderHeader = () => (

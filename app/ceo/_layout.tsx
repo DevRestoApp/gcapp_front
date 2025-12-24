@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Ionicons, AntDesign } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { CeoProvider } from "@/src/contexts/CeoProvider";
 
@@ -55,8 +55,8 @@ export default function CeoLayout() {
                         href: "/reports",
                         title: "Аналитика",
                         tabBarIcon: ({ color, size }) => (
-                            <AntDesign
-                                name="line-chart"
+                            <MaterialCommunityIcons
+                                name="chart-line"
                                 size={size}
                                 color={color}
                             />

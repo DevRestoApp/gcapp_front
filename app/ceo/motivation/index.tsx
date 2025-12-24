@@ -28,17 +28,13 @@ import { useCeo } from "@/src/contexts/CeoProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
-    const { quests, employees, shifts, loading, createQuestAction } = useCeo();
+    const { quests, employees, shifts, loading, createQuestAction, locations } =
+        useCeo();
 
     // Add null checks and default values
     const safeQuests = quests || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
-
-    console.log("loading", loading);
-    console.log("quests", quests);
-    console.log("shifts", shifts);
-    console.log("employees", employees);
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -264,6 +260,8 @@ export default function QuestManagementScreen() {
                 ref={addQuestModalRef}
                 onAddQuest={handleAddQuest}
                 onCancel={() => {}}
+                employees={employees}
+                locations={locations}
             />
         </SafeAreaView>
     );

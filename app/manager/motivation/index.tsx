@@ -25,12 +25,12 @@ import AddQuestModal, {
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
     const { quests, employees, shifts, loading, createQuestAction } = useCeo();
-
-    console.log(employees);
+    const { locations } = useManager();
 
     // Add null checks and default values
     const safeQuests = quests || [];
@@ -261,6 +261,8 @@ export default function QuestManagementScreen() {
                 ref={addQuestModalRef}
                 onAddQuest={handleAddQuest}
                 onCancel={() => {}}
+                employees={employees}
+                locations={locations}
             />
         </SafeAreaView>
     );

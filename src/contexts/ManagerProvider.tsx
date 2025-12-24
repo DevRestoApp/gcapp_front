@@ -8,6 +8,7 @@ import React, {
 } from "react";
 
 import { getTodayFormatted } from "@/src/utils/utils";
+import { getOrganizationsData } from "@/src/server/general/organizations";
 
 // ============================================================================
 // Types
@@ -26,6 +27,8 @@ interface ManagerContextType {
     queryInputs: QueryInputs;
     selectedStorageTab: string;
     selectedExpenseTab: string;
+    // TODO прописать приходящие
+    locations: any[];
 
     // Actions
     refetch: () => Promise<void>;
@@ -55,6 +58,16 @@ export const useManager = () => {
     return context;
 };
 
+const fetchOrganizations = async (): Promise<any> => {
+    try {
+        const response = await getOrganizationsData();
+        return response.organizations;
+    } catch (e) {
+        console.log(e);
+        return null;
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -67,6 +80,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         useState<string>("open"); // Set default value
     const [selectedExpenseTab, setSelectedExpenseTab] =
         useState<string>("open"); // Added this
+
+    const [locations, setLocations] = useState<any[]>([]);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -84,6 +99,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setError(null);
 
             // PUT REQS here
+            const organizations = await fetchOrganizations();
+            setLocations(organizations);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
             setError(
@@ -132,6 +149,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const value: ManagerContextType = {
         loading,
         error,
+        locations,
         selectedStorageTab,
         selectedExpenseTab,
         setSelectedStorageTab,
