@@ -6,28 +6,26 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    Image,
     ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 import SegmentedControl from "@/src/client/components/Tabs";
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
 import Entypo from "@expo/vector-icons/Entypo";
-import { useEmployee } from "@/src/contexts/EmployeeContext";
 import DocumentCard, {
     DetailRow,
     CommentRow,
 } from "@/src/client/components/DocumentCard";
+
+import { ReportHeader } from "@/src/client/components/reports/header";
 
 // TODO при смене табов, получать данные
 
@@ -67,10 +65,15 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
 export default function StorageScreen() {
     const router = useRouter();
 
-    const { selectedStorageTab, setSelectedStorageTab } = useManager();
-
-    // Get data from context instead of local state
-    const { loading, setDate: setInputDate } = useCeo();
+    const {
+        loading,
+        selectedStorageTab,
+        setSelectedStorageTab,
+        queryInputs,
+        setDate,
+        setPeriod,
+        setLocation,
+    } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<
@@ -99,40 +102,19 @@ export default function StorageScreen() {
         setDays(weekDays);
     }, []);
 
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setInputDate(dateStr);
-
-            // Update selected date in context
-            // updateshiftData?({ selectedDate: dateStr });
-        },
-        [days],
-    );
-
     // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Склад</Text>
-            </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <ReportHeader
+                title="Расходы"
+                date={queryInputs.date}
+                period={queryInputs.period}
+                location={queryInputs.organization_id}
+                onBack={() => router.push("/manager")}
+                onDateChange={setDate}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
+            />
         </View>
     );
 

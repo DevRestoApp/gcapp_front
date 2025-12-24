@@ -15,6 +15,8 @@ import { getTodayFormatted } from "@/src/utils/utils";
 
 interface QueryInputs {
     date?: string; // Format: "DD.MM.YYYY"
+    period?: string;
+    organization_id?: string;
 }
 
 interface ManagerContextType {
@@ -29,6 +31,8 @@ interface ManagerContextType {
     refetch: () => Promise<void>;
     clearError: () => void;
     setDate: (date: string) => void;
+    setPeriod: (period: string) => void;
+    setLocation: (organization_id: string) => void;
     setSelectedStorageTab: (tab: string) => void;
     setSelectedExpenseTab: (tab: string) => void;
 }
@@ -66,6 +70,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
+        period: "",
+        organization_id: "",
     });
 
     // ========================================================================
@@ -101,9 +107,18 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     // Actions
     // ========================================================================
 
-    const setDate = useCallback((date: string) => {
+    // Filter update methods
+    const setDate = (date: string) => {
         setInputs((prev) => ({ ...prev, date }));
-    }, []);
+    };
+
+    const setPeriod = (period: string) => {
+        setInputs((prev) => ({ ...prev, period }));
+    };
+
+    const setLocation = (organization_id: string) => {
+        setInputs((prev) => ({ ...prev, organization_id }));
+    };
 
     const refetch = useCallback(async () => {
         await fetchAll();
@@ -122,9 +137,11 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         setSelectedStorageTab,
         setSelectedExpenseTab,
         queryInputs: inputs,
+        setDate,
+        setPeriod,
+        setLocation,
         refetch,
         clearError,
-        setDate,
     };
 
     return (
