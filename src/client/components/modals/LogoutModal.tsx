@@ -1,156 +1,216 @@
+import * as Updates from "expo-updates";
+
 import React, { useRef, useCallback, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 
-interface LogoutConfirmationModalProps {
+interface AccountActionsModalProps {
     userName?: string;
-    onConfirmLogout?: () => void;
+    currentRole?: string;
+    onChangeRole?: () => void;
+    onLogout?: () => void;
     onCancel?: () => void;
 }
 
-export type LogoutConfirmationModalRef = {
+export type AccountActionsModalRef = {
     open: () => void;
     close: () => void;
     isVisible: () => boolean;
 };
 
-const LogoutConfirmationModal = React.forwardRef<
-    LogoutConfirmationModalRef,
-    LogoutConfirmationModalProps
->(({ userName = "Пользователь", onConfirmLogout, onCancel }, ref) => {
-    const modalRef = useRef<ModalWrapperRef>(null);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
+const AccountActionsModal = React.forwardRef<
+    AccountActionsModalRef,
+    AccountActionsModalProps
+>(
+    (
+        {
+            userName = "Пользователь",
+            currentRole = "",
+            onChangeRole,
+            onLogout,
+            onCancel,
+        },
+        ref,
+    ) => {
+        const modalRef = useRef<ModalWrapperRef>(null);
+        const [isProcessing, setIsProcessing] = useState(false);
 
-    // Imperative handle for parent control
-    React.useImperativeHandle(ref, () => ({
-        open: () => modalRef.current?.open(),
-        close: () => modalRef.current?.close(),
-        isVisible: () => modalRef.current?.isVisible() || false,
-    }));
+        // Imperative handle for parent control
+        React.useImperativeHandle(ref, () => ({
+            open: () => modalRef.current?.open(),
+            close: () => modalRef.current?.close(),
+            isVisible: () => modalRef.current?.isVisible() || false,
+        }));
 
-    // Handle modal close
-    const handleClose = useCallback(() => {
-        onCancel?.();
-        modalRef.current?.close();
-    }, [onCancel]);
+        // Handle modal close
+        const handleClose = useCallback(() => {
+            onCancel?.();
+            modalRef.current?.close();
+        }, [onCancel]);
 
-    // Handle modal open
-    const handleOpen = useCallback(() => {
-        setIsLoggingOut(false);
-    }, []);
+        // Handle modal open
+        const handleOpen = useCallback(() => {
+            setIsProcessing(false);
+        }, []);
 
-    // Handle logout confirmation
-    const handleConfirmLogout = useCallback(async () => {
-        setIsLoggingOut(true);
+        // Handle change role
+        const handleChangeRole = useCallback(async () => {
+            setIsProcessing(true);
 
-        try {
-            // Simulate logout API call
-            await new Promise((resolve) => setTimeout(resolve, 800));
+            try {
+                // Simulate API call
+                await new Promise((resolve) => setTimeout(resolve, 500));
 
-            onConfirmLogout?.();
+                onChangeRole?.();
 
-            Alert.alert("Выход выполнен", "Вы успешно вышли из системы", [
-                { text: "OK" },
-            ]);
+                console.log("Смена роли", "Переход к выбору роли", [
+                    { text: "OK" },
+                ]);
 
-            handleClose();
-        } catch (error) {
-            Alert.alert(
-                "Ошибка",
-                "Не удалось выполнить выход. Попробуйте снова.",
-                [{ text: "OK" }],
-            );
-        } finally {
-            setIsLoggingOut(false);
-        }
-    }, [onConfirmLogout, handleClose]);
+                handleClose();
+            } catch (error) {
+                console.log(
+                    "Ошибка",
+                    "Не удалось сменить роль. Попробуйте снова.",
+                    [{ text: "OK" }],
+                );
+            } finally {
+                setIsProcessing(false);
+            }
+        }, [onChangeRole, handleClose]);
 
-    // Render close button
-    const renderCloseButton = () => (
-        <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleClose}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-        >
-            <Text style={styles.closeButtonText}>✕</Text>
-        </TouchableOpacity>
-    );
+        // Handle logout
+        const handleLogout = useCallback(async () => {
+            setIsProcessing(true);
 
-    // Render header
-    const renderHeader = () => (
-        <View style={styles.header}>
-            <View style={styles.headerContent}>
-                <Text style={styles.title}>Выход из аккаунта</Text>
-                {renderCloseButton()}
-            </View>
-        </View>
-    );
+            try {
+                console.log("a");
+                onLogout?.();
+                console.log("b");
 
-    // Render content
-    const renderContent = () => (
-        <View style={styles.content}>
-            <Text style={styles.message}>
-                Вы уверены, что хотите выйти из аккаунта?
-            </Text>
-            {userName !== "Пользователь" && (
-                <Text style={styles.userName}>{userName}</Text>
-            )}
-        </View>
-    );
+                console.log("Выход выполнен", "Вы успешно вышли из системы", [
+                    { text: "OK" },
+                ]);
 
-    // Render actions
-    const renderActions = () => (
-        <View style={styles.actions}>
+                handleClose();
+            } catch (error) {
+                console.log(
+                    "Ошибка",
+                    "Не удалось выполнить выход. Попробуйте снова.",
+                    [{ text: "OK" }],
+                );
+            } finally {
+                setIsProcessing(false);
+            }
+        }, [onLogout, handleClose]);
+
+        // Render close button
+        const renderCloseButton = () => (
             <TouchableOpacity
-                style={styles.cancelButton}
+                style={styles.closeButton}
                 onPress={handleClose}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 activeOpacity={0.7}
-                disabled={isLoggingOut}
             >
-                <Text style={styles.cancelButtonText}>Отмена</Text>
+                <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
+        );
 
-            <TouchableOpacity
-                style={[
-                    styles.logoutButton,
-                    isLoggingOut && styles.logoutButtonDisabled,
-                ]}
-                onPress={handleConfirmLogout}
-                disabled={isLoggingOut}
-                activeOpacity={0.8}
-            >
-                <Text
-                    style={[
-                        styles.logoutButtonText,
-                        isLoggingOut && styles.logoutButtonTextDisabled,
-                    ]}
-                >
-                    {isLoggingOut ? "Выходим..." : "Выйти"}
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    return (
-        <ModalWrapper
-            ref={modalRef}
-            onOpen={handleOpen}
-            onClose={onCancel}
-            animationType="scale"
-            contentStyle={styles.modalContent}
-        >
-            <View style={styles.container}>
-                {renderHeader()}
-                {renderContent()}
-                {renderActions()}
+        // Render header
+        const renderHeader = () => (
+            <View style={styles.header}>
+                <View style={styles.headerContent}>
+                    <Text style={styles.title}>Управление аккаунтом</Text>
+                    {renderCloseButton()}
+                </View>
             </View>
-        </ModalWrapper>
-    );
-});
+        );
 
-LogoutConfirmationModal.displayName = "LogoutConfirmationModal";
-export default LogoutConfirmationModal;
+        // Render content
+        const renderContent = () => (
+            <View style={styles.content}>
+                <Text style={styles.message}>Выберите действие</Text>
+                {userName !== "Пользователь" && (
+                    <View style={styles.userInfo}>
+                        <Text style={styles.userName}>{userName}</Text>
+                        {currentRole && (
+                            <Text style={styles.userRole}>{currentRole}</Text>
+                        )}
+                    </View>
+                )}
+            </View>
+        );
+
+        // Render actions
+        const renderActions = () => (
+            <View style={styles.actions}>
+                {/* Change Role Button */}
+                <TouchableOpacity
+                    style={[
+                        styles.changeRoleButton,
+                        isProcessing && styles.buttonDisabled,
+                    ]}
+                    onPress={handleChangeRole}
+                    disabled={isProcessing}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.changeRoleButtonText}>
+                        {isProcessing ? "Загрузка..." : "Сменить роль"}
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Logout Button */}
+                <TouchableOpacity
+                    style={[
+                        styles.logoutButton,
+                        isProcessing && styles.logoutButtonDisabled,
+                    ]}
+                    onPress={handleLogout}
+                    disabled={isProcessing}
+                    activeOpacity={0.8}
+                >
+                    <Text
+                        style={[
+                            styles.logoutButtonText,
+                            isProcessing && styles.logoutButtonTextDisabled,
+                        ]}
+                    >
+                        {isProcessing ? "Выходим..." : "Выйти"}
+                    </Text>
+                </TouchableOpacity>
+
+                {/* Cancel Button */}
+                <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={handleClose}
+                    activeOpacity={0.7}
+                    disabled={isProcessing}
+                >
+                    <Text style={styles.cancelButtonText}>Отмена</Text>
+                </TouchableOpacity>
+            </View>
+        );
+
+        return (
+            <ModalWrapper
+                ref={modalRef}
+                onOpen={handleOpen}
+                onClose={onCancel}
+                animationType="scale"
+                contentStyle={styles.modalContent}
+            >
+                <View style={styles.container}>
+                    {renderHeader()}
+                    {renderContent()}
+                    {renderActions()}
+                </View>
+            </ModalWrapper>
+        );
+    },
+);
+
+AccountActionsModal.displayName = "AccountActionsModal";
+export default AccountActionsModal;
 
 const styles = StyleSheet.create({
     modalContent: {
@@ -194,7 +254,7 @@ const styles = StyleSheet.create({
 
     // Content styles
     content: {
-        gap: 12,
+        gap: 16,
         alignItems: "center",
     },
     message: {
@@ -203,35 +263,44 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         textAlign: "center",
     },
+    userInfo: {
+        gap: 4,
+        alignItems: "center",
+    },
     userName: {
         color: "#ffffff",
         fontSize: 18,
         fontWeight: "600",
         textAlign: "center",
     },
+    userRole: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 14,
+        textAlign: "center",
+    },
 
     // Actions styles
     actions: {
-        flexDirection: "row",
         gap: 12,
     },
-    cancelButton: {
-        flex: 1,
+    changeRoleButton: {
         height: 48,
         borderRadius: 24,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+        backgroundColor: "#4A90E2",
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
+        shadowColor: "#4A90E2",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    cancelButtonText: {
-        color: "rgba(255, 255, 255, 0.8)",
+    changeRoleButtonText: {
+        color: "#ffffff",
         fontSize: 16,
-        fontWeight: "500",
+        fontWeight: "600",
     },
     logoutButton: {
-        flex: 1,
         height: 48,
         borderRadius: 24,
         backgroundColor: "#FF4444",
@@ -255,5 +324,22 @@ const styles = StyleSheet.create({
     },
     logoutButtonTextDisabled: {
         color: "rgba(255, 255, 255, 0.4)",
+    },
+    cancelButton: {
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+    cancelButtonText: {
+        color: "rgba(255, 255, 255, 0.8)",
+        fontSize: 16,
+        fontWeight: "500",
+    },
+    buttonDisabled: {
+        opacity: 0.5,
     },
 });
