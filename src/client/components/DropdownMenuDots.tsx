@@ -39,7 +39,7 @@ const DropdownMenuDots = forwardRef<DropdownMenuDotsRef, DropdownMenuDotsProps>(
 
         const handleOpen = () => {
             if (buttonRef.current) {
-                // @ts-ignore
+                // eslint-disable-next-line
                 buttonRef.current.measure((fx, fy, width, height, px, py) => {
                     setMenuPosition({
                         top: py + height,

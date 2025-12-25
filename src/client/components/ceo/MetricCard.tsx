@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet } from "react-native";
 import React from "react";
-import { AntDesign } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
@@ -48,13 +48,13 @@ export default function MetricCard({
                         ]}
                     >
                         {change.trend === "down" ? (
-                            <AntDesign
+                            <Ionicons
                                 name="arrow-down"
                                 size={20}
                                 color="#FF3B30"
                             />
                         ) : (
-                            <AntDesign
+                            <Ionicons
                                 name="arrow-up"
                                 size={20}
                                 color="#34C759"

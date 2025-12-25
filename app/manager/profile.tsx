@@ -13,11 +13,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Loading from "@/src/client/components/Loading";
 
-import LogoutConfirmationModal, {
-    LogoutConfirmationModalRef,
+import AccountActionsModal, {
+    AccountActionsModalRef,
 } from "@/src/client/components/modals/LogoutModal";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
 // Types
@@ -57,10 +58,12 @@ const MENU_ITEMS = [
 // ============================================================================
 
 export default function ProfileScreen({
+    // TODO убрать user-123
     userId = "user-123",
 }: ProfileScreenProps) {
     const router = useRouter();
-    const logoutModalRef = useRef<LogoutConfirmationModalRef>(null);
+    const { logout } = useAuth();
+    const logoutModalRef = useRef<AccountActionsModalRef>(null);
 
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
@@ -74,6 +77,7 @@ export default function ProfileScreen({
         setLoading(true);
 
         try {
+            // TODO убрать мокдату
             // Replace with your actual API endpoint
             // const response = await fetch(`YOUR_API_URL/api/waiter/${userId}/profile`);
             // const data = await response.json();
@@ -176,10 +180,9 @@ export default function ProfileScreen({
         logoutModalRef.current?.open();
     }, []);
 
-    const handleConfirmLogout = useCallback(() => {
-        console.log("User logged out");
-        // Clear user session/token here
-        router.replace("/");
+    const handleConfirmLogout = useCallback(async () => {
+        await logout();
+        router.replace("/auth");
     }, [router]);
 
     // ========================================================================
@@ -294,10 +297,12 @@ export default function ProfileScreen({
                 {renderLogoutButton()}
             </View>
 
-            <LogoutConfirmationModal
+            <AccountActionsModal
                 ref={logoutModalRef}
                 userName={profileData?.name}
-                onConfirmLogout={handleConfirmLogout}
+                currentRole={profileData?.role} // Add this line
+                onLogout={handleConfirmLogout}
+                onChangeRole={() => router.push("/")}
             />
         </SafeAreaView>
     );

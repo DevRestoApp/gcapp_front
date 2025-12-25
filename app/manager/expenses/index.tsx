@@ -25,6 +25,8 @@ import ValueBadge from "@/src/client/components/ValueBadge";
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import { ReportHeader } from "@/src/client/components/reports/header";
+import Loading from "@/src/client/components/Loading";
 
 // Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
@@ -68,67 +70,33 @@ export default function ExpensesScreen() {
         loading,
         error,
         refetch,
-        setDate: setInputDate,
+        queryInputs,
+        setDate,
+        setPeriod,
+        setLocation,
     } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
-    // initial value for provider state
-    setSelectedExpenseTab("expense");
 
-    // Initialize calendar
+    // Set initial value in useEffect instead of during render
     useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            });
-        }
-
-        setDays(weekDays);
-    }, []);
-
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setInputDate(dateStr);
-
-            // Update selected date in context
-            // updateshiftData?({ selectedDate: dateStr });
-        },
-        [days],
-    );
+        setSelectedExpenseTab("expense");
+    }, []); // Empty dependency array = runs once on mount
 
     // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>Расходы</Text>
-            </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <ReportHeader
+                title="Расходы"
+                date={queryInputs.date}
+                period={queryInputs.period}
+                location={queryInputs.organization_id}
+                onBack={() => router.push("/manager")}
+                onDateChange={setDate}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
+            />
         </View>
     );
 

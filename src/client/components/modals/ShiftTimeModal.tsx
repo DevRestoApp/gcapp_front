@@ -147,6 +147,7 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
                 modalRef.current?.close();
             } catch (error) {
+                console.error(error);
             } finally {
                 setIsProcessing(false);
             }

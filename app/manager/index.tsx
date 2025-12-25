@@ -18,6 +18,7 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -30,8 +31,7 @@ export default function IndexScreen() {
         error,
         refetch,
         setDate: setInputDate,
-    } = useCeo();
-    console.log("employees", employees);
+    } = useManager();
 
     const [days, setDays] = useState<Day[]>([]);
 

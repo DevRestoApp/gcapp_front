@@ -1,23 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
     View,
     Text,
-    TouchableOpacity,
     ScrollView,
     StyleSheet,
     StatusBar,
-    Image,
     ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { FormContainer } from "@/src/client/components/form/FormContainer";
@@ -25,84 +20,33 @@ import { FormField } from "@/src/client/components/form/FormFields";
 import { OptionPicker } from "@/src/client/components/form/OptionPicker";
 import { CommentInput } from "@/src/client/components/form/Comment";
 import { NumberInput } from "@/src/client/components/form/NumberInput";
-import { Ionicons } from "@expo/vector-icons";
+
+import { ReportHeader } from "@/src/client/components/reports/header";
 
 export default function IncomeScreen() {
     const router = useRouter();
 
-    // Get data from context instead of local state
-    const { loading, setDate: setInputDate } = useCeo();
-    const { selectedExpenseTab } = useManager();
-
-    const [days, setDays] = useState<Day[]>([]);
+    const { queryInputs, setDate, setPeriod, setLocation, loading } =
+        useManager();
 
     // Form states
     const [category, setCategory] = useState("");
     const [amount, setAmount] = useState("");
-    const [date, setDate] = useState("");
     const [comment, setComment] = useState("");
-    const [showCalendar, setShowCalendar] = useState(false);
-
-    // Initialize calendar
-    useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            });
-        }
-
-        setDays(weekDays);
-    }, []);
-
-    // Handle day selection
-    const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setInputDate(dateStr);
-
-            // Update selected date in context
-            // updateshiftData?({ selectedDate: dateStr });
-        },
-        [days],
-    );
 
     // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
-            <View style={styles.headerRow}>
-                <TouchableOpacity
-                    onPress={() => router.push("/manager/expenses")}
-                    style={styles.backButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Доходы</Text>
-            </View>
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <ReportHeader
+                title="Доходы"
+                date={queryInputs.date}
+                period={queryInputs.period}
+                location={queryInputs.organization_id}
+                onBack={() => router.push("/manager/expenses")}
+                onDateChange={setDate}
+                onPeriodChange={setPeriod}
+                onLocationChange={setLocation}
+            />
         </View>
     );
 

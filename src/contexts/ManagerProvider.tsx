@@ -8,6 +8,7 @@ import React, {
 } from "react";
 
 import { getTodayFormatted } from "@/src/utils/utils";
+import { getOrganizationsData } from "@/src/server/general/organizations";
 
 // ============================================================================
 // Types
@@ -15,6 +16,8 @@ import { getTodayFormatted } from "@/src/utils/utils";
 
 interface QueryInputs {
     date?: string; // Format: "DD.MM.YYYY"
+    period?: string;
+    organization_id?: string;
 }
 
 interface ManagerContextType {
@@ -24,11 +27,15 @@ interface ManagerContextType {
     queryInputs: QueryInputs;
     selectedStorageTab: string;
     selectedExpenseTab: string;
+    // TODO прописать приходящие
+    locations: any[];
 
     // Actions
     refetch: () => Promise<void>;
     clearError: () => void;
     setDate: (date: string) => void;
+    setPeriod: (period: string) => void;
+    setLocation: (organization_id: string) => void;
     setSelectedStorageTab: (tab: string) => void;
     setSelectedExpenseTab: (tab: string) => void;
 }
@@ -51,6 +58,16 @@ export const useManager = () => {
     return context;
 };
 
+const fetchOrganizations = async (): Promise<any> => {
+    try {
+        const response = await getOrganizationsData();
+        return response.organizations;
+    } catch (e) {
+        console.log(e);
+        return null;
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -64,8 +81,12 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [selectedExpenseTab, setSelectedExpenseTab] =
         useState<string>("open"); // Added this
 
+    const [locations, setLocations] = useState<any[]>([]);
+
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
+        period: "",
+        organization_id: "",
     });
 
     // ========================================================================
@@ -78,6 +99,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setError(null);
 
             // PUT REQS here
+            const organizations = await fetchOrganizations();
+            setLocations(organizations);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
             setError(
@@ -101,9 +124,18 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     // Actions
     // ========================================================================
 
-    const setDate = useCallback((date: string) => {
+    // Filter update methods
+    const setDate = (date: string) => {
         setInputs((prev) => ({ ...prev, date }));
-    }, []);
+    };
+
+    const setPeriod = (period: string) => {
+        setInputs((prev) => ({ ...prev, period }));
+    };
+
+    const setLocation = (organization_id: string) => {
+        setInputs((prev) => ({ ...prev, organization_id }));
+    };
 
     const refetch = useCallback(async () => {
         await fetchAll();
@@ -117,14 +149,17 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const value: ManagerContextType = {
         loading,
         error,
+        locations,
         selectedStorageTab,
         selectedExpenseTab,
         setSelectedStorageTab,
         setSelectedExpenseTab,
         queryInputs: inputs,
+        setDate,
+        setPeriod,
+        setLocation,
         refetch,
         clearError,
-        setDate,
     };
 
     return (

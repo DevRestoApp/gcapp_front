@@ -7,6 +7,9 @@ const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
     version: "1.0.0",
+    runtimeVersion: {
+        policy: "sdkVersion",
+    },
     extra: {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL || "http://localhost:8008",
@@ -15,7 +18,7 @@ const config: ExpoConfig = {
         },
     },
     android: {
-        package: "com.gcapp.mobile", // Add this line
+        package: "com.gcapp.mobile",
         versionCode: 1,
         adaptiveIcon: {
             foregroundImage: "./assets/adaptive-icon.png",

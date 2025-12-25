@@ -22,17 +22,13 @@ export const icons = {
         />
     ),
     expenses: (
-        <AntDesign
+        <Ionicons
             name="arrow-down"
             size={20}
             color={textStyles.negative.color}
         />
     ),
     incomes: (
-        <AntDesign
-            name="arrow-up"
-            size={20}
-            color={textStyles.positive.color}
-        />
+        <Ionicons name="arrow-up" size={20} color={textStyles.positive.color} />
     ),
 };

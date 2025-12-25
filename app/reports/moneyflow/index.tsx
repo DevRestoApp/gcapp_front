@@ -157,7 +157,7 @@ export default function MoneyflowReports() {
                                         : expenses?.value || ""
                                 }
                                 icon={
-                                    <AntDesign
+                                    <Ionicons
                                         name="arrow-down"
                                         size={20}
                                         color={textStyles.negative.color}
@@ -187,7 +187,7 @@ export default function MoneyflowReports() {
                                         : incomes?.value || ""
                                 }
                                 icon={
-                                    <AntDesign
+                                    <Ionicons
                                         name="arrow-up"
                                         size={20}
                                         color={textStyles.positive.color}

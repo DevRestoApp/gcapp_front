@@ -6,15 +6,39 @@ import {
     StyleSheet,
     TextInput,
     Alert,
+    ScrollView,
 } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 
+// ============================================================================
+// Types
+// ============================================================================
+
+interface Employee {
+    id: string;
+    name: string;
+    role: string;
+}
+
+interface Location {
+    id: string;
+    name: string;
+}
+
+interface QuestFormData {
+    name: string;
+    amount: number;
+    reward: string;
+    employeeId?: string;
+    employeeName?: string;
+    locationId?: string;
+    locationName?: string;
+}
+
 interface AddQuestModalProps {
-    onAddQuest?: (data: {
-        name: string;
-        amount: number;
-        reward: string;
-    }) => void;
+    employees?: Employee[];
+    locations?: Location[];
+    onAddQuest?: (data: QuestFormData) => void;
     onCancel?: () => void;
 }
 
@@ -24,13 +48,23 @@ export type AddQuestModalRef = {
     isVisible: () => boolean;
 };
 
+// ============================================================================
+// Component
+// ============================================================================
+
 const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
-    ({ onAddQuest, onCancel }, ref) => {
+    ({ employees = [], locations = [], onAddQuest, onCancel }, ref) => {
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [questName, setQuestName] = useState("");
         const [amount, setAmount] = useState("");
         const [reward, setReward] = useState("");
+        const [selectedEmployee, setSelectedEmployee] =
+            useState<Employee | null>(null);
+        const [selectedLocation, setSelectedLocation] =
+            useState<Location | null>(null);
+        const [showEmployeePicker, setShowEmployeePicker] = useState(false);
+        const [showLocationPicker, setShowLocationPicker] = useState(false);
 
         // Imperative handle for parent control
         React.useImperativeHandle(ref, () => ({
@@ -44,6 +78,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setQuestName("");
             setAmount("");
             setReward("");
+            setSelectedEmployee(null);
+            setSelectedLocation(null);
+            setShowEmployeePicker(false);
+            setShowLocationPicker(false);
             setIsSubmitting(false);
         }, []);
 
@@ -52,10 +90,26 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setQuestName("");
             setAmount("");
             setReward("");
+            setSelectedEmployee(null);
+            setSelectedLocation(null);
+            setShowEmployeePicker(false);
+            setShowLocationPicker(false);
             setIsSubmitting(false);
             onCancel?.();
             modalRef.current?.close();
         }, [onCancel]);
+
+        // Handle employee select
+        const handleEmployeeSelect = useCallback((employee: Employee) => {
+            setSelectedEmployee(employee);
+            setShowEmployeePicker(false);
+        }, []);
+
+        // Handle location select
+        const handleLocationSelect = useCallback((location: Location) => {
+            setSelectedLocation(location);
+            setShowLocationPicker(false);
+        }, []);
 
         // Handle quest submission
         const handleSubmit = useCallback(async () => {
@@ -87,6 +141,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     name: questName.trim(),
                     amount: Number(amount),
                     reward: reward.trim(),
+                    employeeId: selectedEmployee?.id,
+                    employeeName: selectedEmployee?.name,
+                    locationId: selectedLocation?.id,
+                    locationName: selectedLocation?.name,
                 });
 
                 Alert.alert("Успешно", "Квест успешно создан", [
@@ -98,9 +156,20 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             } finally {
                 setIsSubmitting(false);
             }
-        }, [questName, amount, reward, onAddQuest, handleClose]);
+        }, [
+            questName,
+            amount,
+            reward,
+            selectedEmployee,
+            selectedLocation,
+            onAddQuest,
+            handleClose,
+        ]);
 
-        // Render close button
+        // ====================================================================
+        // Render Functions
+        // ====================================================================
+
         const renderCloseButton = () => (
             <TouchableOpacity
                 style={styles.closeButton}
@@ -112,7 +181,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </TouchableOpacity>
         );
 
-        // Render header
         const renderHeader = () => (
             <View style={styles.header}>
                 <View style={styles.headerContent}>
@@ -122,7 +190,123 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </View>
         );
 
-        // Render quest name input
+        const renderEmployeePicker = () => {
+            if (employees.length === 0) return null;
+
+            return (
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>
+                        Сотрудник (опционально)
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => {
+                            setShowEmployeePicker(!showEmployeePicker);
+                            setShowLocationPicker(false);
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <Text
+                            style={[
+                                styles.pickerButtonText,
+                                !selectedEmployee && styles.pickerPlaceholder,
+                            ]}
+                        >
+                            {selectedEmployee
+                                ? `${selectedEmployee.name} - ${selectedEmployee.role}`
+                                : "Выберите сотрудника"}
+                        </Text>
+                        <Text style={styles.pickerArrow}>
+                            {showEmployeePicker ? "▲" : "▼"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {showEmployeePicker && (
+                        <View style={styles.pickerList}>
+                            <ScrollView
+                                style={styles.pickerScrollView}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {employees.map((employee) => (
+                                    <TouchableOpacity
+                                        key={employee.id}
+                                        style={styles.pickerItem}
+                                        onPress={() =>
+                                            handleEmployeeSelect(employee)
+                                        }
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={styles.pickerItemName}>
+                                            {employee.name}
+                                        </Text>
+                                        <Text style={styles.pickerItemSubtext}>
+                                            {employee.role}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+                </View>
+            );
+        };
+
+        const renderLocationPicker = () => {
+            if (locations.length === 0) return null;
+
+            return (
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Локация (опционально)</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => {
+                            setShowLocationPicker(!showLocationPicker);
+                            setShowEmployeePicker(false);
+                        }}
+                        activeOpacity={0.7}
+                    >
+                        <Text
+                            style={[
+                                styles.pickerButtonText,
+                                !selectedLocation && styles.pickerPlaceholder,
+                            ]}
+                        >
+                            {selectedLocation
+                                ? selectedLocation.name
+                                : "Выберите локацию"}
+                        </Text>
+                        <Text style={styles.pickerArrow}>
+                            {showLocationPicker ? "▲" : "▼"}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {showLocationPicker && (
+                        <View style={styles.pickerList}>
+                            <ScrollView
+                                style={styles.pickerScrollView}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {locations.map((location) => (
+                                    <TouchableOpacity
+                                        key={location.id}
+                                        style={styles.pickerItem}
+                                        onPress={() =>
+                                            handleLocationSelect(location)
+                                        }
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={styles.pickerItemName}>
+                                            {location.name}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
+                </View>
+            );
+        };
+
         const renderQuestNameInput = () => (
             <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>Название квеста</Text>
@@ -140,7 +324,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </View>
         );
 
-        // Render amount input
         const renderAmountInput = () => (
             <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>Сумма</Text>
@@ -159,7 +342,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </View>
         );
 
-        // Render reward input
         const renderRewardInput = () => (
             <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>Награда</Text>
@@ -178,7 +360,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </View>
         );
 
-        // Render actions
         const renderActions = () => (
             <View style={styles.actions}>
                 <TouchableOpacity
@@ -223,6 +404,8 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     {renderHeader()}
                     <View style={styles.formSection}>
                         {renderQuestNameInput()}
+                        {renderEmployeePicker()}
+                        {renderLocationPicker()}
                         {renderAmountInput()}
                         {renderRewardInput()}
                     </View>
@@ -235,6 +418,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
 AddQuestModal.displayName = "AddQuestModal";
 export default AddQuestModal;
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     modalContent: {
@@ -327,6 +514,56 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 22,
         marginLeft: 8,
+    },
+
+    // Picker styles (shared by employee and location)
+    pickerButton: {
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        borderRadius: 16,
+        padding: 16,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
+    pickerButtonText: {
+        color: "#ffffff",
+        fontSize: 16,
+        lineHeight: 22,
+        flex: 1,
+    },
+    pickerPlaceholder: {
+        color: "rgba(121, 122, 128, 1)",
+    },
+    pickerArrow: {
+        color: "#ffffff",
+        fontSize: 12,
+        marginLeft: 8,
+    },
+    pickerList: {
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        borderRadius: 16,
+        maxHeight: 200,
+        marginTop: 4,
+    },
+    pickerScrollView: {
+        padding: 8,
+    },
+    pickerItem: {
+        padding: 12,
+        borderRadius: 12,
+        marginVertical: 2,
+    },
+    pickerItemName: {
+        color: "#ffffff",
+        fontSize: 16,
+        fontWeight: "500",
+        lineHeight: 20,
+    },
+    pickerItemSubtext: {
+        color: "rgba(121, 122, 128, 1)",
+        fontSize: 14,
+        lineHeight: 18,
+        marginTop: 2,
     },
 
     // Actions styles
