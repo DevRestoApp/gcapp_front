@@ -7,12 +7,12 @@ const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
     version: "1.0.0",
-    runtimeVersion: {
-        policy: "sdkVersion",
-    },
+    runtimeVersion: "1.0.0",
     extra: {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL || "http://localhost:8008",
+        EXPO_PUBLIC_API_URL:
+            process.env.EXPO_PUBLIC_API_URL || "http://localhost:8008",
         eas: {
             projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
         },

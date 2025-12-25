@@ -2,10 +2,10 @@ import axios from "axios";
 import Constants from "expo-constants";
 import { storage } from "@/src/server/storage";
 
-const { API_URL } = Constants.expoConfig?.extra || {};
+const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: API_URL ?? EXPO_PUBLIC_API_URL,
 });
 
 api.interceptors.request.use(async (config) => {
