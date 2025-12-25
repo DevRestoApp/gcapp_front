@@ -17,5 +17,16 @@
     },
     "submit": {
         "production": {}
+    },
+    "expo": {
+        "name": "gcapp_front",
+        "slug": "gcapp-front",
+        "version": "1.0.0",
+        "runtimeVersion": {
+            "policy": "sdkVersion"
+        },
+        "android": {
+            "package": "com.yourcompany.gcapp"
+        }
     }
 }
