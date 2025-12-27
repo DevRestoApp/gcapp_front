@@ -36,7 +36,9 @@ export default function EmployeeCard({
                 disabled={!onPress}
             >
                 <View style={styles.employeeContent}>
-                    <Image source={{ uri: avatar }} style={styles.avatar} />
+                    {avatar && (
+                        <Image source={{ uri: avatar }} style={styles.avatar} />
+                    )}
                     <View style={styles.employeeText}>
                         <Text style={styles.employeeName}>{name}</Text>
                         <Text style={styles.employeeAmount} numberOfLines={1}>
@@ -69,7 +71,9 @@ export default function EmployeeCard({
             {/* Employee Info Row */}
             <View style={styles.employeeInfo}>
                 <View style={styles.employeeDetails}>
-                    <Image source={{ uri: avatar }} style={styles.avatar} />
+                    {avatar && (
+                        <Image source={{ uri: avatar }} style={styles.avatar} />
+                    )}
                     <View style={styles.textContainer}>
                         <Text style={styles.name}>{name}</Text>
                         {role && <Text style={styles.role}>{role}</Text>}

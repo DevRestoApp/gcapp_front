@@ -105,13 +105,6 @@ export default function CeoLayout() {
                         title: "Сотрудники",
                     }}
                 />
-                <Tabs.Screen
-                    name="employees/[id]"
-                    options={{
-                        href: null,
-                        title: "Детали сотрудников",
-                    }}
-                />
             </Tabs>
         </CeoProvider>
     );

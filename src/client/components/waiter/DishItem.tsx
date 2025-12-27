@@ -105,13 +105,15 @@ export default function DishItem({
                 </View>
             ) : (
                 <>
-                    <Image
-                        source={{ uri: image }}
-                        style={styles.image}
-                        onLoad={handleImageLoad}
-                        onError={handleImageError}
-                        resizeMode="cover"
-                    />
+                    {image && (
+                        <Image
+                            source={{ uri: image }}
+                            style={styles.image}
+                            onLoad={handleImageLoad}
+                            onError={handleImageError}
+                            resizeMode="cover"
+                        />
+                    )}
                     {imageLoading && (
                         <View style={styles.imageLoader}>
                             <ActivityIndicator size="small" color="#fff" />

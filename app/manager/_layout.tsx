@@ -125,13 +125,6 @@ export default function ManagerLayout() {
                         }}
                     />
                     <Tabs.Screen
-                        name="employees/[id]"
-                        options={{
-                            href: null,
-                            title: "Детали сотрудников",
-                        }}
-                    />
-                    <Tabs.Screen
                         name="expenses/expense"
                         options={{
                             href: null,

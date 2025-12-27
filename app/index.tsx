@@ -150,11 +150,13 @@ export default function RolePicker({
                 disabled={isLoading}
                 activeOpacity={0.7}
             >
-                <Image
-                    source={{ uri: role.icon }}
-                    style={styles.roleIcon}
-                    resizeMode="cover"
-                />
+                {role.icon && (
+                    <Image
+                        source={{ uri: role.icon }}
+                        style={styles.roleIcon}
+                        resizeMode="cover"
+                    />
+                )}
                 <View style={styles.roleContent}>
                     <Text style={styles.roleTitle}>{role.title}</Text>
                     <Text style={styles.roleDescription}>
