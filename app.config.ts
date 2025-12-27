@@ -6,8 +6,8 @@ declare const process: any;
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
-    version: "1.0.0",
-    runtimeVersion: "1.0.0",
+    version: "1.0.1",
+    runtimeVersion: "1.0.1",
     extra: {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL || "http://localhost:8008",

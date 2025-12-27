@@ -50,6 +50,8 @@ export default function Login() {
     const [formData, setFormData] = useState<LoginFormData>(INITIAL_FORM_DATA);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessages] = useState("");
 
     // ========================================================================
     // Effects
@@ -116,7 +118,9 @@ export default function Login() {
             }
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
-            Alert.alert(JSON.stringify(err));
+
+            setError(true);
+            setErrorMessages(JSON.stringify(err.stack));
             console.error(err);
         } finally {
             setLoading(false);
@@ -231,6 +235,12 @@ export default function Login() {
         </TouchableOpacity>
     );
 
+    const renderErrorMessage = () => (
+        <View>
+            <Text style={{ color: "red" }}>{errorMessage}</Text>
+        </View>
+    );
+
     const renderBottomSection = () => (
         <View style={styles.bottomSection}>{renderLoginButton()}</View>
     );
@@ -255,6 +265,7 @@ export default function Login() {
                 >
                     {renderHeader()}
                     {renderForm()}
+                    {error && renderErrorMessage()}
                 </ScrollView>
 
                 {renderBottomSection()}
