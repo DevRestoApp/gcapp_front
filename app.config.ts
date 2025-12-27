@@ -20,8 +20,9 @@ const config: ExpoConfig = {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL,
         EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
-        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
-        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
+        EXPO_PUBLIC_TELEGRAM_BOT_TOKEN:
+            process.env.EXPO_PUBLIC_TELEGRAM_BOT_TOKEN,
+        EXPO_PUBLIC_TELEGRAM_CHAT_ID: process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID,
         eas: {
             projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
         },

@@ -14,7 +14,9 @@
             },
             "distribution": "internal",
             "env": {
-                "EXPO_PUBLIC_API_URL": "http://85.198.88.117:8008"
+                "EXPO_PUBLIC_API_URL": "https://tsolution.kz",
+                "EXPO_PUBLIC_TELEGRAM_BOT_TOKEN": "8394123879:AAGNAHX6BrPniY-T-7sHggg_Tyle8YGih_E",
+                "EXPO_PUBLIC_TELEGRAM_CHAT_ID": "629129654"
             }
         },
         "production": {
