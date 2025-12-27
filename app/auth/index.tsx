@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import Constants from "expo-constants";
 import {
     View,
     Text,
@@ -17,6 +18,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { login as loginRequest } from "@/src/server/auth";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+
+const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
 // ============================================================================
 // Types
@@ -120,7 +123,7 @@ export default function Login() {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
 
             setError(true);
-            setErrorMessages(JSON.stringify(err.stack));
+            setErrorMessages(JSON.stringify(err));
             console.error(err);
         } finally {
             setLoading(false);
@@ -235,11 +238,17 @@ export default function Login() {
         </TouchableOpacity>
     );
 
-    const renderErrorMessage = () => (
-        <View>
-            <Text style={{ color: "red" }}>{errorMessage}</Text>
-        </View>
-    );
+    const renderErrorMessage = () => {
+        const url = API_URL;
+        const expoUrl = EXPO_PUBLIC_API_URL;
+        return (
+            <View>
+                <Text>url{url}</Text>
+                <Text>expoUrl{expoUrl}</Text>
+                <Text style={{ color: "red" }}>{errorMessage}</Text>
+            </View>
+        );
+    };
 
     const renderBottomSection = () => (
         <View style={styles.bottomSection}>{renderLoginButton()}</View>
