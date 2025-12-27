@@ -116,6 +116,7 @@ export default function Login() {
             }
         } catch (err) {
             Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
+            Alert.alert(JSON.stringify(err));
             console.error(err);
         } finally {
             setLoading(false);
