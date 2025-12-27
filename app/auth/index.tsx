@@ -105,7 +105,11 @@ export default function Login() {
                     email: formData.email,
                     role: response.role,
                 };
+                console.log("LOGIN REQUEST");
+
                 await login(userObj, response.access_token);
+                console.log("LOGIN REQUEST");
+
                 router.replace("/");
             } else {
                 Alert.alert("Ошибка", "Неверные данные");

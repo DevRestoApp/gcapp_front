@@ -22,7 +22,9 @@ export default function MotivationCard({
             {/* Header with icon and goal info */}
             <View style={styles.header}>
                 <View style={styles.iconAndText}>
-                    <Image source={{ uri: iconUrl }} style={styles.icon} />
+                    {iconUrl && (
+                        <Image source={{ uri: iconUrl }} style={styles.icon} />
+                    )}
                     <View style={styles.goalTextWrapper}>
                         <Text style={styles.label}>Цель на сегодня</Text>
                         <Text style={styles.goal}>{goalText}</Text>

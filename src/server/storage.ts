@@ -5,10 +5,21 @@ const isMobile = Platform.OS === "ios" || Platform.OS === "android";
 
 export const storage = {
     async setItem(key: string, value: string) {
-        if (isMobile) {
-            await SecureStore.setItemAsync(key, value);
-        } else {
-            localStorage.setItem(key, value);
+        try {
+            if (isMobile) {
+                console.log(
+                    "setItem",
+                    typeof value,
+                    value,
+                    "isMobile",
+                    isMobile,
+                );
+                await SecureStore.setItemAsync(key, value);
+            } else {
+                localStorage.setItem(key, value);
+            }
+        } catch (e) {
+            console.log(e);
         }
     },
     async getItem(key: string) {
