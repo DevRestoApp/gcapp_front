@@ -14,11 +14,14 @@
             },
             "distribution": "internal",
             "env": {
-                "EXPO_PUBLIC_API_URL": "http://85.198.88.117:8008"
+                "EXPO_PUBLIC_API_URL": "https://tsolution.kz"
             }
         },
         "production": {
-            "autoIncrement": true
+            "autoIncrement": true,
+            "env": {
+                "EXPO_PUBLIC_API_URL": "https://tsolution.kz"
+            }
         }
     },
     "submit": {
