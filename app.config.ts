@@ -20,6 +20,7 @@ const config: ExpoConfig = {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: process.env.API_URL,
         EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+        // EAS Secrets will inject these during build
         EXPO_PUBLIC_TELEGRAM_BOT_TOKEN:
             process.env.EXPO_PUBLIC_TELEGRAM_BOT_TOKEN,
         EXPO_PUBLIC_TELEGRAM_CHAT_ID: process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID,
@@ -29,26 +30,14 @@ const config: ExpoConfig = {
     },
     android: {
         package: "com.gcapp.mobile",
-        versionCode: 2,
-        usesCleartextTraffic: true, // ✅ This is the correct way
+        versionCode: 3, // Increment this for new builds
+        // Required permissions
         permissions: ["INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE"],
         adaptiveIcon: {
             foregroundImage: "./assets/adaptive-icon.png",
             backgroundColor: "#ffffff",
         },
     },
-    plugins: [
-        "expo-secure-store",
-        [
-            "expo-build-properties",
-            {
-                android: {
-                    usesCleartextTraffic: true, // ✅ Also set in plugin
-                    networkInspector: true,
-                },
-            },
-        ],
-    ],
     ios: {
         bundleIdentifier: "com.gcapp.mobile",
         supportsTablet: true,
