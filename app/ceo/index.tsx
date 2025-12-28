@@ -124,11 +124,8 @@ export default function IndexScreen() {
                         <Text style={styles.iconText}>👥</Text>
                     </View>
                     <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.openEmployees} официанта
+                            {employees?.length} официанта
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>

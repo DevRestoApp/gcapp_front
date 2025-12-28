@@ -159,7 +159,7 @@ const fetchEmployeesData = async (
 ): Promise<Employee[] | null> => {
     try {
         //const response = await getEmployeesData({ deleted: false, ...inputs });
-        const response = await getEmployeesData({ deleted: false });
+        const response = await getEmployeesData({ ...inputs, deleted: false });
 
         // Validate response structure - getEmployeesData returns the array directly
         if (!Array.isArray(response)) {

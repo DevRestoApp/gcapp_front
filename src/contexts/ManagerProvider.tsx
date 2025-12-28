@@ -10,6 +10,7 @@ import React, {
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getOrganizationsData } from "@/src/server/general/organizations";
 import { getFines } from "@/src/server/ceo/generals";
+import { getEmployeesData } from "@/src/server/general/employees";
 
 // ============================================================================
 // Types
@@ -36,6 +37,19 @@ interface FinesSummary {
     fines: Fine[];
 }
 
+interface Employee {
+    id: number; // Changed from string to number
+    name: string;
+    role: string;
+    avatarUrl: string;
+    totalAmount: string;
+    shiftTime: string;
+    isActive: boolean;
+    deleted?: boolean; // Add this since it's in your API response
+    data?: { label: string; value: string }[];
+    // Add other employee properties
+}
+
 interface ManagerContextType {
     // State
     loading: boolean;
@@ -46,6 +60,7 @@ interface ManagerContextType {
     // TODO прописать приходящие
     locations: any[];
     finesSummary: FinesSummary;
+    employees: Employee[] | null;
 
     // Actions
     refetch: () => Promise<void>;
@@ -96,6 +111,26 @@ const fetchFinesSummary = async (
     }
 };
 
+const fetchEmployeesData = async (
+    inputs: QueryInputs,
+): Promise<Employee[] | null> => {
+    try {
+        //const response = await getEmployeesData({ deleted: false, ...inputs });
+        const response = await getEmployeesData({ ...inputs, deleted: false });
+
+        // Validate response structure - getEmployeesData returns the array directly
+        if (!Array.isArray(response)) {
+            console.error("Invalid employees data structure:", response);
+            return null;
+        }
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching employees:", error);
+        throw error; // Re-throw to handle in fetchAll
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -111,6 +146,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     const [locations, setLocations] = useState<any[]>([]);
     const [finesSummary, setFinesSummary] = useState<any[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -130,9 +166,11 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             // PUT REQS here
             const organizations = await fetchOrganizations();
             const finesSummary = await fetchFinesSummary(inputs);
+            const employees = await fetchEmployeesData(inputs);
 
             setFinesSummary(finesSummary);
             setLocations(organizations);
+            setEmployees(employees);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
             setError(
@@ -183,6 +221,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         error,
         locations,
         finesSummary,
+        employees,
         selectedStorageTab,
         selectedExpenseTab,
         setSelectedStorageTab,

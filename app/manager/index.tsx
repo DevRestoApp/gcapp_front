@@ -21,6 +21,9 @@ import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 import ReportCard from "@/src/client/components/ceo/ReportCard";
 import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
+import { MaterialIcons } from "@expo/vector-icons";
+import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
+import ValueBadge from "@/src/client/components/ValueBadge";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -122,11 +125,8 @@ export default function IndexScreen() {
                         <Text style={styles.iconText}>👥</Text>
                     </View>
                     <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.openEmployees} официанта
+                            {employees?.length} официанта
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -212,14 +212,28 @@ export default function IndexScreen() {
                     ({shifts?.motivationCount})
                 </Text>
             </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
+            <View style={styles.card}>
+                <ListItemIcon
+                    label={"label"}
+                    value={"JSUT AVLUE"}
+                    icon={
+                        <MaterialIcons
+                            name="task-alt"
+                            size={20}
+                            color="white"
+                        />
+                    }
+                    withChevron={true}
+                />
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={handleMotivationPress}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.addButtonIcon}>+</Text>
+                    <Text style={styles.addButtonText}>Добавить</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 
