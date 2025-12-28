@@ -33,7 +33,11 @@ export async function createWarehouseDocumentInventory(
 export async function createWarehouseDocumentIncomingInvoice(
     data: createWarehouseDocumentIncomingInvoiceType,
 ) {
-    const res = await api.post("/documents/inventory", data);
+    try {
+        const res = await api.post("/documents/incoming-invoice", data);
 
-    return res.data;
+        return res.data;
+    } catch (error) {
+        console.log(error);
+    }
 }
