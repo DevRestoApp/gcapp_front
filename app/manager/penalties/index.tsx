@@ -16,12 +16,13 @@ import AddPenaltyModal, {
     AddPenaltyModalRef,
 } from "@/src/client/components/modals/AddPenaltyModal";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 export default function PenaltiesScreen() {
     const router = useRouter();
-    const { employees, shifts, createFineAction } = useCeo();
+    const { employees, shifts, createFineAction } = useManager();
+
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
     const [selectedEmployeeForPenalty, setSelectedEmployeeForPenalty] =
         useState<any>(null);

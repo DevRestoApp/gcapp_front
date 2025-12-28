@@ -9,8 +9,9 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getOrganizationsData } from "@/src/server/general/organizations";
-import { getFines } from "@/src/server/ceo/generals";
+import { createFine, getFines, getShifts } from "@/src/server/ceo/generals";
 import { getEmployeesData } from "@/src/server/general/employees";
+import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
 
 // ============================================================================
 // Types
@@ -61,6 +62,8 @@ interface ManagerContextType {
     locations: any[];
     finesSummary: FinesSummary;
     employees: Employee[] | null;
+    shifts: Shift | null;
+    quests: Quest | null;
 
     // Actions
     refetch: () => Promise<void>;
@@ -70,6 +73,49 @@ interface ManagerContextType {
     setLocation: (organization_id: string) => void;
     setSelectedStorageTab: (tab: string) => void;
     setSelectedExpenseTab: (tab: string) => void;
+    createFineAction: (inputs: FineInputsType) => Promise<void>;
+    createQuestAction: (inputs: QuestInputsType) => Promise<void>;
+}
+
+interface Shift {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    elapsedTime: string;
+    openEmployees: number;
+    totalAmount: number;
+    finesCount: number;
+    motivationCount: number;
+    questsCount: number;
+    status: string;
+}
+
+type EmployeeProgress = {
+    employeeId: string;
+    employeeName: string;
+    progress: number;
+    completed: true;
+    points: number;
+    rank: number;
+};
+
+interface Quest {
+    id: string;
+    title: string;
+    description: string;
+    reward: number;
+    current: number;
+    target: number;
+    unit: string;
+    completed: true;
+    progress: number;
+    expiresAt: string;
+    totalEmployees: number;
+    completedEmployees: number;
+    employeeNames: string[];
+    date: string;
+    employeeProgress: EmployeeProgress[];
 }
 
 // ============================================================================
@@ -131,6 +177,18 @@ const fetchEmployeesData = async (
     }
 };
 
+const fetchShiftsData = async (inputs: QueryInputs): Promise<Shift | null> => {
+    try {
+        const response = await getShifts(inputs);
+        console.log("asd", response);
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching shifts:", error);
+        throw error; // Re-throw to handle in fetchAll
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -145,8 +203,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         useState<string>("open"); // Added this
 
     const [locations, setLocations] = useState<any[]>([]);
-    const [finesSummary, setFinesSummary] = useState<any[]>([]);
+    const [finesSummary, setFinesSummary] = useState<FinesSummary>();
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [shifts, setShifts] = useState<Shift | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -167,8 +226,10 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             const organizations = await fetchOrganizations();
             const finesSummary = await fetchFinesSummary(inputs);
             const employees = await fetchEmployeesData(inputs);
+            const shiftsData = await fetchShiftsData(inputs);
 
             setFinesSummary(finesSummary);
+            setShifts(shiftsData);
             setLocations(organizations);
             setEmployees(employees);
         } catch (err: any) {
@@ -215,12 +276,24 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         setError(null);
     }, []);
 
+    const createFineAction = useCallback(
+        async (inputs: FineInputsType) => {
+            try {
+                await createFine(inputs);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        [createFine],
+    );
+
     // Context Value
     const value: ManagerContextType = {
         loading,
         error,
         locations,
         finesSummary,
+        shifts,
         employees,
         selectedStorageTab,
         selectedExpenseTab,
@@ -230,6 +303,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         setDate,
         setPeriod,
         setLocation,
+        createFineAction,
         refetch,
         clearError,
     };

@@ -243,7 +243,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<any[]>([]);
-    const [finesSummary, setFinesSummary] = useState<FinesSummary>();
+    const [finesSummary, setFinesSummary] = useState<FinesSummary>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),

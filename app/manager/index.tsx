@@ -156,25 +156,28 @@ export default function IndexScreen() {
     );
 
     // Render fines section
+    // Render fines section
     const renderFinesSection = () => {
         return (
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                    Штрафы{" "}
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Штрафы</Text>
                     <Text style={styles.countBadge}>
+                        {" "}
                         ({finesSummary.fines.length})
                     </Text>
-                </Text>
+                </View>
                 <View style={styles.card}>
                     {finesSummary.fines.length > 0 ? (
                         <View>
-                            {finesSummary?.fines?.map((el) => (
+                            {finesSummary.fines.map((el, index) => (
                                 <EmployeeCardFines
+                                    key={el.id || index}
                                     name={el.employeeName}
-                                    avatar={""}
+                                    avatar=""
                                     amount={String(el.amount)}
                                     reason={el.reason}
-                                ></EmployeeCardFines>
+                                />
                             ))}
                         </View>
                     ) : (
@@ -206,16 +209,17 @@ export default function IndexScreen() {
     // Render motivation section
     const renderMotivationSection = () => (
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.sectionTitle}>Мотивация</Text>
                 <Text style={styles.countBadge}>
-                    ({shifts?.motivationCount})
+                    {" "}
+                    ({shifts?.motivationCount || 0})
                 </Text>
-            </Text>
+            </View>
             <View style={styles.card}>
                 <ListItemIcon
-                    label={"label"}
-                    value={"JSUT AVLUE"}
+                    label="label"
+                    value="JUST VALUE"
                     icon={
                         <MaterialIcons
                             name="task-alt"
