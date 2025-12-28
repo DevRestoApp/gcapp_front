@@ -26,9 +26,10 @@ interface Location {
 }
 
 interface QuestFormData {
-    name: string;
+    title: string;
     amount: number;
     reward: string;
+    unit: string;
     employeeId?: string;
     employeeName?: string;
     locationId?: string;
@@ -57,6 +58,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [questName, setQuestName] = useState("");
+        const [itemName, setItemName] = useState("");
         const [amount, setAmount] = useState("");
         const [reward, setReward] = useState("");
         const [selectedEmployee, setSelectedEmployee] =
@@ -76,6 +78,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         // Reset form when modal opens
         const handleOpen = useCallback(() => {
             setQuestName("");
+            setItemName("");
             setAmount("");
             setReward("");
             setSelectedEmployee(null);
@@ -90,6 +93,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setQuestName("");
             setAmount("");
             setReward("");
+            setItemName("");
             setSelectedEmployee(null);
             setSelectedLocation(null);
             setShowEmployeePicker(false);
@@ -138,9 +142,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                 await new Promise((resolve) => setTimeout(resolve, 1000));
 
                 onAddQuest?.({
-                    name: questName.trim(),
+                    title: questName.trim(),
                     amount: Number(amount),
                     reward: reward.trim(),
+                    unit: itemName.trim(),
                     employeeId: selectedEmployee?.id,
                     employeeName: selectedEmployee?.name,
                     locationId: selectedLocation?.id,
@@ -323,6 +328,20 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                 </Text>
             </View>
         );
+        const renderItemNameInput = () => (
+            <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Блюдо</Text>
+                <TextInput
+                    style={styles.textInput}
+                    value={itemName}
+                    onChangeText={setItemName}
+                    placeholder="Введите название блюда..."
+                    placeholderTextColor="rgba(121, 122, 128, 1)"
+                    maxLength={100}
+                />
+                <Text style={styles.characterCount}>{itemName.length}/100</Text>
+            </View>
+        );
 
         const renderAmountInput = () => (
             <View style={styles.inputSection}>
@@ -407,6 +426,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                         {renderEmployeePicker()}
                         {renderLocationPicker()}
                         {renderAmountInput()}
+                        {renderItemNameInput()}
                         {renderRewardInput()}
                     </View>
                     {renderActions()}

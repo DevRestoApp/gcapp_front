@@ -9,7 +9,13 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getOrganizationsData } from "@/src/server/general/organizations";
-import { createFine, getFines, getShifts } from "@/src/server/ceo/generals";
+import {
+    createFine,
+    createQuest,
+    getFines,
+    getQuests,
+    getShifts,
+} from "@/src/server/ceo/generals";
 import { getEmployeesData } from "@/src/server/general/employees";
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
@@ -216,6 +222,17 @@ const fetchShiftsData = async (inputs: QueryInputs): Promise<Shift | null> => {
     }
 };
 
+const fetchQuestsData = async (inputs: QueryInputs): Promise<Quest | null> => {
+    try {
+        const response = await getQuests(inputs);
+
+        return response;
+    } catch (error) {
+        console.error("Error fetching quests:", error);
+        throw error; // Re-throw to handle in fetchAll
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -234,6 +251,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [shifts, setShifts] = useState<Shift | null>(null);
     const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
+    const [quests, setQuests] = useState<Quest | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -256,12 +274,14 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             const employees = await fetchEmployeesData(inputs);
             const shiftsData = await fetchShiftsData(inputs);
             const analyticsData = await fetchAnalyticsData(inputs);
+            const questsData = await fetchQuestsData(inputs);
 
             setFinesSummary(finesSummary);
             setShifts(shiftsData);
             setLocations(organizations);
             setEmployees(employees);
             setAnalytics(analyticsData);
+            setQuests(questsData);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
             setError(
@@ -317,6 +337,17 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         [createFine],
     );
 
+    const createQuestAction = useCallback(
+        async (inputs: QuestInputsType) => {
+            try {
+                await createQuest(inputs);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        [createQuest],
+    );
+
     // Context Value
     const value: ManagerContextType = {
         employees,
@@ -325,6 +356,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         locations,
         finesSummary,
         shifts,
+        quests,
         analytics,
         selectedStorageTab,
         selectedExpenseTab,
@@ -335,6 +367,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         setPeriod,
         setLocation,
         createFineAction,
+        createQuestAction,
         refetch,
         clearError,
     };

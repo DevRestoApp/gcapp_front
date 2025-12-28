@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
@@ -121,7 +122,7 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
+                        <FontAwesome name="user-o" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoValue}>
@@ -140,7 +141,7 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
+                        <FontAwesome name="dollar" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
@@ -344,6 +345,7 @@ const styles = StyleSheet.create({
     },
     iconText: {
         fontSize: 20,
+        color: "green",
     },
     infoContent: {
         flex: 1,

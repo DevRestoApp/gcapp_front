@@ -21,6 +21,7 @@ import { useCeo } from "@/src/contexts/CeoProvider";
 import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import { MaterialIcons } from "@expo/vector-icons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -124,7 +125,7 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
+                        <FontAwesome name="user-o" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoValue}>
@@ -143,7 +144,7 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
+                        <FontAwesome name="dollar" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>

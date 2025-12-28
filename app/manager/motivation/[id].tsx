@@ -19,7 +19,7 @@ import QuestCardEmployees, {
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { useCeo } from "@/src/contexts/CeoProvider";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 interface EmployeeQuestProgress {
     id: string;
@@ -38,14 +38,14 @@ interface EmployeeQuestProgress {
 export default function QuestDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
-    const { quests, employees, loading } = useCeo();
+    const { quests, employees, loading } = useManager();
 
     const [questLoading, setQuestLoading] = useState(false);
     const questId = Array.isArray(id) ? id[0] : id;
 
     // Find the specific quest
     const quest = useMemo(() => {
-        return quests.find((q) => q.id === questId) || null;
+        return quests.quests.find((q) => q.id === questId) || null;
     }, [quests, questId]);
 
     // Generate employee quest progress data
@@ -56,7 +56,7 @@ export default function QuestDetailScreen() {
             (employee, index) => {
                 const isCompleted =
                     quest.employeeNames?.includes(employee.name) || false;
-                const progress = isCompleted ? 100 : Math.random() * 80; // Mock progress data
+                const progress = isCompleted ? 100 : 0;
                 const points = isCompleted
                     ? quest.reward
                     : Math.floor((progress / 100) * quest.reward);

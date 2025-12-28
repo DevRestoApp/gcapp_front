@@ -33,15 +33,13 @@ export async function getShifts(inputs: {
     return res.data;
 }
 
-export async function getQuests(
-    quest_id: number,
-    inputs: {
-        organization_id?: string;
-    },
-) {
+export async function getQuests(inputs: {
+    data?: string;
+    organization_id?: string;
+}) {
     const params = checkFilters(inputs);
 
-    const res = await api.get(`/quests/${quest_id}`, { params });
+    const res = await api.get(`/quests/active`, { params });
 
     return res.data;
 }
