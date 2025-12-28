@@ -16,6 +16,7 @@ import {
     getQuests,
     getShifts,
     createFine,
+    getFines,
     createQuest,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
@@ -26,6 +27,21 @@ import { getOrganizationsData } from "@/src/server/general/organizations";
 
 interface QueryInputs {
     date?: string; // Format: "DD.MM.YYYY"
+}
+type Fine = {
+    id: number;
+    employeeId: number;
+    employeeName: string;
+    amount: number;
+    reason: string;
+    date: string;
+    createdAt: string;
+};
+
+interface FinesSummary {
+    succes: boolean;
+    message: string;
+    fines: Fine[];
 }
 
 interface Employee {
@@ -90,6 +106,7 @@ interface CeoContextType {
 
     // TODO прописать входящие
     locations: any[];
+    finesSummary: FinesSummary;
 
     // State
     loading: boolean;
@@ -125,6 +142,17 @@ export const useCeo = () => {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+const fetchFinesSummary = async (
+    inputs: QueryInputs,
+): Promise<FinesSummary | null> => {
+    try {
+        const response = await getFines(inputs);
+        return response;
+    } catch (e) {
+        return null;
+    }
+};
 
 const fetchEmployeesData = async (
     inputs: QueryInputs,
@@ -215,6 +243,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<any[]>([]);
+    const [finesSummary, setFinesSummary] = useState<FinesSummary>();
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -229,15 +258,22 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setLoading(true);
             setError(null);
 
-            const [employeesData, shiftsData, questsData, organizations] =
-                await Promise.all([
-                    fetchEmployeesData(inputs),
-                    fetchShiftsData(inputs),
-                    fetchQuestsData(inputs),
-                    fetchOrganizations(),
-                ]);
+            const [
+                employeesData,
+                shiftsData,
+                questsData,
+                organizations,
+                finesSummary,
+            ] = await Promise.all([
+                fetchEmployeesData(inputs),
+                fetchShiftsData(inputs),
+                fetchQuestsData(inputs),
+                fetchOrganizations(),
+                fetchFinesSummary(inputs),
+            ]);
             setLocations(organizations);
 
+            setFinesSummary(finesSummary);
             setEmployees(employeesData);
             setShifts(shiftsData);
             setQuests(questsData);
@@ -302,6 +338,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const value: CeoContextType = {
         employees,
         locations,
+        finesSummary,
         shifts,
         quests,
         loading,

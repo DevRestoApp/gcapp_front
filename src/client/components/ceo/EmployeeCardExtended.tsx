@@ -30,7 +30,6 @@ export default function EmployeeCardExtended({
     stats,
     onPress,
 }: EmployeeCardProps) {
-    console.log("amount", amount);
     // Full variant (for employee management screen)
     return (
         <TouchableOpacity

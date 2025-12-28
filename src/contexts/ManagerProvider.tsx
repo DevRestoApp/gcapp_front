@@ -9,6 +9,7 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getOrganizationsData } from "@/src/server/general/organizations";
+import { getFines } from "@/src/server/ceo/generals";
 
 // ============================================================================
 // Types
@@ -18,6 +19,21 @@ interface QueryInputs {
     date?: string; // Format: "DD.MM.YYYY"
     period?: string;
     organization_id?: string;
+}
+type Fine = {
+    id: number;
+    employeeId: number;
+    employeeName: string;
+    amount: number;
+    reason: string;
+    date: string;
+    createdAt: string;
+};
+
+interface FinesSummary {
+    succes: boolean;
+    message: string;
+    fines: Fine[];
 }
 
 interface ManagerContextType {
@@ -29,6 +45,7 @@ interface ManagerContextType {
     selectedExpenseTab: string;
     // TODO прописать приходящие
     locations: any[];
+    finesSummary: FinesSummary;
 
     // Actions
     refetch: () => Promise<void>;
@@ -68,6 +85,17 @@ const fetchOrganizations = async (): Promise<any> => {
     }
 };
 
+const fetchFinesSummary = async (
+    inputs: QueryInputs,
+): Promise<FinesSummary | null> => {
+    try {
+        const response = await getFines(inputs);
+        return response;
+    } catch (e) {
+        return null;
+    }
+};
+
 // ============================================================================
 // Provider Component
 // ============================================================================
@@ -82,6 +110,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         useState<string>("open"); // Added this
 
     const [locations, setLocations] = useState<any[]>([]);
+    const [finesSummary, setFinesSummary] = useState<any[]>([]);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -100,6 +129,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
             // PUT REQS here
             const organizations = await fetchOrganizations();
+            const finesSummary = await fetchFinesSummary(inputs);
+
+            setFinesSummary(finesSummary);
             setLocations(organizations);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
@@ -150,6 +182,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         loading,
         error,
         locations,
+        finesSummary,
         selectedStorageTab,
         selectedExpenseTab,
         setSelectedStorageTab,

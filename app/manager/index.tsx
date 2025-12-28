@@ -19,6 +19,8 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import ReportCard from "@/src/client/components/ceo/ReportCard";
+import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -27,6 +29,7 @@ export default function IndexScreen() {
     const {
         employees,
         shifts,
+        finesSummary,
         loading,
         error,
         refetch,
@@ -153,33 +156,52 @@ export default function IndexScreen() {
     );
 
     // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы{" "}
-                <Text style={styles.countBadge}>({shifts?.finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет списка штрафов</Text>
+    const renderFinesSection = () => {
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                    Штрафы{" "}
+                    <Text style={styles.countBadge}>
+                        ({finesSummary.fines.length})
+                    </Text>
+                </Text>
+                <View style={styles.card}>
+                    {finesSummary.fines.length > 0 ? (
+                        <View>
+                            {finesSummary?.fines?.map((el) => (
+                                <EmployeeCardFines
+                                    name={el.employeeName}
+                                    avatar={""}
+                                    amount={String(el.amount)}
+                                    reason={el.reason}
+                                ></EmployeeCardFines>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <Image
+                                source={{
+                                    uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
+                                }}
+                                style={styles.emptyIcon}
+                                resizeMode="contain"
+                            />
+                            <Text style={styles.emptyText}>
+                                Нет списка штрафов
+                            </Text>
+                        </View>
+                    )}
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handlePenaltiesPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
             </View>
-        </View>
-    );
+        );
+    };
 
     // Render motivation section
     const renderMotivationSection = () => (
