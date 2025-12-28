@@ -42,29 +42,36 @@ export default function AnalyticsScreen() {
         {
             id: 1,
             title: "Итого расходы",
-            value: profitloss?.total_expenses.toFixed(2),
-            date: filters.date.slice(0, 5) ?? "",
+            value: profitloss?.total_expenses?.toFixed(2) || "0.00",
+            date: filters.date?.slice(0, 5) || "",
             type: "expense",
         },
         {
             id: 2,
             title: "Итого доходы",
-            value: profitloss?.total_revenue.toFixed(2),
-            date: filters.date.slice(0, 5) ?? "",
+            value: profitloss?.total_revenue?.toFixed(2) || "0.00",
+            date: filters.date?.slice(0, 5) || "",
             type: "income",
         },
         {
             id: 3,
             title: "Итого чистая прибыль",
-            value: profitloss?.gross_profit.toFixed(2),
-            date: filters.date.slice(0, 5) ?? "",
-            type: profitloss?.gross_profit > 0 ? "income" : "expense",
+            value: profitloss?.gross_profit?.toFixed(2) || "0.00",
+            date: filters.date?.slice(0, 5) || "",
+            type: (profitloss?.gross_profit || 0) > 0 ? "income" : "expense",
         },
     ];
 
-    const renderValueBadge = (value: string, type: string) => (
-        <ValueBadge value={value} type={type} />
-    );
+    const renderValue = (value: any, type?: string) => {
+        if (!value && value !== 0) return <Text>-</Text>;
+
+        if (type) {
+            return <ValueBadge value={String(value)} type={type} />;
+        }
+
+        // Always wrap in Text component
+        return <Text style={styles.valueText}>{String(value)}</Text>;
+    };
 
     // Loading state
     if (loading) {
@@ -108,7 +115,6 @@ export default function AnalyticsScreen() {
 
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
-            {/* Header */}
             <ReportHeader
                 title="Аналитика"
                 date={filters.date}
@@ -121,15 +127,13 @@ export default function AnalyticsScreen() {
                 organizations={organizations}
             />
 
-            {/* Scrollable Content */}
             <ScrollView
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* General Metrics */}
                 {analytics?.metrics && analytics.metrics.length > 0 && (
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/analytics")}
+                        onPress={() => router.push("/ceo/reports/analytics")}
                     >
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
@@ -153,10 +157,9 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Profit & Loss Report */}
                 {analytics?.reports && analytics.reports.length > 0 && (
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/expenses")}
+                        onPress={() => router.push("/ceo/reports/expenses")}
                     >
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
@@ -176,7 +179,7 @@ export default function AnalyticsScreen() {
                                 </View>
                                 <TouchableOpacity
                                     onPress={() =>
-                                        router.push("/reports/expenses")
+                                        router.push("/ceo/reports/expenses")
                                     }
                                     style={styles.button}
                                 >
@@ -189,10 +192,9 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Orders Report */}
                 {analytics?.orders && analytics.orders.length > 0 && (
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/orders")}
+                        onPress={() => router.push("/ceo/reports/orders")}
                     >
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
@@ -209,14 +211,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -226,10 +224,9 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Financial Reports */}
                 {analytics?.financial && analytics.financial.length > 0 && (
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/moneyflow")}
+                        onPress={() => router.push("/ceo/reports/moneyflow")}
                     >
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
@@ -246,14 +243,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -263,10 +256,9 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Inventory Reports */}
                 {analytics?.inventory && analytics.inventory.length > 0 && (
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/storage")}
+                        onPress={() => router.push("/ceo/reports/storage")}
                     >
                         <View style={cardStyles.section}>
                             <Text style={cardStyles.sectionTitle}>
@@ -283,14 +275,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -300,7 +288,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Employee Reports */}
                 {analytics?.employees && analytics.employees.length > 0 && (
                     <View style={cardStyles.section}>
                         <Text style={cardStyles.sectionTitle}>
@@ -324,7 +311,7 @@ export default function AnalyticsScreen() {
                                             showStats={false}
                                             onPress={() => {
                                                 router.push(
-                                                    "/reports/employees",
+                                                    "/ceo/reports/employees",
                                                 );
                                             }}
                                         />
@@ -334,7 +321,7 @@ export default function AnalyticsScreen() {
                             <TouchableOpacity
                                 style={styles.button}
                                 onPress={() =>
-                                    router.push("/reports/employees")
+                                    router.push("/ceo/reports/employees")
                                 }
                             >
                                 <Text style={styles.buttonText}>
@@ -384,5 +371,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
         lineHeight: 24,
+    },
+    valueText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "bold",
+        lineHeight: 20,
     },
 });

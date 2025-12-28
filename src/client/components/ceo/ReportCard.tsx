@@ -5,7 +5,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
 
-export default function ReportCard({ title, value, date, type }) {
+interface ReportCardProps {
+    title: string;
+    value: string;
+    date?: string;
+    type: "income" | "expense" | string;
+}
+
+export default function ReportCard({
+    title,
+    value,
+    date,
+    type,
+}: ReportCardProps) {
     const isIncome = type === "income";
     const isExpense = type === "expense";
 
@@ -55,7 +67,10 @@ export default function ReportCard({ title, value, date, type }) {
                         </Text>
                     </View>
                 </View>
-                {date && <Text style={styles.dateText}>{date}</Text>}
+                {/* Fixed: Only render if date exists and is not empty */}
+                {date && date.trim() !== "" && (
+                    <Text style={styles.dateText}>{date}</Text>
+                )}
             </View>
         </View>
     );

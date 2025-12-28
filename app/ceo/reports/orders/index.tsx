@@ -7,7 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
@@ -73,7 +73,7 @@ export default function OrderReports() {
                 <View style={cardStyles.card}>
                     <TouchableOpacity
                         onPress={() => {
-                            router.push("reports/orders/history");
+                            router.push("/ceo/reports/orders/history");
                         }}
                     >
                         <View
@@ -94,8 +94,8 @@ export default function OrderReports() {
                                         : checks.value
                                 }
                                 icon={
-                                    <AntDesign
-                                        name="money-collect"
+                                    <MaterialIcons
+                                        name="attach-money"
                                         size={20}
                                         color="white"
                                     />
@@ -106,7 +106,7 @@ export default function OrderReports() {
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => {
-                            router.push("reports/orders/returns");
+                            router.push("/ceo/reports/orders/returns");
                         }}
                     >
                         <View

@@ -22,31 +22,51 @@ type TabType = "revenue" | "checks" | "average";
 export function ReportSalesChart({ title, data }: ReportSalesChartProps) {
     const [activeTab, setActiveTab] = useState<TabType>("revenue");
 
+    // Validate data
+    if (!data || !data[activeTab] || data[activeTab].length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.noDataText}>
+                    Нет данных для отображения
+                </Text>
+            </View>
+        );
+    }
+
     const resultData = data[activeTab];
 
-    const maxValue = Math.max(...resultData.map((d) => d.value));
+    // Calculate max value safely
+    const values = resultData
+        .map((d) => Number(d.value))
+        .filter((v) => isFinite(v) && v > 0);
+
+    const maxValue = values.length > 0 ? Math.max(...values) : 1;
     const chartHeight = 120;
 
     const renderBar = (item: ChartData, index: number, barWidth: number) => {
-        const hasValue = item.value > 0;
-        const height = hasValue ? (item.value / maxValue) * chartHeight : 44;
+        const value = Number(item.value);
+        const hasValue = isFinite(value) && value > 0;
+        const height = hasValue
+            ? Math.max((value / maxValue) * chartHeight, 4)
+            : 44;
         const color = hasValue ? "#20C774" : "#1C1C1E";
+
+        // Ensure width and height are valid
+        const validWidth = Math.max(barWidth - 8, 1);
+        const validHeight = Math.max(height, 1);
 
         return (
             <View
                 key={index}
                 style={[styles.barContainer, { width: barWidth }]}
             >
-                <Svg
-                    width={barWidth - 8}
-                    height={chartHeight}
-                    style={styles.svg}
-                >
+                <Svg width={validWidth} height={chartHeight} style={styles.svg}>
                     <Rect
                         x={0}
-                        y={chartHeight - height}
-                        width={barWidth - 8}
-                        height={height}
+                        y={chartHeight - validHeight}
+                        width={validWidth}
+                        height={validHeight}
                         fill={color}
                         rx={12}
                         ry={12}
@@ -54,14 +74,14 @@ export function ReportSalesChart({ title, data }: ReportSalesChartProps) {
                 </Svg>
 
                 <View style={styles.labelContainer}>
-                    <Text style={styles.dateText}>{item.date}</Text>
-                    <Text style={styles.valueText}>{item.label}</Text>
+                    <Text style={styles.dateText}>{item.date || "-"}</Text>
+                    <Text style={styles.valueText}>{item.label || "0"}</Text>
                 </View>
             </View>
         );
     };
 
-    const barWidth = 400 / resultData.length;
+    const barWidth = resultData.length > 0 ? 400 / resultData.length : 50;
 
     return (
         <View style={styles.container}>
@@ -195,5 +215,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 16,
         fontWeight: "500",
+    },
+    noDataText: {
+        color: "#8E8E93",
+        fontSize: 16,
+        textAlign: "center",
+        paddingVertical: 32,
     },
 });

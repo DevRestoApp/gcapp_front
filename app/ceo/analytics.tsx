@@ -129,7 +129,7 @@ export default function AnalyticsScreen() {
                 {/* General Metrics */}
                 <TouchableOpacity
                     onPress={() => {
-                        router.push("/reports");
+                        router.push("/ceo/reports");
                     }}
                 >
                     {analyticsData?.metrics?.length > 0 && (
