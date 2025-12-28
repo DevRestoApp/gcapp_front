@@ -25,11 +25,8 @@ import StorageForm from "./forms";
 
 export default function AddScreen() {
     const router = useRouter();
-
-    const { selectedStorageTab } = useManager();
-
     // Get data from context instead of local state
-    const { loading, setDate: setInputDate } = useCeo();
+    const { loading, setDate: setInputDate, selectedStorageTab } = useManager();
 
     // ... keep calendar initialization and handleDayPress ...
     const renderHeader = () => {

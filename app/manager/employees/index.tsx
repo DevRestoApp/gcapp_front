@@ -15,12 +15,12 @@ import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 
 import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { useCeo } from "@/src/contexts/CeoProvider";
+import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function EmployeesScreen() {
     const router = useRouter();
-    const { employees, shifts, loading, error, refetch } = useCeo();
-    console.log("em", employees);
+    const { employees, shifts, loading, error, refetch } = useManager();
 
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
 
@@ -30,6 +30,52 @@ export default function EmployeesScreen() {
         activeTab === "open"
             ? employees.filter((emp) => emp.isActive)
             : employees;
+
+    const mappedEmployees = filteredEmployees?.map((employees) => {
+        return {
+            id: employees.id,
+            avatar: employees.avatarUrl,
+            name: employees.name,
+            role: employees.role,
+            data: [
+                {
+                    label: "Общая сумма",
+                    value:
+                        employees.totalAmount.length > 0
+                            ? employees.totalAmount
+                            : "0",
+                },
+                {
+                    label: "Длительность смены",
+                    value:
+                        employees.shiftTime.length > 0
+                            ? employees.shiftTime
+                            : "0",
+                },
+            ],
+        };
+    });
+
+    const RenderEmployeeCard = (employeeData) => {
+        const { name, avatar, amount, data, role } = employeeData;
+
+        return (
+            <EmployeeCardExtended
+                name={name}
+                avatar={avatar}
+                amount={amount}
+                role={role}
+                stats={data}
+                onPress={() => {
+                    setSelectedEmployee(employeeData);
+                    // Navigate to employee detail page
+                    router.push({
+                        pathname: `manager/employees/${employeeData.id}`,
+                    });
+                }}
+            />
+        );
+    };
 
     return (
         <SafeAreaView
@@ -119,23 +165,8 @@ export default function EmployeesScreen() {
                     </Text>
 
                     <View style={styles.employeesList}>
-                        {filteredEmployees.map((employee) => (
-                            <EmployeeCard
-                                key={employee.id}
-                                name={employee.name}
-                                role={employee.role}
-                                avatar={employee.avatarUrl}
-                                totalAmount={employee.totalAmount}
-                                shiftTime={employee.shiftTime}
-                                showStats={activeTab === "open"}
-                                onPress={() => {
-                                    setSelectedEmployee(employee);
-                                    // Navigate to employee detail page
-                                    router.push({
-                                        pathname: `manager/employees/${employee.id}`,
-                                    });
-                                }}
-                            />
+                        {mappedEmployees.map((emp) => (
+                            <RenderEmployeeCard key={emp.id} {...emp} />
                         ))}
                     </View>
                 </View>

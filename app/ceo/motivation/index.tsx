@@ -15,9 +15,9 @@ import Svg, { Path } from "react-native-svg";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
-import QuestCardEmployees, {
+import QuestCard, {
     QuestEmployees,
-} from "@/src/client/components/ceo/QuestCardEmployees";
+} from "@/src/client/components/ceo/QuestCard";
 import AddQuestModal, {
     AddQuestModalRef,
 } from "@/src/client/components/modals/AddQuestModal";
@@ -32,7 +32,7 @@ export default function QuestManagementScreen() {
         useCeo();
 
     // Add null checks and default values
-    const safeQuests = quests || [];
+    const safeQuests = quests.quests || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
 
@@ -108,7 +108,12 @@ export default function QuestManagementScreen() {
 
     // Handle quest creation
     const handleAddQuest = useCallback(
-        async (data: { name: string; amount: number; reward: string }) => {
+        async (data: {
+            title: string;
+            amount: number;
+            reward: string;
+            unit: string;
+        }) => {
             if (!createQuestAction) {
                 Alert.alert("Ошибка", "Функция создания квеста недоступна");
                 return;
@@ -117,11 +122,11 @@ export default function QuestManagementScreen() {
             try {
                 // Add quest to context
                 createQuestAction({
-                    title: data.name,
+                    title: data.title,
                     description: data.reward,
                     reward: data.amount,
                     target: data.amount,
-                    unit: "единиц", // Default unit
+                    unit: data.unit, // Default unit
                     totalEmployees: safeEmployees.length,
                     completedEmployees: 0,
                     employeeNames: [],
@@ -141,7 +146,7 @@ export default function QuestManagementScreen() {
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => router.push("/ceo")}
+                onPress={() => router.push("/manager")}
                 style={styles.backButton}
                 activeOpacity={0.7}
             >
@@ -199,7 +204,7 @@ export default function QuestManagementScreen() {
 
     // Render quest item
     const renderQuestItem = ({ item }: { item: QuestEmployees }) => (
-        <QuestCardEmployees
+        <QuestCard
             quest={item}
             onPress={() => router.push(`/ceo/motivation/${item.id}`)}
         />

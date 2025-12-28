@@ -16,9 +16,11 @@ import {
     getQuests,
     getShifts,
     createFine,
+    getFines,
     createQuest,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
+import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 // ============================================================================
 // Types
@@ -26,6 +28,21 @@ import { getOrganizationsData } from "@/src/server/general/organizations";
 
 interface QueryInputs {
     date?: string; // Format: "DD.MM.YYYY"
+}
+type Fine = {
+    id: number;
+    employeeId: number;
+    employeeName: string;
+    amount: number;
+    reason: string;
+    date: string;
+    createdAt: string;
+};
+
+interface FinesSummary {
+    succes: boolean;
+    message: string;
+    fines: Fine[];
 }
 
 interface Employee {
@@ -81,15 +98,27 @@ interface Quest {
     date: string;
     employeeProgress: EmployeeProgress[];
 }
+type generalType = {
+    id: number;
+    label: any;
+    type?: any;
+    value: any;
+};
+
+interface AnalyticsInterface {
+    metrics: generalType[];
+}
 
 interface CeoContextType {
     // Data
     employees: Employee[] | null;
     shifts: Shift | null;
     quests: Quest | null;
+    analytics: AnalyticsInterface | null;
 
     // TODO прописать входящие
     locations: any[];
+    finesSummary: FinesSummary;
 
     // State
     loading: boolean;
@@ -126,12 +155,37 @@ export const useCeo = () => {
 // Helper Functions
 // ============================================================================
 
+const fetchAnalyticsData = async (
+    filters: QueryInputs,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getAnalyticsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return {
+            metrics: [],
+        };
+    }
+};
+
+const fetchFinesSummary = async (
+    inputs: QueryInputs,
+): Promise<FinesSummary | null> => {
+    try {
+        const response = await getFines(inputs);
+        return response;
+    } catch (e) {
+        return null;
+    }
+};
+
 const fetchEmployeesData = async (
     inputs: QueryInputs,
 ): Promise<Employee[] | null> => {
     try {
         //const response = await getEmployeesData({ deleted: false, ...inputs });
-        const response = await getEmployeesData({ deleted: false });
+        const response = await getEmployeesData({ ...inputs, deleted: false });
 
         // Validate response structure - getEmployeesData returns the array directly
         if (!Array.isArray(response)) {
@@ -158,32 +212,9 @@ const fetchShiftsData = async (inputs: QueryInputs): Promise<Shift | null> => {
 };
 const fetchQuestsData = async (inputs: QueryInputs): Promise<Quest | null> => {
     try {
-        // TODO change to input while there be quests
-        const response = await getQuests(2, {});
+        const response = await getQuests(inputs);
 
-        console.log("quests", response);
-        // TODO Добавить нормальный запрос на списко квестов
-
-        return [
-            response,
-            {
-                id: "1",
-                title: "title",
-                description: "description",
-                reward: 5,
-                current: 2,
-                target: 10,
-                unit: "unit",
-                completed: true,
-                progress: 3,
-                expiresAt: "25.12.2025",
-                totalEmployees: 5,
-                completedEmployees: 3,
-                employeeNames: ["ASD", "zxc", "zzz"],
-                date: "12.12.2025",
-                employeeProgress: [1, 2, 3],
-            },
-        ];
+        return response;
     } catch (error) {
         console.error("Error fetching quests:", error);
         throw error; // Re-throw to handle in fetchAll
@@ -215,9 +246,12 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<any[]>([]);
+    const [finesSummary, setFinesSummary] = useState<FinesSummary>(null);
+    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
-        date: getTodayFormatted(),
+        // TODO убрать СРОЧНО!!
+        date: "28.12.2025" ?? getTodayFormatted(),
     });
 
     // ========================================================================
@@ -229,18 +263,28 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setLoading(true);
             setError(null);
 
-            const [employeesData, shiftsData, questsData, organizations] =
-                await Promise.all([
-                    fetchEmployeesData(inputs),
-                    fetchShiftsData(inputs),
-                    fetchQuestsData(inputs),
-                    fetchOrganizations(),
-                ]);
+            const [
+                employeesData,
+                shiftsData,
+                questsData,
+                organizations,
+                finesSummary,
+                analyticsData,
+            ] = await Promise.all([
+                fetchEmployeesData(inputs),
+                fetchShiftsData(inputs),
+                fetchQuestsData(inputs),
+                fetchOrganizations(),
+                fetchFinesSummary(inputs),
+                fetchAnalyticsData(inputs),
+            ]);
             setLocations(organizations);
 
+            setFinesSummary(finesSummary);
             setEmployees(employeesData);
             setShifts(shiftsData);
             setQuests(questsData);
+            setAnalytics(analyticsData);
         } catch (err: any) {
             console.error("❌ Error fetching CEO data:", err);
             setError(
@@ -302,8 +346,10 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const value: CeoContextType = {
         employees,
         locations,
+        finesSummary,
         shifts,
         quests,
+        analytics,
         loading,
         error,
         queryInputs: inputs,

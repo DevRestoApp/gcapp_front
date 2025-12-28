@@ -11,14 +11,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
+import { MaterialIcons } from "@expo/vector-icons";
+import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -27,9 +30,13 @@ export default function IndexScreen() {
     const {
         employees,
         shifts,
+        finesSummary,
+        quests,
         loading,
+        queryInputs,
         error,
         refetch,
+        analytics,
         setDate: setInputDate,
     } = useManager();
 
@@ -116,14 +123,11 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>👥</Text>
+                        <FontAwesome name="user-o" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
-                        <Text style={styles.infoLabel}>
-                            Открытых сотрудники
-                        </Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.openEmployees} официанта
+                            {employees?.length} официанта
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -138,12 +142,12 @@ export default function IndexScreen() {
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconContainer}>
-                        <Text style={styles.iconText}>₸</Text>
+                        <FontAwesome name="dollar" size={20} color="white" />
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.totalAmount.toLocaleString()} тг
+                            {analytics?.metrics[0]?.value}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -153,53 +157,101 @@ export default function IndexScreen() {
     );
 
     // Render fines section
-    const renderFinesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Штрафы{" "}
-                <Text style={styles.countBadge}>({shifts?.finesCount})</Text>
-            </Text>
-            <View style={styles.card}>
-                <View style={styles.emptyState}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
-                        }}
-                        style={styles.emptyIcon}
-                        resizeMode="contain"
-                    />
-                    <Text style={styles.emptyText}>Нет списка штрафов</Text>
+    const renderFinesSection = () => {
+        return (
+            <View style={styles.section}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Штрафы</Text>
+                    <Text style={styles.countBadge}>
+                        {" "}
+                        ({finesSummary.fines.length})
+                    </Text>
                 </View>
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handlePenaltiesPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
+                <View style={styles.card}>
+                    {finesSummary.fines.length > 0 ? (
+                        <View>
+                            {finesSummary.fines.map((el, index) => (
+                                <EmployeeCardFines
+                                    key={el.id || index}
+                                    name={el.employeeName}
+                                    avatar=""
+                                    amount={String(el.amount)}
+                                    reason={el.reason}
+                                />
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <Image
+                                source={{
+                                    uri: "https://api.builder.io/api/v1/image/assets/TEMP/3a2062fc9fe28a4ced85562fb2ca8299b6cae617?width=160",
+                                }}
+                                style={styles.emptyIcon}
+                                resizeMode="contain"
+                            />
+                            <Text style={styles.emptyText}>
+                                Нет списка штрафов
+                            </Text>
+                        </View>
+                    )}
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handlePenaltiesPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
-                <Text style={styles.countBadge}>
-                    ({shifts?.motivationCount})
-                </Text>
-            </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
-        </View>
-    );
+    const renderMotivationSection = () => {
+        const dateStr = new Date().toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        const label =
+            queryInputs.date === dateStr
+                ? "Задания на сегодня"
+                : "Задания на " + queryInputs.date;
+        const quest = "Задании: " + quests.quests?.length.toString();
+        return (
+            <View style={styles.section}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Мотивация</Text>
+                    <Text style={styles.countBadge}>
+                        {" "}
+                        ({shifts?.motivationCount || 0})
+                    </Text>
+                </View>
+                <View style={styles.card}>
+                    <ListItemIcon
+                        label={label}
+                        value={quest}
+                        icon={
+                            <MaterialIcons
+                                name="task-alt"
+                                size={20}
+                                color="white"
+                            />
+                        }
+                        withChevron={true}
+                    />
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handleMotivationPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonIcon}>+</Text>
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    };
 
     return (
         <SafeAreaView
@@ -306,6 +358,7 @@ const styles = StyleSheet.create({
     },
     iconText: {
         fontSize: 20,
+        color: "green",
     },
     infoContent: {
         flex: 1,

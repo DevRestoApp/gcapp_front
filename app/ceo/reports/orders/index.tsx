@@ -152,7 +152,7 @@ export default function OrderReports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/reports")}
+                    onBack={() => router.push("/ceo/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -171,7 +171,7 @@ export default function OrderReports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}
-                onBack={() => router.push("/reports")}
+                onBack={() => router.push("/ceo/reports")}
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}

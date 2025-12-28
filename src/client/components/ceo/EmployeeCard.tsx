@@ -42,7 +42,7 @@ export default function EmployeeCard({
                     <View style={styles.employeeText}>
                         <Text style={styles.employeeName}>{name}</Text>
                         <Text style={styles.employeeAmount} numberOfLines={1}>
-                            Общий сумма:{" "}
+                            Общая сумма:{" "}
                             <Text style={styles.bold}>{totalAmount}</Text>
                         </Text>
                     </View>
@@ -107,7 +107,7 @@ export default function EmployeeCard({
                                 />
                             </Svg>
                             <Text style={styles.statLabelText}>
-                                Общий сумма:
+                                Общая сумма:
                             </Text>
                         </View>
                         <Text style={styles.statValue}>{totalAmount}</Text>

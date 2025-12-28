@@ -20,7 +20,6 @@ import { useCeo } from "@/src/contexts/CeoProvider";
 export default function EmployeesScreen() {
     const router = useRouter();
     const { employees, shifts, loading, error, refetch } = useCeo();
-    console.log("em", employees);
 
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
 

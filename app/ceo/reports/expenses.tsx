@@ -36,6 +36,7 @@ export default function ExpensesReports() {
     const renderGeneralCard = () => {
         const { total_expenses, total_revenue, gross_profit } = profitloss;
 
+        // TODO пофиксить вычитвание чистой прибыли
         // { title, value, date, type }
         const expensesGeneral = [
             {
