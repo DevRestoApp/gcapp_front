@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     View,
     ScrollView,
@@ -35,43 +35,48 @@ export default function MoneyflowReports() {
         error,
     } = useReports();
 
-    useEffect(() => {
-        if (moneyflow) {
-            const incomes = (data) => {
-                const paytypes = data.income_by_pay_type.map((el) => {
-                    return {
-                        id: el.id,
-                        name: el.payment_type,
-                        amount: el.amount,
-                    };
-                });
-                const categories = data.income_by_category.map((el) => {
-                    return {
-                        id: el.id,
-                        name: el.category,
-                        amount: el.amount,
-                    };
-                });
+    // Move the transformation logic outside useEffect
+    const transformedData = useMemo(() => {
+        if (!moneyflow) return null;
 
-                return {
-                    id: data.id,
-                    label: data.label,
-                    type: data.type,
-                    value: data.value,
-                    data: [...paytypes, ...categories],
-                };
+        const incomes = (data) => {
+            const paytypes = data.income_by_pay_type.map((el) => ({
+                id: el.id,
+                name: el.payment_type,
+                amount: el.amount,
+            }));
+            const categories = data.income_by_category.map((el) => ({
+                id: el.id,
+                name: el.category,
+                amount: el.amount,
+            }));
+
+            return {
+                id: data.id,
+                label: data.label,
+                type: data.type,
+                value: data.value,
+                data: [...paytypes, ...categories],
             };
-            setMoneyFlowData({
-                dishes: moneyflow.dishes,
-                writeoffs: moneyflow.writeoffs,
-                expenses: moneyflow.expenses,
-                incomes: incomes(moneyflow.incomes),
-            });
+        };
+
+        return {
+            dishes: moneyflow.dishes,
+            writeoffs: moneyflow.writeoffs,
+            expenses: moneyflow.expenses,
+            incomes: incomes(moneyflow.incomes),
+        };
+    }, [moneyflow]);
+
+    // Use useEffect only to update the context, not for transformation
+    useEffect(() => {
+        if (transformedData) {
+            setMoneyFlowData(transformedData);
         }
-    }, [moneyflow, setMoneyFlowData]);
+    }, [transformedData]); // Only depend on transformedData, remove setMoneyFlowData
 
     const renderValueBadge = (value: string, type: string) => (
-        <ValueBadge value={value} type={type} />
+        <ValueBadge value={String(value)} type={type} />
     );
 
     const renderGeneralCard = () => {
@@ -93,12 +98,12 @@ export default function MoneyflowReports() {
                             <ListItemIcon
                                 label={dishes?.label || ""}
                                 value={
-                                    dishes?.type
+                                    dishes?.type && dishes?.value
                                         ? renderValueBadge(
-                                              dishes.value,
+                                              String(dishes.value),
                                               dishes.type,
                                           )
-                                        : dishes?.value || ""
+                                        : String(dishes?.value || "")
                                 }
                                 icon={
                                     <Ionicons
@@ -122,12 +127,12 @@ export default function MoneyflowReports() {
                             <ListItemIcon
                                 label={writeoffs?.label || ""}
                                 value={
-                                    writeoffs?.type
+                                    writeoffs?.type && writeoffs?.value
                                         ? renderValueBadge(
-                                              writeoffs.value,
+                                              String(writeoffs.value),
                                               writeoffs.type,
                                           )
-                                        : writeoffs?.value || ""
+                                        : String(writeoffs?.value || "")
                                 }
                                 icon={
                                     <Ionicons
@@ -151,12 +156,12 @@ export default function MoneyflowReports() {
                             <ListItemIcon
                                 label={expenses?.label || ""}
                                 value={
-                                    expenses?.type
+                                    expenses?.type && expenses?.value
                                         ? renderValueBadge(
-                                              expenses.value,
+                                              String(expenses.value),
                                               expenses.type,
                                           )
-                                        : expenses?.value || ""
+                                        : String(expenses?.value || "")
                                 }
                                 icon={
                                     <Ionicons
@@ -181,12 +186,12 @@ export default function MoneyflowReports() {
                             <ListItemIcon
                                 label={incomes?.label || ""}
                                 value={
-                                    incomes?.type
+                                    incomes?.type && incomes?.value
                                         ? renderValueBadge(
-                                              incomes.value,
+                                              String(incomes.value),
                                               incomes.type,
                                           )
-                                        : incomes?.value || ""
+                                        : String(incomes?.value || "")
                                 }
                                 icon={
                                     <Ionicons

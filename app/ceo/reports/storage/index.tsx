@@ -47,7 +47,9 @@ const RenderItemsCard = () => {
                 {[checks, checks2].map((item, i) => (
                     <TouchableOpacity
                         key={i}
-                        onPress={() => router.push("reports/storage/items")}
+                        onPress={() =>
+                            router.push("/ceo/reports/storage/items")
+                        }
                     >
                         <View
                             style={{
@@ -123,7 +125,7 @@ export default function Warehouse() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/reports")}
+                    onBack={() => router.push("/ceo/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -144,7 +146,7 @@ export default function Warehouse() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/reports")}
+                    onBack={() => router.push("/ceo/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -163,7 +165,7 @@ export default function Warehouse() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}
-                onBack={() => router.push("/reports")}
+                onBack={() => router.push("/ceo/reports")}
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}

@@ -240,6 +240,7 @@ const styles = StyleSheet.create({
     container: {
         width: "100%",
         backgroundColor: "#19191A",
+        marginTop: 40,
     },
     header: {
         flexDirection: "row",

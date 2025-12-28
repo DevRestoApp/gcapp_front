@@ -29,30 +29,33 @@ const prepareData = (data, key) => {
             .padStart(6, "0");
 
     // Total sum for percent calculation
-    const total = data.reduce((sum, item) => sum + item.amount, 0);
+    const total = data.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     // chartData
     const chartData = data.map((item) => ({
-        name: item[key],
+        name: item[key] || "Unknown",
         value: total ? Math.round((item.amount / total) * 100) : 0,
         color: randomColor(),
     }));
 
     // listItems
     const listItems = data.map((item) => ({
-        label: item[key],
+        label: item[key] || "Unknown",
         sublabel: `${total ? Math.round((item.amount / total) * 100) : 0}%`,
-        value: `${Math.round(item.amount).toLocaleString("ru-RU")} тг`,
+        value: `${Math.round(item.amount || 0).toLocaleString("ru-RU")} тг`,
     }));
 
     return { chartData, listItems };
 };
+
 function formatNumberShort(value) {
+    if (!value || isNaN(value)) return "0";
     if (value >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1) + "B";
     if (value >= 1_000_000) return (value / 1_000_000).toFixed(0) + "M";
     if (value >= 1_000) return (value / 1_000).toFixed(0) + "K";
     return value.toString();
 }
+
 export default function Reports() {
     const router = useRouter();
 
@@ -78,29 +81,28 @@ export default function Reports() {
         moneyflow?.incomes?.income_by_pay_type,
         "payment_type",
     );
-    const sales = {
-        revenue: salesDynamics?.daily_data.map((el) => {
-            return {
-                date: el.date.slice(0, 5),
-                value: el.revenue,
-                label: formatNumberShort(el.revenue),
-            };
-        }),
-        checks: salesDynamics?.daily_data.map((el) => {
-            return {
-                date: el.date.slice(0, 5),
-                value: el.checks_count,
-                label: formatNumberShort(el.checks_count),
-            };
-        }),
-        average: salesDynamics?.daily_data.map((el) => {
-            return {
-                date: el.date.slice(0, 5),
-                value: el.average_check,
-                label: formatNumberShort(el.average_check),
-            };
-        }),
-    };
+
+    // Safe sales data preparation with null checks
+    const sales =
+        salesDynamics?.daily_data && Array.isArray(salesDynamics.daily_data)
+            ? {
+                  revenue: salesDynamics.daily_data.map((el) => ({
+                      date: el.date?.slice(0, 5) || "",
+                      value: el.revenue || 0,
+                      label: formatNumberShort(el.revenue || 0),
+                  })),
+                  checks: salesDynamics.daily_data.map((el) => ({
+                      date: el.date?.slice(0, 5) || "",
+                      value: el.checks_count || 0,
+                      label: formatNumberShort(el.checks_count || 0),
+                  })),
+                  average: salesDynamics.daily_data.map((el) => ({
+                      date: el.date?.slice(0, 5) || "",
+                      value: el.average_check || 0,
+                      label: formatNumberShort(el.average_check || 0),
+                  })),
+              }
+            : null;
 
     const renderMainMetrics = () => {
         const metrics = analytics?.metrics;
@@ -113,7 +115,7 @@ export default function Reports() {
                 <Text style={cardStyles.sectionTitle}>Общие показатели</Text>
                 <View style={cardStyles.card}>
                     {metrics.map((metric, index) => (
-                        <React.Fragment key={metric.id}>
+                        <React.Fragment key={metric.id || index}>
                             {index > 0 && <View style={cardStyles.divider} />}
                             <MetricCard {...metric} />
                         </React.Fragment>
@@ -132,7 +134,7 @@ export default function Reports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/reports")}
+                    onBack={() => router.push("/ceo/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -155,7 +157,7 @@ export default function Reports() {
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
-                    onBack={() => router.push("/reports")}
+                    onBack={() => router.push("/ceo/reports")}
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
@@ -176,7 +178,7 @@ export default function Reports() {
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}
-                onBack={() => router.push("/reports")}
+                onBack={() => router.push("/ceo/reports")}
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
@@ -190,25 +192,29 @@ export default function Reports() {
             >
                 {renderMainMetrics()}
 
-                {sales && (
+                {sales && sales.revenue && sales.revenue.length > 0 && (
                     <ReportSalesChart title="Динамика продаж" data={sales} />
                 )}
 
-                {payments && (
-                    <ReportDonutSection
-                        title="Выручка по типам оплаты"
-                        chartData={payments.chartData}
-                        listItems={payments.listItems}
-                    />
-                )}
+                {payments &&
+                    payments.chartData &&
+                    payments.chartData.length > 0 && (
+                        <ReportDonutSection
+                            title="Выручка по типам оплаты"
+                            chartData={payments.chartData}
+                            listItems={payments.listItems}
+                        />
+                    )}
 
-                {categories && (
-                    <ReportDonutSection
-                        title="Выручка по категориям"
-                        chartData={categories.chartData}
-                        listItems={categories.listItems}
-                    />
-                )}
+                {categories &&
+                    categories.chartData &&
+                    categories.chartData.length > 0 && (
+                        <ReportDonutSection
+                            title="Выручка по категориям"
+                            chartData={categories.chartData}
+                            listItems={categories.listItems}
+                        />
+                    )}
             </ScrollView>
         </View>
     );

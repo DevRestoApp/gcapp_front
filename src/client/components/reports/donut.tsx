@@ -4,7 +4,6 @@ import Svg, { Path, G } from "react-native-svg";
 
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { ListCard } from "@/src/client/components/ListCard";
-import { list } from "postcss";
 
 interface DonutData {
     name: string;
@@ -29,41 +28,17 @@ export function ReportDonutSection({
     chartData,
     listItems,
 }: ReportDonutSectionProps) {
-    // TODO Найти норм библиотеку с красивыми чартами для использования дефолтные свг дерьмо
-    const renderDonutChart = () => {
-        const size = 240;
-        const centerX = size / 2;
-        const centerY = size / 2;
-        const outerRadius = 120;
-        const innerRadius = 72;
-
-        const total = chartData.reduce((sum, item) => sum + item.value, 0);
-        let currentAngle = -90; // Start from top
-
-        const paths = chartData.map((item, index) => {
-            const angle = (item.value / total) * 360;
-            const startAngle = currentAngle;
-            const endAngle = currentAngle + angle;
-
-            const path = describeArc(
-                centerX,
-                centerY,
-                outerRadius,
-                innerRadius,
-                startAngle,
-                endAngle,
-            );
-            currentAngle = endAngle;
-
-            return <Path key={index} d={path} fill={item.color} />;
-        });
-
+    // Validate data before rendering
+    if (!chartData || chartData.length === 0) {
         return (
-            <Svg width={size} height={size}>
-                <G>{paths}</G>
-            </Svg>
+            <View style={styles.container}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.noDataText}>
+                    Нет данных для отображения
+                </Text>
+            </View>
         );
-    };
+    }
 
     const polarToCartesian = (
         centerX: number,
@@ -93,6 +68,26 @@ export function ReportDonutSection({
 
         const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
 
+        // Validate all values before creating path
+        const values = [
+            outerStart.x,
+            outerStart.y,
+            outerRadius,
+            outerEnd.x,
+            outerEnd.y,
+            innerEnd.x,
+            innerEnd.y,
+            innerRadius,
+            innerStart.x,
+            innerStart.y,
+        ];
+
+        // Check if any value is NaN or Infinity
+        if (values.some((v) => !isFinite(v))) {
+            console.warn("Invalid arc values detected", values);
+            return "M 0 0"; // Return a valid but invisible path
+        }
+
         return [
             "M",
             outerStart.x,
@@ -120,12 +115,85 @@ export function ReportDonutSection({
         ].join(" ");
     };
 
-    // Calculate percentages and positions
-    const total = chartData.reduce((sum, item) => sum + item.value, 0);
-    const dataWithPercentages = chartData.map((item) => ({
-        ...item,
-        percentage: Math.round((item.value / total) * 100),
-    }));
+    const renderDonutChart = () => {
+        const size = 240;
+        const centerX = size / 2;
+        const centerY = size / 2;
+        const outerRadius = 120;
+        const innerRadius = 72;
+
+        // Calculate total and validate
+        const total = chartData.reduce((sum, item) => {
+            const value = Number(item.value);
+            return sum + (isFinite(value) ? value : 0);
+        }, 0);
+
+        // If total is 0 or invalid, don't render chart
+        if (!total || !isFinite(total)) {
+            return null;
+        }
+
+        let currentAngle = -90; // Start from top
+
+        const paths = chartData
+            .filter((item) => {
+                const value = Number(item.value);
+                return isFinite(value) && value > 0;
+            })
+            .map((item, index) => {
+                const value = Number(item.value);
+                const angle = (value / total) * 360;
+
+                // Skip if angle is invalid
+                if (!isFinite(angle) || angle === 0) {
+                    return null;
+                }
+
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+
+                const path = describeArc(
+                    centerX,
+                    centerY,
+                    outerRadius,
+                    innerRadius,
+                    startAngle,
+                    endAngle,
+                );
+
+                currentAngle = endAngle;
+
+                return <Path key={index} d={path} fill={item.color} />;
+            })
+            .filter(Boolean); // Remove null entries
+
+        return (
+            <Svg width={size} height={size}>
+                <G>{paths}</G>
+            </Svg>
+        );
+    };
+
+    // Calculate percentages
+    const total = chartData.reduce((sum, item) => {
+        const value = Number(item.value);
+        return sum + (isFinite(value) ? value : 0);
+    }, 0);
+
+    const dataWithPercentages = chartData
+        .filter((item) => {
+            const value = Number(item.value);
+            return isFinite(value) && value > 0;
+        })
+        .map((item) => {
+            const value = Number(item.value);
+            const percentage =
+                total > 0 ? Math.round((value / total) * 100) : 0;
+            return {
+                ...item,
+                percentage: isFinite(percentage) ? percentage : 0,
+            };
+        });
 
     const getPercentagePositions = () => {
         const positions = [
@@ -160,7 +228,9 @@ export function ReportDonutSection({
                 })}
             </View>
 
-            <ListCard items={listItems}></ListCard>
+            {listItems && listItems.length > 0 && (
+                <ListCard items={listItems} />
+            )}
         </View>
     );
 }
@@ -189,5 +259,11 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 12,
         lineHeight: 16,
+    },
+    noDataText: {
+        color: "#8E8E93",
+        fontSize: 16,
+        textAlign: "center",
+        paddingVertical: 32,
     },
 });

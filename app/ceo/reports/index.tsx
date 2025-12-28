@@ -63,13 +63,6 @@ export default function AnalyticsScreen() {
     ];
 
     const renderValue = (value: any, type?: string) => {
-        // Debug logging
-        console.log("renderValue called:", {
-            value,
-            type,
-            valueType: typeof value,
-        });
-
         if (!value && value !== 0) return <Text>-</Text>;
 
         if (type) {
