@@ -12,6 +12,7 @@ import { getOrganizationsData } from "@/src/server/general/organizations";
 import { createFine, getFines, getShifts } from "@/src/server/ceo/generals";
 import { getEmployeesData } from "@/src/server/general/employees";
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
+import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 // ============================================================================
 // Types
@@ -64,6 +65,7 @@ interface ManagerContextType {
     employees: Employee[] | null;
     shifts: Shift | null;
     quests: Quest | null;
+    analytics: AnalyticsInterface | null;
 
     // Actions
     refetch: () => Promise<void>;
@@ -118,6 +120,17 @@ interface Quest {
     employeeProgress: EmployeeProgress[];
 }
 
+type generalType = {
+    id: number;
+    label: any;
+    type?: any;
+    value: any;
+};
+
+interface AnalyticsInterface {
+    metrics: generalType[];
+}
+
 // ============================================================================
 // Context Creation
 // ============================================================================
@@ -134,6 +147,20 @@ export const useManager = () => {
         throw new Error("useManager must be used within ManagerProvider");
     }
     return context;
+};
+
+const fetchAnalyticsData = async (
+    filters: QueryInputs,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getAnalyticsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return {
+            metrics: [],
+        };
+    }
 };
 
 const fetchOrganizations = async (): Promise<any> => {
@@ -206,6 +233,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [finesSummary, setFinesSummary] = useState<FinesSummary>();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [shifts, setShifts] = useState<Shift | null>(null);
+    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -227,11 +255,13 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             const finesSummary = await fetchFinesSummary(inputs);
             const employees = await fetchEmployeesData(inputs);
             const shiftsData = await fetchShiftsData(inputs);
+            const analyticsData = await fetchAnalyticsData(inputs);
 
             setFinesSummary(finesSummary);
             setShifts(shiftsData);
             setLocations(organizations);
             setEmployees(employees);
+            setAnalytics(analyticsData);
         } catch (err: any) {
             console.error("❌ Error fetching Manager data:", err);
             setError(
@@ -289,12 +319,13 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     // Context Value
     const value: ManagerContextType = {
+        employees,
         loading,
         error,
         locations,
         finesSummary,
         shifts,
-        employees,
+        analytics,
         selectedStorageTab,
         selectedExpenseTab,
         setSelectedStorageTab,

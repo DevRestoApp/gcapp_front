@@ -17,13 +17,10 @@ import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
-import ReportCard from "@/src/client/components/ceo/ReportCard";
 import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
 import { MaterialIcons } from "@expo/vector-icons";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
-import ValueBadge from "@/src/client/components/ValueBadge";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -36,8 +33,10 @@ export default function IndexScreen() {
         loading,
         error,
         refetch,
+        analytics,
         setDate: setInputDate,
     } = useManager();
+    console.log("analytics", analytics);
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -146,7 +145,7 @@ export default function IndexScreen() {
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.totalAmount.toLocaleString()} тг
+                            {analytics?.metrics[0]?.value}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -155,7 +154,6 @@ export default function IndexScreen() {
         </View>
     );
 
-    // Render fines section
     // Render fines section
     const renderFinesSection = () => {
         return (

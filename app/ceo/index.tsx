@@ -19,6 +19,8 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useCeo } from "@/src/contexts/CeoProvider";
 import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
+import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -31,6 +33,7 @@ export default function IndexScreen() {
         finesSummary,
         error,
         refetch,
+        analytics,
         setDate: setInputDate,
     } = useCeo();
 
@@ -145,7 +148,7 @@ export default function IndexScreen() {
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {shifts?.totalAmount.toLocaleString()} тг
+                            {analytics?.metrics[0].value}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -158,22 +161,24 @@ export default function IndexScreen() {
     const renderFinesSection = () => {
         return (
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                    Штрафы{" "}
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Штрафы</Text>
                     <Text style={styles.countBadge}>
+                        {" "}
                         ({finesSummary.fines.length})
                     </Text>
-                </Text>
+                </View>
                 <View style={styles.card}>
                     {finesSummary.fines.length > 0 ? (
                         <View>
-                            {finesSummary?.fines?.map((el) => (
+                            {finesSummary.fines.map((el, index) => (
                                 <EmployeeCardFines
+                                    key={el.id || index}
                                     name={el.employeeName}
-                                    avatar={""}
+                                    avatar=""
                                     amount={String(el.amount)}
                                     reason={el.reason}
-                                ></EmployeeCardFines>
+                                />
                             ))}
                         </View>
                     ) : (
@@ -205,20 +210,35 @@ export default function IndexScreen() {
     // Render motivation section
     const renderMotivationSection = () => (
         <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-                Мотивация{" "}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.sectionTitle}>Мотивация</Text>
                 <Text style={styles.countBadge}>
-                    ({shifts?.motivationCount})
+                    {" "}
+                    ({shifts?.motivationCount || 0})
                 </Text>
-            </Text>
-            <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleMotivationPress}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addButtonIcon}>+</Text>
-                <Text style={styles.addButtonText}>Добавить</Text>
-            </TouchableOpacity>
+            </View>
+            <View style={styles.card}>
+                <ListItemIcon
+                    label="label"
+                    value="JUST VALUE"
+                    icon={
+                        <MaterialIcons
+                            name="task-alt"
+                            size={20}
+                            color="white"
+                        />
+                    }
+                    withChevron={true}
+                />
+                <TouchableOpacity
+                    style={styles.addButton}
+                    onPress={handleMotivationPress}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.addButtonIcon}>+</Text>
+                    <Text style={styles.addButtonText}>Добавить</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 

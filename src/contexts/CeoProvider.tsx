@@ -20,6 +20,7 @@ import {
     createQuest,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
+import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 // ============================================================================
 // Types
@@ -97,12 +98,23 @@ interface Quest {
     date: string;
     employeeProgress: EmployeeProgress[];
 }
+type generalType = {
+    id: number;
+    label: any;
+    type?: any;
+    value: any;
+};
+
+interface AnalyticsInterface {
+    metrics: generalType[];
+}
 
 interface CeoContextType {
     // Data
     employees: Employee[] | null;
     shifts: Shift | null;
     quests: Quest | null;
+    analytics: AnalyticsInterface | null;
 
     // TODO прописать входящие
     locations: any[];
@@ -142,6 +154,20 @@ export const useCeo = () => {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+const fetchAnalyticsData = async (
+    filters: QueryInputs,
+): Promise<AnalyticsInterface> => {
+    try {
+        const response = await getAnalyticsData(filters);
+        return response;
+    } catch (e) {
+        console.log(e);
+        return {
+            metrics: [],
+        };
+    }
+};
 
 const fetchFinesSummary = async (
     inputs: QueryInputs,
@@ -244,6 +270,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<any[]>([]);
     const [finesSummary, setFinesSummary] = useState<FinesSummary>(null);
+    const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -264,12 +291,14 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 questsData,
                 organizations,
                 finesSummary,
+                analyticsData,
             ] = await Promise.all([
                 fetchEmployeesData(inputs),
                 fetchShiftsData(inputs),
                 fetchQuestsData(inputs),
                 fetchOrganizations(),
                 fetchFinesSummary(inputs),
+                fetchAnalyticsData(inputs),
             ]);
             setLocations(organizations);
 
@@ -277,6 +306,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setEmployees(employeesData);
             setShifts(shiftsData);
             setQuests(questsData);
+            setAnalytics(analyticsData);
         } catch (err: any) {
             console.error("❌ Error fetching CEO data:", err);
             setError(
@@ -341,6 +371,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         finesSummary,
         shifts,
         quests,
+        analytics,
         loading,
         error,
         queryInputs: inputs,
