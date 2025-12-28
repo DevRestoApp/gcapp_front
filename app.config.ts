@@ -6,6 +6,7 @@ declare const process: any;
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
+    scheme: "com.gcapp.mobile",
     version: "1.0.1",
     runtimeVersion: "1.0.1",
     orientation: "portrait",
@@ -26,6 +27,9 @@ const config: ExpoConfig = {
         EXPO_PUBLIC_TELEGRAM_CHAT_ID: process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID,
         eas: {
             projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
+        },
+        router: {
+            origin: "app",
         },
     },
     android: {
