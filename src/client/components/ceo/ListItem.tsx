@@ -9,7 +9,8 @@ export default function ListItem({
     value,
     withChevron = true,
 }: ListItemProps) {
-    const isValueNode = typeof value !== "string";
+    // Check if value is a React element (not a string/number/boolean)
+    const isReactElement = React.isValidElement(value);
 
     return (
         <View style={styles.listItem}>
@@ -17,10 +18,12 @@ export default function ListItem({
                 <Text style={styles.listLabel} numberOfLines={1}>
                     {label}
                 </Text>
-                {!isValueNode ? (
-                    <Text style={styles.listValue}>{value}</Text>
-                ) : (
+                {isReactElement ? (
+                    // Render React element directly (like <ValueBadge />)
                     value
+                ) : (
+                    // Wrap primitive values in Text component
+                    <Text style={styles.listValue}>{String(value)}</Text>
                 )}
             </View>
             {withChevron && (

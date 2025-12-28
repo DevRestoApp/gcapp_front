@@ -14,11 +14,11 @@ import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 
 interface ReportHeaderProps {
     title: string;
-    date?: string; // Format: "DD.MM.YYYY"
+    date?: string;
     period?: string;
-    location?: string;
+    location?: string | number;
     onBack?: () => void;
-    onDateChange?: (date: string) => void; // Receives formatted string
+    onDateChange?: (date: string) => void;
     onPeriodChange?: (period: string) => void;
     onLocationChange?: (location: string) => void;
     organizations?: {
@@ -29,7 +29,6 @@ interface ReportHeaderProps {
     }[];
 }
 
-// TODO переделать место {label: "день", value: "day"}
 const PERIODS = [
     { label: "День", value: "day" },
     { label: "Неделя", value: "week" },
@@ -60,7 +59,7 @@ export function ReportHeader({
         if (organizations && organizations.length > 0) {
             return organizations.map((org) => ({
                 label: org.name,
-                value: org.id,
+                value: String(org.id), // Convert to string for consistent comparison
             }));
         }
         return [];
@@ -79,13 +78,18 @@ export function ReportHeader({
     const getPeriodLabel = (value: string) => {
         if (!value) return "Выбрать...";
         const item = PERIODS.find((p) => p.value === value);
-        return item ? item.label : value;
+        return item ? item.label : "Выбрать...";
     };
 
-    const getLocationLabel = (value: string) => {
-        if (!value) return "Выбрать...";
-        const item = LOCATIONS.find((l) => l.value === value);
-        return item ? item.label : value;
+    const getLocationLabel = (value: string | number) => {
+        if (!value && value !== 0) return "Выбрать...";
+
+        // Convert to string for comparison
+        const stringValue = String(value);
+        const item = LOCATIONS.find((l) => l.value === stringValue);
+
+        // Always return a string, never the raw value
+        return item ? item.label : "Выбрать...";
     };
 
     type itemsProps = {
@@ -97,7 +101,7 @@ export function ReportHeader({
         visible: boolean,
         onClose: () => void,
         items: itemsProps[],
-        selectedItem: string,
+        selectedItem: string | number,
         onSelect: (item: string) => void,
     ) => (
         <Modal
@@ -119,7 +123,8 @@ export function ReportHeader({
                             <TouchableOpacity
                                 style={[
                                     styles.modalItem,
-                                    item.value === selectedItem &&
+                                    String(item.value) ===
+                                        String(selectedItem) &&
                                         styles.modalItemSelected,
                                 ]}
                                 onPress={() => onSelect(item.value)}
@@ -127,13 +132,15 @@ export function ReportHeader({
                                 <Text
                                     style={[
                                         styles.modalItemText,
-                                        item.value === selectedItem &&
+                                        String(item.value) ===
+                                            String(selectedItem) &&
                                             styles.modalItemTextSelected,
                                     ]}
                                 >
                                     {item.label}
                                 </Text>
-                                {item.value === selectedItem && (
+                                {String(item.value) ===
+                                    String(selectedItem) && (
                                     <Ionicons
                                         name="checkmark"
                                         size={20}
@@ -174,7 +181,9 @@ export function ReportHeader({
                         size={20}
                         color="#FFFFFF"
                     />
-                    <Text style={styles.filterText}>{date}</Text>
+                    <Text style={styles.filterText}>
+                        {date || "Выбрать..."}
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

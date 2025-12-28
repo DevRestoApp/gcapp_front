@@ -12,8 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
-import { useReports } from "@/src/contexts/ReportDataProvider";
-import { Ionicons } from "@expo/vector-icons";
+
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 // ChevronLeft Icon Component
@@ -32,21 +31,12 @@ function ChevronLeftIcon() {
 }
 
 export default function OrderHistory() {
-    const { generalOrders } = useReports();
     const router = useRouter();
 
-    const orders = [
-        { id: 1, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 2, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 3, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 4, tableNumber: "8 стол", amount: "+ 85 000 тг", time: "19:21" },
-        { id: 5, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 6, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-        { id: 7, tableNumber: "15 стол", amount: "+56 000 тг", time: "19:21" },
-    ];
+    const orders = [];
 
     const handleGoBack = () => {
-        router.push("/reports/orders");
+        router.push("/ceo/reports/orders");
     };
 
     return (
@@ -121,13 +111,6 @@ export default function OrderHistory() {
                             tableNumber={order.tableNumber}
                             amount={order.amount}
                             time={order.time}
-                            icon={
-                                <Ionicons
-                                    name="receipt-sharp"
-                                    size={20}
-                                    color="white"
-                                />
-                            }
                         />
                     ))}
                 </View>

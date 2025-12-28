@@ -85,7 +85,9 @@ export default function MoneyflowReports() {
                 <View style={cardStyles.card}>
                     {/* Dishes */}
                     <TouchableOpacity
-                        onPress={() => router.push("/reports/moneyflow/dishes")}
+                        onPress={() =>
+                            router.push("/ceo/reports/moneyflow/dishes")
+                        }
                     >
                         <View style={styles.listItemContainer}>
                             <ListItemIcon
@@ -113,7 +115,7 @@ export default function MoneyflowReports() {
                     {/* Writeoffs */}
                     <TouchableOpacity
                         onPress={() =>
-                            router.push("/reports/moneyflow/writeoffs")
+                            router.push("/ceo/reports/moneyflow/writeoffs")
                         }
                     >
                         <View style={styles.listItemContainer}>
@@ -142,7 +144,7 @@ export default function MoneyflowReports() {
                     {/* Expenses */}
                     <TouchableOpacity
                         onPress={() =>
-                            router.push("/reports/moneyflow/expenses")
+                            router.push("/ceo/reports/moneyflow/expenses")
                         }
                     >
                         <View style={styles.listItemContainer}>
@@ -172,7 +174,7 @@ export default function MoneyflowReports() {
                     {/* Incomes */}
                     <TouchableOpacity
                         onPress={() =>
-                            router.push("/reports/moneyflow/incomes")
+                            router.push("/ceo/reports/moneyflow/incomes")
                         }
                     >
                         <View style={styles.listItemContainer}>
