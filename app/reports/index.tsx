@@ -62,9 +62,12 @@ export default function AnalyticsScreen() {
         },
     ];
 
-    const renderValueBadge = (value: string, type: string) => (
-        <ValueBadge value={value} type={type} />
-    );
+    const renderValue = (value: string, type?: string) => {
+        if (type) {
+            return <ValueBadge value={value} type={type} />;
+        }
+        return <ValueBadge value={value} />;
+    };
 
     // Loading state
     if (loading) {
@@ -108,7 +111,6 @@ export default function AnalyticsScreen() {
 
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
-            {/* Header */}
             <ReportHeader
                 title="Аналитика"
                 date={filters.date}
@@ -121,12 +123,10 @@ export default function AnalyticsScreen() {
                 organizations={organizations}
             />
 
-            {/* Scrollable Content */}
             <ScrollView
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* General Metrics */}
                 {analytics?.metrics && analytics.metrics.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/analytics")}
@@ -153,7 +153,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Profit & Loss Report */}
                 {analytics?.reports && analytics.reports.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/expenses")}
@@ -189,7 +188,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Orders Report */}
                 {analytics?.orders && analytics.orders.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/orders")}
@@ -209,14 +207,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -226,7 +220,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Financial Reports */}
                 {analytics?.financial && analytics.financial.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/moneyflow")}
@@ -246,14 +239,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -263,7 +252,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Inventory Reports */}
                 {analytics?.inventory && analytics.inventory.length > 0 && (
                     <TouchableOpacity
                         onPress={() => router.push("/reports/storage")}
@@ -283,14 +271,10 @@ export default function AnalyticsScreen() {
                                             )}
                                             <ListItem
                                                 label={item.label}
-                                                value={
-                                                    item.type
-                                                        ? renderValueBadge(
-                                                              item.value,
-                                                              item.type,
-                                                          )
-                                                        : item.value
-                                                }
+                                                value={renderValue(
+                                                    item.value,
+                                                    item.type,
+                                                )}
                                             />
                                         </React.Fragment>
                                     ),
@@ -300,7 +284,6 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                 )}
 
-                {/* Employee Reports */}
                 {analytics?.employees && analytics.employees.length > 0 && (
                     <View style={cardStyles.section}>
                         <Text style={cardStyles.sectionTitle}>

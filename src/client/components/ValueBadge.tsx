@@ -27,7 +27,11 @@ export default function ValueBadge({ value, type }: ValueBadgeProps) {
             </View>
         );
     }
-    return null;
+    return (
+        <View style={[styles.badge]}>
+            <Text style={[styles.badgeText, textStyles.white]}>{value}</Text>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
