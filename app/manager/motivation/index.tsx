@@ -24,13 +24,12 @@ import AddQuestModal, {
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
-    const { quests, employees, shifts, loading, createQuestAction } = useCeo();
-    const { locations } = useManager();
+    const { quests, employees, shifts, loading, createQuestAction, locations } =
+        useManager();
 
     // Add null checks and default values
     const safeQuests = quests.quests || [];

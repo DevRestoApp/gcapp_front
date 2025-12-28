@@ -250,7 +250,8 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
-        date: getTodayFormatted(),
+        // TODO убрать СРОЧНО!!
+        date: "28.12.2025" ?? getTodayFormatted(),
     });
 
     // ========================================================================

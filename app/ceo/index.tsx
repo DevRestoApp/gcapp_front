@@ -32,6 +32,8 @@ export default function IndexScreen() {
         shifts,
         loading,
         finesSummary,
+        quests,
+        queryInputs,
         error,
         refetch,
         analytics,
@@ -220,8 +222,8 @@ export default function IndexScreen() {
             </View>
             <View style={styles.card}>
                 <ListItemIcon
-                    label="label"
-                    value="JUST VALUE"
+                    label={"Квесты"}
+                    value={quests.quests?.length.toString()}
                     icon={
                         <MaterialIcons
                             name="task-alt"

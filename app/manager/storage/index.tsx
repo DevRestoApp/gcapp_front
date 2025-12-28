@@ -106,7 +106,7 @@ export default function StorageScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Расходы"
+                title="Склад"
                 date={queryInputs.date}
                 period={queryInputs.period}
                 location={queryInputs.organization_id}

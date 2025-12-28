@@ -254,7 +254,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [quests, setQuests] = useState<Quest | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
-        date: getTodayFormatted(),
+        // TODO убрать потом важно!!!!!
+        date: "28.12.2025" ?? getTodayFormatted(),
         period: "",
         organization_id: "",
     });

@@ -31,13 +31,14 @@ export default function IndexScreen() {
         employees,
         shifts,
         finesSummary,
+        quests,
         loading,
+        queryInputs,
         error,
         refetch,
         analytics,
         setDate: setInputDate,
     } = useManager();
-    console.log("analytics", analytics);
 
     const [days, setDays] = useState<Day[]>([]);
 
@@ -206,39 +207,51 @@ export default function IndexScreen() {
     };
 
     // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={styles.sectionTitle}>Мотивация</Text>
-                <Text style={styles.countBadge}>
-                    {" "}
-                    ({shifts?.motivationCount || 0})
-                </Text>
+    const renderMotivationSection = () => {
+        const dateStr = new Date().toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        const label =
+            queryInputs.date === dateStr
+                ? "Задания на сегодня"
+                : "Задания на " + queryInputs.date;
+        const quest = "Задании: " + quests.quests?.length.toString();
+        return (
+            <View style={styles.section}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Мотивация</Text>
+                    <Text style={styles.countBadge}>
+                        {" "}
+                        ({shifts?.motivationCount || 0})
+                    </Text>
+                </View>
+                <View style={styles.card}>
+                    <ListItemIcon
+                        label={label}
+                        value={quest}
+                        icon={
+                            <MaterialIcons
+                                name="task-alt"
+                                size={20}
+                                color="white"
+                            />
+                        }
+                        withChevron={true}
+                    />
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handleMotivationPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonIcon}>+</Text>
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <View style={styles.card}>
-                <ListItemIcon
-                    label="label"
-                    value="JUST VALUE"
-                    icon={
-                        <MaterialIcons
-                            name="task-alt"
-                            size={20}
-                            color="white"
-                        />
-                    }
-                    withChevron={true}
-                />
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handleMotivationPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonIcon}>+</Text>
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView
