@@ -25,6 +25,12 @@ import DocumentCard, {
     CommentRow,
 } from "@/src/client/components/DocumentCard";
 
+import {
+    WarehouseDocumentsItemType,
+    WarehouseDocumentsOutput,
+} from "@/src/server/types/storage";
+import { getWarehouseDocuments } from "@/src/server/general/warehouse";
+
 import { ReportHeader } from "@/src/client/components/reports/header";
 
 // TODO при смене табов, получать данные
@@ -66,7 +72,6 @@ export default function StorageScreen() {
     const router = useRouter();
 
     const {
-        loading,
         selectedStorageTab,
         setSelectedStorageTab,
         queryInputs,
@@ -79,6 +84,17 @@ export default function StorageScreen() {
     const [activeTab, setActiveTab] = useState<
         "receipts" | "inventory" | "writeoffs"
     >("receipts");
+    const [receipts, setReceipts] = useState<
+        WarehouseDocumentsItemType[] | null
+    >(null);
+    const [writeoffs, setWriteoffs] = useState<
+        WarehouseDocumentsItemType[] | null
+    >(null);
+    const [inventory, setInventory] = useState<
+        WarehouseDocumentsItemType[] | null
+    >(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     useEffect(() => {
         setSelectedStorageTab(activeTab);
     }, [activeTab, setSelectedStorageTab]);
@@ -100,6 +116,32 @@ export default function StorageScreen() {
         }
 
         setDays(weekDays);
+    }, []);
+
+    useEffect(() => {
+        const fetchDocuments = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                /*const response = await getWarehouseDocuments({});
+
+                const receipts = response.documents.filter(doc => doc.document_type === "RECEIPT");
+                const writeoffs = response.documents.filter(doc => doc.document_type === "WRITEOFFS");
+                const inventory = response.documents.filter(doc => doc.document_type === "INVENTORY");
+                setReceipts(receipts)
+                setWriteoffs(writeoffs)
+                setInventory(inventory)*/
+                console.log(receipts);
+            } catch (err: any) {
+                setError(err.message || "Failed to fetch documents");
+                console.error("Error fetching documents:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDocuments();
     }, []);
 
     // Render header

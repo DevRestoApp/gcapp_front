@@ -1,10 +1,4 @@
-import React, {
-    useState,
-    useRef,
-    useCallback,
-    useMemo,
-    useEffect,
-} from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -12,24 +6,17 @@ import {
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    Alert,
     ActivityIndicator,
+    Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-import DishItem from "@/src/client/components/waiter/DishItem";
-import DishDetailModal, {
-    DishDetailModalRef,
-} from "@/src/client/components/modals/DishDetailModal";
-import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { getMenu } from "@/src/server/general/menu";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface MenuItem {
+export interface MenuItem {
     id: number;
     name: string;
     price: number;
@@ -38,37 +25,35 @@ interface MenuItem {
     category: string;
 }
 
-interface MenuScreenProps {
-    restaurantId?: string;
+interface MenuPickerProps {
+    visible: boolean;
+    onClose: () => void;
+    onSelect: (item: MenuItem) => void;
+    selectedItem?: MenuItem | null;
+    title?: string;
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-export default function MenuScreen({
-    restaurantId = "restaurant-123",
-}: MenuScreenProps = {}) {
+export default function MenuPicker({
+    visible,
+    onClose,
+    onSelect,
+    selectedItem = null,
+    title = "Выберите блюдо",
+}: MenuPickerProps) {
     // ========================================================================
     // State Management
     // ========================================================================
 
     const [dishes, setDishes] = useState<MenuItem[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("");
-    const [quantities, setQuantities] = useState<Record<number, number>>({});
-    const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
-
-    const modalRef = useRef<DishDetailModalRef>(null);
 
     // ========================================================================
     // Data Fetching
@@ -82,10 +67,9 @@ export default function MenuScreen({
             const response = await getMenu({});
 
             if (!response?.items || !Array.isArray(response.items)) {
-                throw new Error("Invalid menu data received");
+                throw new Error("Invalid menu data");
             }
 
-            // Extract unique categories
             const uniqueCategories = Array.from(
                 new Set(response.items.map((item: MenuItem) => item.category)),
             ).filter(Boolean) as string[];
@@ -93,30 +77,22 @@ export default function MenuScreen({
             setDishes(response.items);
             setCategories(uniqueCategories);
 
-            // Set first category as default if not already set
             if (!selectedCategory && uniqueCategories.length > 0) {
                 setSelectedCategory(uniqueCategories[0]);
             }
-
-            console.log(
-                `Loaded ${response.items.length} dishes in ${uniqueCategories.length} categories`,
-            );
         } catch (err: any) {
-            const errorMessage = err.message || "Failed to load menu";
-            setError(errorMessage);
+            setError(err.message || "Failed to load menu");
             console.error("Error fetching menu:", err);
-            Alert.alert("Ошибка", "Не удалось загрузить меню");
         } finally {
             setLoading(false);
         }
     }, [selectedCategory]);
 
     useEffect(() => {
-        fetchMenuData();
-
-        const interval = setInterval(fetchMenuData, REFRESH_INTERVAL);
-        return () => clearInterval(interval);
-    }, [fetchMenuData]);
+        if (visible) {
+            fetchMenuData();
+        }
+    }, [visible, fetchMenuData]);
 
     // ========================================================================
     // Computed Values
@@ -124,7 +100,6 @@ export default function MenuScreen({
 
     const filteredDishes = useMemo(() => {
         return dishes.filter((dish) => {
-            // Search filter
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase().trim();
                 const matchesName = dish.name.toLowerCase().includes(query);
@@ -134,7 +109,6 @@ export default function MenuScreen({
                 if (!matchesName && !matchesDesc) return false;
             }
 
-            // Category filter
             if (selectedCategory && dish.category !== selectedCategory) {
                 return false;
             }
@@ -142,10 +116,6 @@ export default function MenuScreen({
             return true;
         });
     }, [dishes, searchQuery, selectedCategory]);
-
-    const totalCartItems = useMemo(() => {
-        return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-    }, [quantities]);
 
     const getCategoryDishCount = useCallback(
         (category: string) => {
@@ -157,21 +127,6 @@ export default function MenuScreen({
     // ========================================================================
     // Event Handlers
     // ========================================================================
-
-    const handleQuantityChange = useCallback(
-        (dishId: number, quantity: number) => {
-            setQuantities((prev) => {
-                const newQuantities = { ...prev };
-                if (quantity <= 0) {
-                    delete newQuantities[dishId];
-                } else {
-                    newQuantities[dishId] = quantity;
-                }
-                return newQuantities;
-            });
-        },
-        [],
-    );
 
     const handleSearchChange = useCallback((text: string) => {
         setSearchQuery(text);
@@ -186,46 +141,13 @@ export default function MenuScreen({
         setSearchQuery("");
     }, []);
 
-    const handleDishPress = useCallback((dish: MenuItem) => {
-        setSelectedDish(dish);
-        setTimeout(() => modalRef.current?.open(), 0);
-    }, []);
-
-    const handleModalClose = useCallback(() => {
-        setSelectedDish(null);
-    }, []);
-
-    const handleAddToOrder = useCallback(
-        (quantity: number) => {
-            if (!selectedDish || quantity <= 0) return;
-
-            handleQuantityChange(selectedDish.id, quantity);
-
-            Alert.alert(
-                "Добавлено в заказ",
-                `${selectedDish.name} (${quantity} шт.) — ${(selectedDish.price * quantity).toLocaleString("ru-RU")} тг`,
-                [{ text: "OK" }],
-                { cancelable: true },
-            );
-
-            modalRef.current?.close();
-            setSelectedDish(null);
+    const handleDishSelect = useCallback(
+        (dish: MenuItem) => {
+            onSelect(dish);
+            onClose();
         },
-        [selectedDish, handleQuantityChange],
+        [onSelect, onClose],
     );
-
-    const handleViewCart = useCallback(() => {
-        // Calculate total
-        const total = Object.entries(quantities).reduce((sum, [id, qty]) => {
-            const dish = dishes.find((d) => d.id === Number(id));
-            return sum + (dish ? dish.price * qty : 0);
-        }, 0);
-
-        Alert.alert(
-            "Корзина",
-            `Товаров: ${totalCartItems}\nСумма: ${total.toLocaleString("ru-RU")} тг`,
-        );
-    }, [totalCartItems, quantities, dishes]);
 
     const handleRetry = useCallback(() => {
         fetchMenuData();
@@ -236,9 +158,9 @@ export default function MenuScreen({
     // ========================================================================
 
     const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
+        <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка меню...</Text>
+            <Text style={styles.loadingText}>Загрузка меню...</Text>
         </View>
     );
 
@@ -260,7 +182,6 @@ export default function MenuScreen({
                 placeholderTextColor="#797A80"
                 style={styles.searchInput}
                 returnKeyType="search"
-                clearButtonMode="while-editing"
             />
             {searchQuery.length > 0 && (
                 <TouchableOpacity
@@ -333,20 +254,37 @@ export default function MenuScreen({
         );
     };
 
-    const renderDishItem = (dish: MenuItem) => (
-        <DishItem
-            key={`dish-${dish.id}`}
-            id={String(dish.id)}
-            name={dish.name}
-            description={dish.description || ""}
-            price={`${dish.price.toLocaleString("ru-RU")} тг`}
-            image={""}
-            variant="interactive"
-            initialQuantity={quantities[dish.id] || 0}
-            onQuantityChange={(id, qty) => handleQuantityChange(dish.id, qty)}
-            onPress={() => handleDishPress(dish)}
-        />
-    );
+    const renderDishItem = (dish: MenuItem) => {
+        const isSelected = selectedItem?.id === dish.id;
+
+        return (
+            <TouchableOpacity
+                key={`dish-${dish.id}`}
+                style={[styles.dishItem, isSelected && styles.dishItemSelected]}
+                onPress={() => handleDishSelect(dish)}
+                activeOpacity={0.7}
+            >
+                <View style={styles.dishInfo}>
+                    <Text style={styles.dishName} numberOfLines={2}>
+                        {dish.name}
+                    </Text>
+                    {dish.description && (
+                        <Text style={styles.dishDescription} numberOfLines={2}>
+                            {dish.description}
+                        </Text>
+                    )}
+                    <Text style={styles.dishPrice}>
+                        {dish.price.toLocaleString("ru-RU")} тг
+                    </Text>
+                </View>
+                {isSelected && (
+                    <View style={styles.checkmark}>
+                        <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    };
 
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
@@ -381,97 +319,55 @@ export default function MenuScreen({
             )}
 
             {filteredDishes.length > 0 ? (
-                <View style={styles.dishesList}>
+                <ScrollView
+                    style={styles.dishesList}
+                    showsVerticalScrollIndicator={false}
+                >
                     {filteredDishes.map(renderDishItem)}
-                </View>
+                </ScrollView>
             ) : (
                 renderEmptyState()
             )}
         </View>
     );
 
-    const renderCartButton = () => {
-        if (totalCartItems === 0) return null;
-
-        const totalPrice = Object.entries(quantities).reduce(
-            (sum, [id, qty]) => {
-                const dish = dishes.find((d) => d.id === Number(id));
-                return sum + (dish ? dish.price * qty : 0);
-            },
-            0,
-        );
-
-        return (
-            <TouchableOpacity
-                style={styles.cartButton}
-                onPress={handleViewCart}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.cartButtonText}>
-                    Корзина ({totalCartItems}) •{" "}
-                    {totalPrice.toLocaleString("ru-RU")} тг
-                </Text>
-            </TouchableOpacity>
-        );
-    };
-
     // ========================================================================
     // Main Render
     // ========================================================================
 
-    if (loading) {
-        return (
-            <SafeAreaView
-                style={[styles.container, backgroundsStyles.generalBg]}
-            >
-                {renderLoadingState()}
-            </SafeAreaView>
-        );
-    }
-
-    if (error) {
-        return (
-            <SafeAreaView
-                style={[styles.container, backgroundsStyles.generalBg]}
-            >
-                {renderErrorState()}
-            </SafeAreaView>
-        );
-    }
-
     return (
-        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {renderSearchSection()}
-                {renderCategoriesSection()}
-                {renderDishesSection()}
-            </ScrollView>
+        <Modal
+            visible={visible}
+            animationType="slide"
+            transparent={false}
+            onRequestClose={onClose}
+        >
+            <View style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>{title}</Text>
+                    <TouchableOpacity
+                        onPress={onClose}
+                        style={styles.closeButton}
+                    >
+                        <Text style={styles.closeButtonText}>×</Text>
+                    </TouchableOpacity>
+                </View>
 
-            {renderCartButton()}
-
-            {selectedDish && (
-                <DishDetailModal
-                    ref={modalRef}
-                    dish={{
-                        id: String(selectedDish.id),
-                        name: selectedDish.name,
-                        description: selectedDish.description || "",
-                        price: `${selectedDish.price.toLocaleString("ru-RU")} тг`,
-                        image: selectedDish.image,
-                        category: selectedDish.category,
-                    }}
-                    onClose={handleModalClose}
-                    initialQuantity={quantities[selectedDish.id] || 0}
-                    onQuantityChange={(qty) =>
-                        handleQuantityChange(selectedDish.id, qty)
-                    }
-                    onAddToOrder={handleAddToOrder}
-                />
-            )}
-        </SafeAreaView>
+                {/* Content */}
+                {loading ? (
+                    renderLoadingState()
+                ) : error ? (
+                    renderErrorState()
+                ) : (
+                    <View style={styles.content}>
+                        {renderSearchSection()}
+                        {renderCategoriesSection()}
+                        {renderDishesSection()}
+                    </View>
+                )}
+            </View>
+        </Modal>
     );
 }
 
@@ -482,15 +378,54 @@ export default function MenuScreen({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: "#19191A",
     },
-    scrollContent: {
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         paddingHorizontal: 16,
-        paddingTop: 20,
-        paddingBottom: 100,
-        flexGrow: 1,
+        paddingTop: 60,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(43, 43, 44, 1)",
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#fff",
+    },
+    closeButton: {
+        width: 32,
+        height: 32,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 16,
+        backgroundColor: "rgba(35, 35, 36, 1)",
+    },
+    closeButtonText: {
+        fontSize: 24,
+        color: "#fff",
+        fontWeight: "300",
     },
 
-    // Error State
+    content: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 20,
+    },
+
+    // Loading/Error States
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loadingText: {
+        color: "#fff",
+        fontSize: 16,
+        marginTop: 12,
+    },
     errorContainer: {
         flex: 1,
         justifyContent: "center",
@@ -528,8 +463,6 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(35, 35, 36, 1)",
         color: "#fff",
         fontSize: 16,
-        borderWidth: 1,
-        borderColor: "transparent",
     },
     clearButton: {
         position: "absolute",
@@ -563,12 +496,9 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginRight: 10,
         backgroundColor: "rgba(35, 35, 36, 1)",
-        borderWidth: 1,
-        borderColor: "transparent",
     },
     categoryButtonActive: {
         backgroundColor: "#fff",
-        borderColor: "#fff",
     },
     categoryText: {
         color: "#797A80",
@@ -614,7 +544,54 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     dishesList: {
-        gap: 12,
+        flex: 1,
+    },
+    dishItem: {
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    dishItemSelected: {
+        backgroundColor: "rgba(60, 130, 253, 0.2)",
+        borderWidth: 2,
+        borderColor: "#3C82FD",
+    },
+    dishInfo: {
+        flex: 1,
+        gap: 4,
+    },
+    dishName: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#fff",
+    },
+    dishDescription: {
+        fontSize: 14,
+        color: "rgba(121, 122, 128, 1)",
+    },
+    dishPrice: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#fff",
+        marginTop: 4,
+    },
+    checkmark: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#3C82FD",
+        justifyContent: "center",
+        alignItems: "center",
+        marginLeft: 12,
+    },
+    checkmarkText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "bold",
     },
 
     // Empty State
@@ -629,42 +606,16 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         marginBottom: 20,
-        lineHeight: 24,
     },
     clearSearchButton: {
         backgroundColor: "rgba(35, 35, 36, 1)",
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     clearSearchButtonText: {
         color: "#fff",
         fontSize: 14,
         fontWeight: "500",
-    },
-
-    // Cart Button
-    cartButton: {
-        position: "absolute",
-        bottom: 20,
-        left: 16,
-        right: 16,
-        height: 50,
-        backgroundColor: "#fff",
-        borderRadius: 25,
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    cartButtonText: {
-        color: "#000",
-        fontSize: 16,
-        fontWeight: "600",
     },
 });

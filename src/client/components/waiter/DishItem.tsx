@@ -1,22 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface DishItemProps {
     id: string;
     name: string;
     description: string;
     price: string;
-    image: string;
+    image?: string; // Keep for future use
     initialQuantity?: number;
     onQuantityChange?: (id: string, quantity: number) => void;
-    // New props for flexibility
     variant?: "interactive" | "informative";
     onPress?: (id: string) => void;
     showQuantity?: boolean;
@@ -29,7 +21,6 @@ export default function DishItem({
     name,
     description,
     price,
-    image,
     initialQuantity = 0,
     onQuantityChange,
     variant = "interactive",
@@ -39,19 +30,11 @@ export default function DishItem({
     disabled = false,
 }: DishItemProps) {
     const [quantity, setQuantity] = useState(initialQuantity);
-    const [imageLoading, setImageLoading] = useState(true);
-    const [imageError, setImageError] = useState(false);
 
     // Sync quantity with prop changes
     useEffect(() => {
         setQuantity(initialQuantity);
     }, [initialQuantity]);
-
-    // Reset image states when image URL changes
-    useEffect(() => {
-        setImageLoading(true);
-        setImageError(false);
-    }, [image]);
 
     // Quantity handlers
     const handleDecrease = useCallback(() => {
@@ -76,16 +59,6 @@ export default function DishItem({
         onPress?.(id);
     }, [disabled, onPress, id]);
 
-    // Image handlers
-    const handleImageLoad = useCallback(() => {
-        setImageLoading(false);
-    }, []);
-
-    const handleImageError = useCallback(() => {
-        setImageLoading(false);
-        setImageError(true);
-    }, []);
-
     // Format price
     const formatPrice = (priceString: string) => {
         const match = priceString.match(/(\d[\d\s]*)/);
@@ -96,48 +69,24 @@ export default function DishItem({
         return priceString;
     };
 
-    // Render image section
-    const renderImage = () => (
-        <View style={styles.imageContainer}>
-            {imageError ? (
-                <View style={styles.imagePlaceholder}>
-                    <Text style={styles.imagePlaceholderText}>📷</Text>
-                </View>
-            ) : (
-                <>
-                    {image && (
-                        <Image
-                            source={{ uri: image }}
-                            style={styles.image}
-                            onLoad={handleImageLoad}
-                            onError={handleImageError}
-                            resizeMode="cover"
-                        />
-                    )}
-                    {imageLoading && (
-                        <View style={styles.imageLoader}>
-                            <ActivityIndicator size="small" color="#fff" />
-                        </View>
-                    )}
-                </>
-            )}
-            {quantity > 0 && variant === "interactive" && (
-                <View style={styles.quantityBadge}>
-                    <Text style={styles.quantityBadgeText}>{quantity}</Text>
-                </View>
-            )}
-        </View>
-    );
-
     // Render info section
     const renderInfo = () => (
         <View style={styles.info}>
-            <Text style={styles.title} numberOfLines={2}>
-                {name}
-            </Text>
-            <Text style={styles.description} numberOfLines={maxLines}>
-                {description}
-            </Text>
+            <View style={styles.titleRow}>
+                <Text style={styles.title} numberOfLines={2}>
+                    {name}
+                </Text>
+                {quantity > 0 && variant === "interactive" && (
+                    <View style={styles.quantityBadge}>
+                        <Text style={styles.quantityBadgeText}>{quantity}</Text>
+                    </View>
+                )}
+            </View>
+            {description && (
+                <Text style={styles.description} numberOfLines={maxLines}>
+                    {description}
+                </Text>
+            )}
             {variant === "informative" && (
                 <Text style={styles.priceInline}>{formatPrice(price)}</Text>
             )}
@@ -198,7 +147,7 @@ export default function DishItem({
     // Render bottom section
     const renderBottomSection = () => {
         if (variant === "informative") {
-            return null; // Price is already shown inline in info section
+            return null;
         }
 
         return (
@@ -231,13 +180,7 @@ export default function DishItem({
             ]}
             {...containerProps}
         >
-            {/* Top section: image + info */}
-            <View style={styles.topRow}>
-                {renderImage()}
-                {renderInfo()}
-            </View>
-
-            {/* Bottom section: price + quantity (interactive mode only) */}
+            {renderInfo()}
             {renderBottomSection()}
         </ContainerComponent>
     );
@@ -257,78 +200,22 @@ const styles = StyleSheet.create({
         opacity: 0.6,
     },
 
-    // Top row styles
-    topRow: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        marginBottom: 12,
-    },
-
-    // Image styles
-    imageContainer: {
-        position: "relative",
-        marginRight: 12,
-    },
-    image: {
-        width: 70,
-        height: 70,
-        borderRadius: 12,
-    },
-    imagePlaceholder: {
-        width: 70,
-        height: 70,
-        borderRadius: 12,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    imagePlaceholderText: {
-        fontSize: 24,
-        opacity: 0.5,
-    },
-    imageLoader: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.3)",
-        borderRadius: 12,
-    },
-    quantityBadge: {
-        position: "absolute",
-        top: -6,
-        right: -6,
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        minWidth: 24,
-        height: 24,
-        justifyContent: "center",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    quantityBadgeText: {
-        color: "#000",
-        fontSize: 12,
-        fontWeight: "700",
-    },
-
     // Info styles
     info: {
-        flex: 1,
-        gap: 4,
+        gap: 8,
+    },
+    titleRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 12,
     },
     title: {
         fontSize: 18,
         fontWeight: "bold",
         color: "#fff",
         lineHeight: 24,
+        flex: 1,
     },
     description: {
         fontSize: 14,
@@ -340,6 +227,25 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#fff",
         marginTop: 4,
+    },
+    quantityBadge: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        minWidth: 24,
+        height: 24,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingHorizontal: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    quantityBadgeText: {
+        color: "#000",
+        fontSize: 12,
+        fontWeight: "700",
     },
 
     // Bottom section styles
