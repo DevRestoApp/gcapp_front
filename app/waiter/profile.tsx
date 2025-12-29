@@ -7,17 +7,18 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import Loading from "@/src/client/components/Loading";
 
-import LogoutConfirmationModal, {
-    LogoutConfirmationModalRef,
+import AccountActionsModal, {
+    AccountActionsModalRef,
 } from "@/src/client/components/modals/LogoutModal";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
 // Types
@@ -57,10 +58,12 @@ const MENU_ITEMS = [
 // ============================================================================
 
 export default function ProfileScreen({
+    // TODO убрать user-123
     userId = "user-123",
 }: ProfileScreenProps) {
     const router = useRouter();
-    const logoutModalRef = useRef<LogoutConfirmationModalRef>(null);
+    const { logout } = useAuth();
+    const logoutModalRef = useRef<AccountActionsModalRef>(null);
 
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [elapsedTime, setElapsedTime] = useState("00:00:00");
@@ -74,6 +77,7 @@ export default function ProfileScreen({
         setLoading(true);
 
         try {
+            // TODO убрать мокдату
             // Replace with your actual API endpoint
             // const response = await fetch(`YOUR_API_URL/api/waiter/${userId}/profile`);
             // const data = await response.json();
@@ -83,9 +87,9 @@ export default function ProfileScreen({
 
             const mockData: ProfileData = {
                 id: userId,
-                name: "Адилет Дегитаев",
-                role: "Официант",
-                avatar: "https://api.builder.io/api/v1/image/assets/TEMP/e0e80a9a8e34ae933a9711def284c06ceaaf5c18?width=144",
+                name: "Амиржан Амир",
+                role: "Владелец",
+                avatar: "",
                 shiftStartTime: "09:00",
                 todaysEarnings: 53000,
             };
@@ -176,10 +180,9 @@ export default function ProfileScreen({
         logoutModalRef.current?.open();
     }, []);
 
-    const handleConfirmLogout = useCallback(() => {
-        console.log("User logged out");
-        // Clear user session/token here
-        router.replace("/login");
+    const handleConfirmLogout = useCallback(async () => {
+        await logout();
+        router.replace("/auth");
     }, [router]);
 
     // ========================================================================
@@ -188,7 +191,7 @@ export default function ProfileScreen({
 
     const renderLoadingState = () => (
         <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
+            <Loading />
             <Text style={loadingStyles.loadingText}>Загрузка профиля...</Text>
         </View>
     );
@@ -219,32 +222,6 @@ export default function ProfileScreen({
                 <View style={styles.nameSection}>
                     <Text style={styles.name}>{profileData.name}</Text>
                     <Text style={styles.role}>{profileData.role}</Text>
-                </View>
-
-                <View style={styles.statsContainer}>
-                    <View style={styles.statCard}>
-                        <View style={styles.statIcon}>
-                            <Text style={styles.timeIconText}>⏰</Text>
-                        </View>
-                        <View style={styles.statContent}>
-                            <Text style={styles.statLabel}>Прошло времени</Text>
-                            <Text style={styles.statValue}>{elapsedTime}</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.statCard}>
-                        <View style={styles.statIcon}>
-                            <Text style={styles.earningsIconText}>₸</Text>
-                        </View>
-                        <View style={styles.statContent}>
-                            <Text style={styles.statLabel}>
-                                Сегодняшний счет
-                            </Text>
-                            <Text style={styles.statValue}>
-                                {profileData.todaysEarnings.toLocaleString()} тг
-                            </Text>
-                        </View>
-                    </View>
                 </View>
             </View>
         );
@@ -322,10 +299,12 @@ export default function ProfileScreen({
                 {renderLogoutButton()}
             </View>
 
-            <LogoutConfirmationModal
+            <AccountActionsModal
                 ref={logoutModalRef}
                 userName={profileData?.name}
-                onConfirmLogout={handleConfirmLogout}
+                currentRole={profileData?.role} // Add this line
+                onLogout={handleConfirmLogout}
+                onChangeRole={() => router.push("/")}
             />
         </SafeAreaView>
     );
@@ -404,49 +383,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         letterSpacing: -0.24,
         textAlign: "center",
-    },
-
-    // Stats Cards
-    statsContainer: {
-        flexDirection: "row",
-        width: "100%",
-        gap: 16,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
-        padding: 12,
-        gap: 12,
-    },
-    statIcon: {
-        width: 24,
-        height: 24,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    timeIconText: {
-        fontSize: 20,
-    },
-    earningsIconText: {
-        fontSize: 20,
-        color: "#0DC268",
-    },
-    statContent: {
-        gap: 4,
-    },
-    statLabel: {
-        color: "#797A80",
-        fontSize: 12,
-        letterSpacing: -0.24,
-        lineHeight: 16,
-    },
-    statValue: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "600",
-        letterSpacing: -0.24,
-        lineHeight: 30,
     },
 
     // Menu Section
