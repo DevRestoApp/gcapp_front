@@ -142,12 +142,11 @@ export default function StorageScreen() {
         }
     }, []);
 
-    // Initial fetch
     useEffect(() => {
         fetchDocuments();
     }, [fetchDocuments]);
 
-    // Refetch when screen comes into focus (RECOMMENDED APPROACH)
+    // Refetch when screen comes into focus
     useFocusEffect(
         useCallback(() => {
             fetchDocuments();
