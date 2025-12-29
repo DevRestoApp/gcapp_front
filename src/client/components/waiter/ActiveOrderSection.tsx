@@ -157,7 +157,6 @@ export default function ActiveOrdersSection({
 const styles = StyleSheet.create({
     container: {
         width: "100%",
-        maxWidth: Math.min(screenWidth - 32, 390),
         alignSelf: "center",
         paddingHorizontal: 16,
         gap: 20,
