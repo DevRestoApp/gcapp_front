@@ -12,12 +12,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -39,7 +36,7 @@ export default function AddScreen() {
             <View style={styles.headerSection}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity
-                        onPress={() => router.push("/manager/storage")}
+                        onPress={() => router.replace("/manager/storage")}
                         style={styles.backButton}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >

@@ -7,6 +7,7 @@ import {
     StyleSheet,
     StatusBar,
     ActivityIndicator,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -33,11 +34,7 @@ import { getWarehouseDocuments } from "@/src/server/general/warehouse";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
 
-// TODO при смене табов, получать данные
-
-// Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
-    // Extract the display name
     const tableNumber =
         item.name ||
         item.item ||
@@ -45,14 +42,12 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
         item.source ||
         `Элемент ${index + 1}`;
 
-    // Extract and format the amount
     const rawAmount = item.amount || item.quantity || 0;
     const formattedAmount =
         typeof rawAmount === "number"
             ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
             : rawAmount;
 
-    // Extract time if available, otherwise use current time or empty
     const time = item.time || "";
     let formattedType = "positive";
     if (itemType === "negative") {
@@ -95,11 +90,11 @@ export default function StorageScreen() {
     >(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         setSelectedStorageTab(activeTab);
     }, [activeTab, setSelectedStorageTab]);
 
-    // Initialize calendar
     useEffect(() => {
         const today = new Date();
         const weekDays: Day[] = [];
@@ -124,15 +119,20 @@ export default function StorageScreen() {
                 setLoading(true);
                 setError(null);
 
-                /*const response = await getWarehouseDocuments({});
+                const response = await getWarehouseDocuments({});
 
-                const receipts = response.documents.filter(doc => doc.document_type === "RECEIPT");
-                const writeoffs = response.documents.filter(doc => doc.document_type === "WRITEOFFS");
-                const inventory = response.documents.filter(doc => doc.document_type === "INVENTORY");
-                setReceipts(receipts)
-                setWriteoffs(writeoffs)
-                setInventory(inventory)*/
-                console.log(receipts);
+                const receipts = response.documents.filter(
+                    (doc) => doc.document_type === "RECEIPT",
+                );
+                const writeoffs = response.documents.filter(
+                    (doc) => doc.document_type === "WRITEOFF",
+                );
+                const inventory = response.documents.filter(
+                    (doc) => doc.document_type === "INVENTORY",
+                );
+                setReceipts(receipts);
+                setWriteoffs(writeoffs);
+                setInventory(inventory);
             } catch (err: any) {
                 setError(err.message || "Failed to fetch documents");
                 console.error("Error fetching documents:", err);
@@ -144,7 +144,6 @@ export default function StorageScreen() {
         fetchDocuments();
     }, []);
 
-    // Render header
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
@@ -188,95 +187,80 @@ export default function StorageScreen() {
                         value as "receipts" | "inventory" | "writeoffs",
                     );
                     setSelectedStorageTab(value);
-                    console.log(value);
-                    console.log("a", selectedStorageTab);
                 }}
             />
         );
     };
 
     const renderItemList = () => {
-        if (activeTab === "expense") {
-            // TODO add real data api
+        const formattedDate = (date: string | Date) => {
+            const today = new Date(date);
+            const day = today.getDate().toString().padStart(2, "0");
+            const month = (today.getMonth() + 1).toString().padStart(2, "0");
+            const year = today.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
 
-            const currentData = {
-                data: [],
-                type: "negative",
-            };
-            return currentData.data && currentData.data.length > 0 ? (
-                <View style={styles.listContainer}>
-                    {currentData.data.map((item, index) => {
-                        const formattedItem = formatDataItem(
-                            item,
-                            index,
-                            currentData.type,
-                        );
-                        return (
-                            <OrderHistoryCard
-                                key={formattedItem.id}
-                                tableNumber={formattedItem.tableNumber}
-                                amount={formattedItem.amount}
-                                time={formattedItem.time}
-                                icon={icons["dishes"]}
-                                type={currentData.type}
-                            />
-                        );
-                    })}
-                </View>
-            ) : (
-                <View style={styles.noDataContainer}>
-                    <Text style={styles.noDataText}>
-                        Нет данных для отображения
-                    </Text>
-                </View>
-            );
-        } else {
-            // TODO add real data api
-            const currentData = {
-                data: [],
-                type: "positive",
-            };
-            return currentData.data && currentData.data.length > 0 ? (
-                <View style={styles.listContainer}>
-                    {currentData.data.map((item, index) => {
-                        const formattedItem = formatDataItem(
-                            item,
-                            index,
-                            currentData.type,
-                        );
-                        return (
-                            <OrderHistoryCard
-                                key={formattedItem.id}
-                                tableNumber={formattedItem.tableNumber}
-                                amount={formattedItem.amount}
-                                time={formattedItem.time}
-                                icon={icons["writeoffs"]}
-                                type={currentData.type}
-                            />
-                        );
-                    })}
-                </View>
-            ) : (
-                <View style={styles.noDataContainer}>
-                    <Text style={styles.noDataText}>
-                        Нет данных для отображения
-                    </Text>
+        let data = null;
+        if (activeTab === "receipts") {
+            console.log("receipts: ", receipts, " |");
+            data = receipts;
+        }
+        if (activeTab === "inventory") {
+            console.log("inventory: ", inventory, " |");
+            data = inventory;
+        }
+        if (activeTab === "writeoffs") {
+            console.log("writeoffs: ", writeoffs, " |");
+            data = writeoffs;
+        }
 
-                    {/*// TODO убрать и положить когда будут данные*/}
-                    <DocumentCard
-                        documentNumber="Поступление №123"
-                        timestamp="14:30"
-                        category="Продукты"
-                        onPress={() => console.log("Pressed")}
-                    >
-                        <DetailRow label="Себестоимость" value="150,000 тг" />
-                        <DetailRow label="Учетная сумма" value="180,000 тг" />
-                        <DetailRow label="Сумма" value="200,000 тг" />
-                        <CommentRow comment="Закупка для нового меню" />
-                    </DocumentCard>
+        const limitedData = data?.slice(0, 10) || [];
+
+        if (!data || data.length === 0) {
+            return (
+                <View style={styles.listContainer}>
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyStateText}>
+                            Нет документов для отображения
+                        </Text>
+                    </View>
                 </View>
             );
         }
+
+        return (
+            <View style={styles.listContainer}>
+                <FlatList
+                    data={limitedData}
+                    keyExtractor={(item) =>
+                        item.id?.toString() || Math.random().toString()
+                    }
+                    renderItem={({ item }) => (
+                        <DocumentCard
+                            documentNumber={`${
+                                activeTab === "receipts"
+                                    ? "Поступление"
+                                    : activeTab === "inventory"
+                                      ? "Инвентаризация"
+                                      : "Списание"
+                            } №${item.document_number || item.id}`}
+                            timestamp={formattedDate(item.date) || ""}
+                            category={item.items[0]?.item_name || ""}
+                            onPress={() => console.log("Pressed", item.id)}
+                        >
+                            <CommentRow comment={item.comment ?? ""} />
+                        </DocumentCard>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.listContent}
+                    ItemSeparatorComponent={() => (
+                        <View style={styles.cardSeparator} />
+                    )}
+                    scrollEnabled={false}
+                />
+            </View>
+        );
     };
 
     return (
@@ -304,7 +288,6 @@ export default function StorageScreen() {
                     <>
                         {renderHeader()}
                         {renderTabs()}
-
                         {renderItemList()}
                     </>
                 )}
@@ -314,7 +297,6 @@ export default function StorageScreen() {
     );
 }
 
-// ... keep all existing styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -326,8 +308,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 128,
     },
-
-    // Header Section
     headerSection: {
         gap: 16,
     },
@@ -344,7 +324,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    }, // Section
+    },
     section: {
         paddingHorizontal: 16,
         gap: 16,
@@ -358,16 +338,12 @@ const styles = StyleSheet.create({
     countBadge: {
         color: "#797A80",
     },
-
-    // Card
     card: {
         backgroundColor: "rgba(35, 35, 36, 1)",
         borderRadius: 20,
         padding: 12,
         gap: 16,
     },
-
-    // Info Row
     infoRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -404,17 +380,14 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "300",
     },
-
-    // Divider
     divider: {
         height: 1,
         backgroundColor: "rgba(43, 43, 44, 1)",
     },
-
-    // Empty State
     emptyState: {
         alignItems: "center",
         gap: 8,
+        paddingVertical: 40,
     },
     emptyIcon: {
         width: 80,
@@ -426,8 +399,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 20,
     },
-
-    // Add Button
     addButton: {
         width: 64,
         height: 64,
@@ -446,7 +417,8 @@ const styles = StyleSheet.create({
         lineHeight: 24,
     },
     listContainer: {
-        gap: 12,
+        paddingHorizontal: 16,
+        gap: 16,
     },
     noDataContainer: {
         padding: 40,
@@ -456,5 +428,29 @@ const styles = StyleSheet.create({
         color: "#666",
         fontSize: 16,
         textAlign: "center",
+    },
+    listContent: {
+        paddingBottom: 0,
+    },
+    emptyStateText: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 16,
+        textAlign: "center",
+    },
+    showMoreButton: {
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 16,
+    },
+    showMoreText: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    cardSeparator: {
+        height: 16,
     },
 });
