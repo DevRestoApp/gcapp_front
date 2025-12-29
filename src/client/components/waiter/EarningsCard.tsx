@@ -17,7 +17,7 @@ export default function EarningsCard({ amount }: EarningsCardProps) {
             {/* Content */}
             <View style={styles.textWrapper}>
                 <Text style={styles.label}>Сегодняшний счет</Text>
-                <Text style={styles.amount}> 15000 тг{amount}</Text>
+                <Text style={styles.amount}>{amount} тг</Text>
             </View>
         </View>
     );
