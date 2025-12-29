@@ -56,8 +56,9 @@ export default function Index() {
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
 
-            {/* Календарь */}
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <View>
+                <Calendar days={days} onDayPress={handleDayPress} />
+            </View>
 
             {/* Контент */}
 
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.24,
     },
 
-    main: { flex: 1, paddingHorizontal: 16 },
+    main: { flex: 1 },
     greetingSmall: { fontSize: 16, color: "#aaa", marginBottom: 4 },
     greetingBig: {
         fontSize: 20,

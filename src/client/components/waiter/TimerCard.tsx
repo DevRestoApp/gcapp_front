@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
         gap: 12,
         padding: 12,
         borderRadius: 20,
-        width: 175,
+        width: "100%",
         backgroundColor: "rgba(35, 35, 36, 1)",
     },
     content: {

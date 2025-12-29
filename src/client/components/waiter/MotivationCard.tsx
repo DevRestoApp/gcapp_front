@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         alignItems: "flex-start",
         gap: 16,
-        padding: 12,
+        padding: 16,
         borderRadius: 20,
         width: "100%",
         backgroundColor: "rgba(35, 35, 36, 1)",
