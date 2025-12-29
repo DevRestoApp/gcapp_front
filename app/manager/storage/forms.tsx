@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
+import { Alert } from "react-native";
+
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 
 import { FormContainer } from "@/src/client/components/form/FormContainer";
@@ -17,6 +20,7 @@ import { createWarehouseDocumentIncomingInvoice } from "@/src/server/general/war
 
 export default function StorageForm() {
     const { selectedStorageTab } = useManager();
+    const router = useRouter(); // Add this import at the top: import { useRouter } from "expo-router";
 
     const [days, setDays] = useState<Day[]>([]);
     const [showCalendar, setShowCalendar] = useState(false);
@@ -112,9 +116,29 @@ export default function StorageForm() {
 
     const renderFormReceipts = () => {
         const handleSubmit = async () => {
-            let preparedData: any = {};
-            if (selectedStorageTab === "receipts") {
-                preparedData = {
+            try {
+                // Validate required fields
+                if (!formData.date) {
+                    Alert.alert("Ошибка", "Пожалуйста, выберите дату");
+                    return;
+                }
+                if (!formData.itemId) {
+                    Alert.alert("Ошибка", "Пожалуйста, выберите товар");
+                    return;
+                }
+                if (
+                    !formData.itemQuantity ||
+                    Number(formData.itemQuantity) <= 0
+                ) {
+                    Alert.alert("Ошибка", "Пожалуйста, введите количество");
+                    return;
+                }
+                if (!formData.itemPrice || Number(formData.itemPrice) <= 0) {
+                    Alert.alert("Ошибка", "Пожалуйста, введите цену");
+                    return;
+                }
+
+                const preparedData: any = {
                     dateIncoming: formData.date,
                     items: [
                         {
@@ -127,10 +151,55 @@ export default function StorageForm() {
                         },
                     ],
                 };
-                if (formData.comment)
-                    preparedData["comment"] = formData.comment;
+
+                if (formData.comment) {
+                    preparedData.comment = formData.comment;
+                }
+                if (formData.supplier) {
+                    preparedData.supplier = formData.supplier;
+                }
+                if (formData.storage) {
+                    preparedData.storage = formData.storage;
+                }
+
+                // Make API call
+                await createWarehouseDocumentIncomingInvoice(preparedData);
+
+                // Show success notification
+                Alert.alert("Успешно", "Приходная накладная успешно создана");
+                router.push("/manager/storage");
+                // Reset form
+                setFormData({
+                    storage: "",
+                    amount: "",
+                    accountingAmount: "",
+                    date: "",
+                    comment: "",
+                    priceType: "",
+                    deviaton: "",
+                    supplier: "",
+                    itemId: 0,
+                    itemName: "",
+                    itemQuantity: "",
+                    itemUnit: "",
+                    itemPurchasePrice: "",
+                    itemAccountingQuantity: "",
+                    itemCoefficient: "",
+                    itemNote: "",
+                    itemPrice: "",
+                    itemCostPrice: "",
+                    itemAmount: "",
+                    itemAccountingAmount: "",
+                });
+                setSelectedMenuItem(null);
+                setActiveTab("general");
+            } catch (error: any) {
+                console.error("Error creating document:", error);
+                Alert.alert(
+                    "Ошибка",
+                    error.message || "Не удалось создать приходную накладную",
+                );
             }
-            await createWarehouseDocumentIncomingInvoice(preparedData);
         };
 
         return (
