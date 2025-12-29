@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
@@ -113,36 +114,45 @@ export default function StorageScreen() {
         setDays(weekDays);
     }, []);
 
-    useEffect(() => {
-        const fetchDocuments = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+    // Extract fetchDocuments as a standalone function
+    const fetchDocuments = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                const response = await getWarehouseDocuments({});
+            const response = await getWarehouseDocuments({});
 
-                const receipts = response.documents.filter(
-                    (doc) => doc.document_type === "RECEIPT",
-                );
-                const writeoffs = response.documents.filter(
-                    (doc) => doc.document_type === "WRITEOFF",
-                );
-                const inventory = response.documents.filter(
-                    (doc) => doc.document_type === "INVENTORY",
-                );
-                setReceipts(receipts);
-                setWriteoffs(writeoffs);
-                setInventory(inventory);
-            } catch (err: any) {
-                setError(err.message || "Failed to fetch documents");
-                console.error("Error fetching documents:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDocuments();
+            const receipts = response.documents.filter(
+                (doc) => doc.document_type === "RECEIPT",
+            );
+            const writeoffs = response.documents.filter(
+                (doc) => doc.document_type === "WRITEOFF",
+            );
+            const inventory = response.documents.filter(
+                (doc) => doc.document_type === "INVENTORY",
+            );
+            setReceipts(receipts);
+            setWriteoffs(writeoffs);
+            setInventory(inventory);
+        } catch (err: any) {
+            setError(err.message || "Failed to fetch documents");
+            console.error("Error fetching documents:", err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchDocuments();
+    }, [fetchDocuments]);
+
+    // Refetch when screen comes into focus (RECOMMENDED APPROACH)
+    useFocusEffect(
+        useCallback(() => {
+            fetchDocuments();
+        }, [fetchDocuments]),
+    );
 
     const renderHeader = () => (
         <View style={styles.headerSection}>
@@ -203,15 +213,12 @@ export default function StorageScreen() {
 
         let data = null;
         if (activeTab === "receipts") {
-            console.log("receipts: ", receipts, " |");
             data = receipts;
         }
         if (activeTab === "inventory") {
-            console.log("inventory: ", inventory, " |");
             data = inventory;
         }
         if (activeTab === "writeoffs") {
-            console.log("writeoffs: ", writeoffs, " |");
             data = writeoffs;
         }
 
