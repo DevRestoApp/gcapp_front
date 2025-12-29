@@ -13,7 +13,6 @@ import { useRouter } from "expo-router";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { FormContainer } from "@/src/client/components/form/FormContainer";

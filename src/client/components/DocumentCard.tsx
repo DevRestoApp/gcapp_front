@@ -75,7 +75,6 @@ export const CommentRow = ({ comment }: { comment: string }) => (
 const styles = StyleSheet.create({
     container: {
         width: "100%",
-        maxWidth: 358,
         borderRadius: 20,
         padding: 12,
         backgroundColor: "rgba(35, 35, 36, 1)",

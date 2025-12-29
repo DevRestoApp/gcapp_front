@@ -36,10 +36,10 @@ export default function ActiveShiftWrapper() {
             {/* Top row */}
             <View style={styles.row}>
                 <View style={styles.half}>
-                    {<TimerCard timeElapsed={"15"}></TimerCard>}
+                    {<TimerCard timeElapsed={"00:00:00"}></TimerCard>}
                 </View>
                 <View style={styles.half}>
-                    {<EarningsCard amount={"15"}></EarningsCard>}
+                    {<EarningsCard amount={"15000"}></EarningsCard>}
                 </View>
             </View>
 
@@ -50,7 +50,7 @@ export default function ActiveShiftWrapper() {
             <View style={styles.bottom}>
                 {
                     <MotivationCard
-                        goalText={"ewkere"}
+                        goalText={"Продать десерт"}
                         targetAmount={"15"}
                         currentProgress={"3"}
                     ></MotivationCard>
