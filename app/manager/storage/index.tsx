@@ -71,6 +71,7 @@ export default function StorageScreen() {
 
     const {
         selectedStorageTab,
+        locations,
         setSelectedStorageTab,
         queryInputs,
         setDate,
@@ -166,6 +167,7 @@ export default function StorageScreen() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={locations}
             />
         </View>
     );

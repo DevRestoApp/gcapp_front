@@ -27,7 +27,7 @@ export default function ExpenseScreen() {
     const router = useRouter();
 
     // Get data from context instead of local state
-    const { queryInputs, setDate, setPeriod, setLocation, loading } =
+    const { queryInputs, setDate, setPeriod, setLocation, loading, locations } =
         useManager();
 
     // Form states
@@ -47,6 +47,7 @@ export default function ExpenseScreen() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={locations}
             />
         </View>
     );

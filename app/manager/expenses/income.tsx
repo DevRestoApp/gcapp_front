@@ -26,7 +26,7 @@ import { ReportHeader } from "@/src/client/components/reports/header";
 export default function IncomeScreen() {
     const router = useRouter();
 
-    const { queryInputs, setDate, setPeriod, setLocation, loading } =
+    const { queryInputs, setDate, setPeriod, setLocation, loading, locations } =
         useManager();
 
     // Form states
@@ -46,6 +46,7 @@ export default function IncomeScreen() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={locations}
             />
         </View>
     );

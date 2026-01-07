@@ -33,6 +33,7 @@ export default function QuestManagementScreen() {
         employees,
         shifts,
         loading,
+        refetch,
         createQuestAction,
         locations,
         setDate: setInputDate,
@@ -141,6 +142,8 @@ export default function QuestManagementScreen() {
                 });
 
                 console.log("Quest created successfully:", data);
+
+                await refetch();
             } catch (error) {
                 console.error("Failed to create quest:", error);
                 Alert.alert("Ошибка", "Не удалось создать квест");
@@ -224,7 +227,7 @@ export default function QuestManagementScreen() {
     const ItemSeparator = () => <View style={styles.itemSeparator} />;
 
     // Show loading if context is still loading
-    if (loading && safeQuests.length === 0) {
+    if (loading) {
         return (
             <SafeAreaView
                 style={{ ...styles.container, ...backgroundsStyles.generalBg }}
@@ -273,7 +276,7 @@ export default function QuestManagementScreen() {
                 onAddQuest={handleAddQuest}
                 onCancel={() => {}}
                 employees={employees}
-                locations={locations}
+                organizations={locations}
             />
         </SafeAreaView>
     );

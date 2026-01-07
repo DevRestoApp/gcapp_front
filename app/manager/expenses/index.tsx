@@ -68,6 +68,7 @@ export default function ExpensesScreen() {
     // Get data from context instead of local state
     const {
         setSelectedExpenseTab,
+        locations,
         loading,
         error,
         refetch,
@@ -97,6 +98,7 @@ export default function ExpensesScreen() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={locations}
             />
         </View>
     );
