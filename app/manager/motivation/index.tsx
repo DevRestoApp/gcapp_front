@@ -28,8 +28,15 @@ import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
-    const { quests, employees, shifts, loading, createQuestAction, locations } =
-        useManager();
+    const {
+        quests,
+        employees,
+        shifts,
+        loading,
+        createQuestAction,
+        locations,
+        setDate: setInputDate,
+    } = useManager();
 
     // Add null checks and default values
     const safeQuests = quests.quests || [];
@@ -71,14 +78,13 @@ export default function QuestManagementScreen() {
 
     // Handle day selection
     const handleDayPress = useCallback(
-        async (index: number) => {
+        (index: number) => {
             const newDays = days.map((day, i) => ({
                 ...day,
                 active: i === index,
             }));
             setDays(newDays);
 
-            // Calculate the date for selected day
             const today = new Date();
             const selectedDay = new Date(today);
             selectedDay.setDate(today.getDate() - (6 - index));
@@ -89,6 +95,7 @@ export default function QuestManagementScreen() {
                 year: "numeric",
             });
 
+            setInputDate(dateStr);
             setSelectedDate(dateStr);
 
             // Fetch quests for the selected date

@@ -5,3 +5,10 @@ export function getTodayFormatted() {
     const year = today.getFullYear();
     return `${day}.${month}.${year}`;
 }
+
+export const sizes = {
+    s: 16,
+    m: 32,
+    l: 48,
+    xl: 64,
+};

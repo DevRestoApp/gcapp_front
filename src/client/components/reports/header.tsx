@@ -37,7 +37,7 @@ const PERIODS = [
 
 export function ReportHeader({
     title,
-    date = "29.10.2025",
+    date = "",
     period = "",
     location = "",
     onBack,
@@ -57,10 +57,15 @@ export function ReportHeader({
 
     const LOCATIONS = useMemo(() => {
         if (organizations && organizations.length > 0) {
-            return organizations.map((org) => ({
+            const result = organizations.map((org) => ({
                 label: org.name,
                 value: String(org.id), // Convert to string for consistent comparison
             }));
+            result.push({
+                label: "Все точки",
+                value: "",
+            });
+            return result;
         }
         return [];
     }, [organizations]);

@@ -38,19 +38,16 @@ const DEFAULT_ROLES: Role[] = [
     {
         id: "admin",
         title: "Админ",
-        description: "Здесь будет краткий описание",
         icon: "https://api.builder.io/api/v1/image/assets/TEMP/bd0d9d4d83dc41e04175af2ec4e77596361c0d68?width=88",
     },
     {
         id: "owner",
         title: "Владелец",
-        description: "Здесь будет краткий описание",
         icon: "https://api.builder.io/api/v1/image/assets/TEMP/5755be83d68683e11fc669e4355160df16297489?width=88",
     },
     {
         id: "waiter",
         title: "Официант",
-        description: "Здесь будет краткий описание",
         icon: "https://api.builder.io/api/v1/image/assets/TEMP/bd0d9d4d83dc41e04175af2ec4e77596361c0d68?width=88",
     },
 ];
@@ -159,9 +156,6 @@ export default function RolePicker({
                 )}
                 <View style={styles.roleContent}>
                     <Text style={styles.roleTitle}>{role.title}</Text>
-                    <Text style={styles.roleDescription}>
-                        {role.description}
-                    </Text>
                 </View>
             </TouchableOpacity>
         );
@@ -269,7 +263,8 @@ const styles = StyleSheet.create({
     // Role Card
     roleCard: {
         flexDirection: "row",
-        alignItems: "flex-start",
+        alignItems: "center",
+        justifyContent: "center",
         gap: 12,
         padding: 12,
         borderRadius: 20,

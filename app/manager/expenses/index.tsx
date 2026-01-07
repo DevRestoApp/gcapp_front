@@ -16,8 +16,9 @@ import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { sizes } from "@/src/utils/utils";
 
-import { useCeo } from "@/src/contexts/CeoProvider";
 import SegmentedControl from "@/src/client/components/Tabs";
 import Entypo from "@expo/vector-icons/Entypo";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
@@ -121,10 +122,10 @@ export default function ExpensesScreen() {
         return (
             <TouchableOpacity
                 onPress={() => router.push(`/manager/expenses/${activeTab}`)}
-                style={styles.addButton}
+                style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
-                <Entypo name="plus" size={40} color="black" />
+                <Entypo name="plus" size={sizes.m} color="black" />
             </TouchableOpacity>
         );
     };
@@ -346,24 +347,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         lineHeight: 20,
-    },
-
-    addButton: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: "#ffffff",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "absolute",
-        bottom: 16,
-        right: 16,
-    },
-    addButtonText: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "600",
-        lineHeight: 24,
     },
     listContainer: {
         gap: 12,
