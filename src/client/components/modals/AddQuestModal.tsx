@@ -138,7 +138,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setIsSubmitting(true);
 
             try {
-                // TODO: Replace with actual API call
                 await new Promise((resolve) => setTimeout(resolve, 1000));
 
                 onAddQuest?.({
@@ -152,9 +151,13 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     locationName: selectedLocation?.name,
                 });
 
-                Alert.alert("Успешно", "Квест успешно создан", [
-                    { text: "OK", onPress: handleClose },
-                ]);
+                // Close modal first
+                handleClose();
+
+                // Then show success message
+                setTimeout(() => {
+                    Alert.alert("Успешно", "Квест успешно создан");
+                }, 300); // Small delay for smooth transition
             } catch (error) {
                 console.log(error);
                 Alert.alert("Ошибка", "Не удалось создать квест");

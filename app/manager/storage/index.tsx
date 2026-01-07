@@ -34,6 +34,8 @@ import {
 import { getWarehouseDocuments } from "@/src/server/general/warehouse";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
+import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { sizes } from "@/src/utils/utils";
 
 const formatDataItem = (item: any, index: number, itemType: string) => {
     const tableNumber =
@@ -69,6 +71,7 @@ export default function StorageScreen() {
 
     const {
         selectedStorageTab,
+        locations,
         setSelectedStorageTab,
         queryInputs,
         setDate,
@@ -164,6 +167,7 @@ export default function StorageScreen() {
                 onDateChange={setDate}
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
+                organizations={locations}
             />
         </View>
     );
@@ -171,11 +175,11 @@ export default function StorageScreen() {
     const renderAddButton = () => {
         return (
             <TouchableOpacity
-                onPress={() => router.push("/manager/storage/add")}
-                style={styles.addButton}
+                onPress={() => router.push(`/manager/expenses/${activeTab}`)}
+                style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
-                <Entypo name="plus" size={40} color="black" />
+                <Entypo name="plus" size={sizes.m} color="black" />
             </TouchableOpacity>
         );
     };
@@ -404,23 +408,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         lineHeight: 20,
-    },
-    addButton: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: "#ffffff",
-        justifyContent: "center",
-        alignItems: "center",
-        position: "absolute",
-        bottom: 16,
-        right: 16,
-    },
-    addButtonText: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "600",
-        lineHeight: 24,
     },
     listContainer: {
         paddingHorizontal: 16,

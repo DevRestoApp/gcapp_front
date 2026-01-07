@@ -50,9 +50,8 @@ export default function CeoLayout() {
                 />
 
                 <Tabs.Screen
-                    name="analytics"
+                    name="reports"
                     options={{
-                        href: "/ceo/reports",
                         title: "Аналитика",
                         tabBarIcon: ({ color, size }) => (
                             <MaterialCommunityIcons
@@ -100,13 +99,6 @@ export default function CeoLayout() {
                 />
                 <Tabs.Screen
                     name="employees"
-                    options={{
-                        href: null,
-                        title: "Сотрудники",
-                    }}
-                />
-                <Tabs.Screen
-                    name="reports"
                     options={{
                         href: null,
                         title: "Сотрудники",
