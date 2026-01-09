@@ -47,6 +47,7 @@ export default function IncomeScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={locations}
+                showPeriodSelector={false}
             />
         </View>
     );

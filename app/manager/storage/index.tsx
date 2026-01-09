@@ -168,6 +168,7 @@ export default function StorageScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={locations}
+                showPeriodSelector={false}
             />
         </View>
     );

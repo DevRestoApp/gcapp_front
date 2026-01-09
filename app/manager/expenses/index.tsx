@@ -99,6 +99,7 @@ export default function ExpensesScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={locations}
+                showPeriodSelector={false}
             />
         </View>
     );
