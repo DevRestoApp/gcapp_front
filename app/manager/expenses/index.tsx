@@ -21,8 +21,6 @@ import { sizes } from "@/src/utils/utils";
 
 import SegmentedControl from "@/src/client/components/Tabs";
 import Entypo from "@expo/vector-icons/Entypo";
-import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
-import ValueBadge from "@/src/client/components/ValueBadge";
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
 import { useManager } from "@/src/contexts/ManagerProvider";
@@ -99,6 +97,7 @@ export default function ExpensesScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={locations}
+                showPeriodSelector={false}
             />
         </View>
     );
@@ -218,12 +217,7 @@ export default function ExpensesScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
+                    <Loading text={"Загрузка данных"} />
                 ) : (
                     <>
                         {renderHeader()}

@@ -23,6 +23,8 @@ import { NumberInput } from "@/src/client/components/form/NumberInput";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
 
+import Loading from "@/src/client/components/Loading";
+
 export default function IncomeScreen() {
     const router = useRouter();
 
@@ -47,6 +49,7 @@ export default function IncomeScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={locations}
+                showPeriodSelector={false}
             />
         </View>
     );
@@ -116,12 +119,7 @@ export default function IncomeScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
+                    <Loading text={"Загрузка данных"} />
                 ) : (
                     <>
                         {renderHeader()}

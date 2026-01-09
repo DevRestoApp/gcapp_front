@@ -5,7 +5,6 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
     FlatList,
 } from "react-native";
@@ -380,10 +379,7 @@ export default function SalaryScreen({
 
                     {loading ? (
                         <View style={loadingStyles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#fff" />
-                            <Text style={loadingStyles.loadingText}>
-                                Загрузка данных...
-                            </Text>
+                            <Loading text={"Загрузка данных"} />
                         </View>
                     ) : (
                         <>

@@ -20,6 +20,7 @@ import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtend
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import Loading from "@/src/client/components/Loading";
 
 interface EmployeeQuestProgress {
     id: string;
@@ -229,12 +230,7 @@ export default function QuestDetailScreen() {
                     backgroundColor="rgba(25, 25, 26, 1)"
                 />
                 {renderHeader()}
-                <View style={loadingStyles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#fff" />
-                    <Text style={loadingStyles.loadingText}>
-                        Загрузка квеста...
-                    </Text>
-                </View>
+                <Loading text={"Загрузка данных"} />
             </SafeAreaView>
         );
     }

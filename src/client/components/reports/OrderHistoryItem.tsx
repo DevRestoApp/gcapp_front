@@ -13,7 +13,7 @@ interface OrderHistoryCardProps {
     amount: string;
     time: string;
     icon?: ReactNode;
-    type?: "positive" | "negative" | "default";
+    type?: "positive" | "negative" | "default" | undefined;
 }
 
 export function OrderHistoryCard({

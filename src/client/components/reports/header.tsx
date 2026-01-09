@@ -27,6 +27,9 @@ interface ReportHeaderProps {
         id: number;
         is_active: boolean;
     }[];
+    showDateSelector?: boolean;
+    showPeriodSelector?: boolean;
+    showLocationSelector?: boolean;
 }
 
 const PERIODS = [
@@ -45,6 +48,9 @@ export function ReportHeader({
     onPeriodChange,
     onLocationChange,
     organizations,
+    showDateSelector = true,
+    showPeriodSelector = true,
+    showLocationSelector = true,
 }: ReportHeaderProps) {
     const [showCalendar, setShowCalendar] = useState(false);
     const [showPeriodModal, setShowPeriodModal] = useState(false);
@@ -177,42 +183,59 @@ export function ReportHeader({
             </View>
 
             <View style={styles.filtersContainer}>
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={() => setShowCalendar(true)}
-                >
-                    <Ionicons
-                        name="calendar-outline"
-                        size={20}
-                        color="#FFFFFF"
-                    />
-                    <Text style={styles.filterText}>
-                        {date || "Выбрать..."}
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.filterButton, styles.filterButtonWide]}
-                    onPress={() => setShowPeriodModal(true)}
-                >
-                    <Text style={styles.filterText}>
-                        {getPeriodLabel(period)}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.filterButton, styles.filterButtonWide]}
-                    onPress={() => setShowLocationModal(true)}
-                >
-                    <Text
-                        style={[styles.filterText, styles.filterTextTruncate]}
-                        numberOfLines={1}
+                {showDateSelector ?? (
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => setShowCalendar(true)}
                     >
-                        {getLocationLabel(location)}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
+                        <Ionicons
+                            name="calendar-outline"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                        <Text style={styles.filterText}>
+                            {date || "Выбрать..."}
+                        </Text>
+                    </TouchableOpacity>
+                )}
+
+                {showPeriodSelector ?? (
+                    <TouchableOpacity
+                        style={[styles.filterButton, styles.filterButtonWide]}
+                        onPress={() => setShowPeriodModal(true)}
+                    >
+                        <Text style={styles.filterText}>
+                            {getPeriodLabel(period)}
+                        </Text>
+                        <Ionicons
+                            name="chevron-down"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                    </TouchableOpacity>
+                )}
+
+                {showLocationSelector ?? (
+                    <TouchableOpacity
+                        style={[styles.filterButton, styles.filterButtonWide]}
+                        onPress={() => setShowLocationModal(true)}
+                    >
+                        <Text
+                            style={[
+                                styles.filterText,
+                                styles.filterTextTruncate,
+                            ]}
+                            numberOfLines={1}
+                        >
+                            {getLocationLabel(location)}
+                        </Text>
+                        <Ionicons
+                            name="chevron-down"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                    </TouchableOpacity>
+                )}
             </View>
 
             <ReportCalendar
