@@ -5,7 +5,6 @@ import {
     FlatList,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
+import Loading from "@/src/client/components/Loading";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -181,8 +181,7 @@ export default function MotivationScreen({
     // Render loading state
     const renderLoadingState = () => (
         <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
+            <Loading text={"Загрузка квестов"} />
         </View>
     );
 

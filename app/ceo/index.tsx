@@ -22,6 +22,7 @@ import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import { MaterialIcons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Loading from "@/src/client/components/Loading";
 
 export default function IndexScreen() {
     const router = useRouter();
@@ -260,12 +261,7 @@ export default function IndexScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
+                    <Loading text={"Загрузка данных"} />
                 ) : (
                     <>
                         {renderHeader()}

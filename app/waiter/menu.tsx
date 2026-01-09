@@ -13,7 +13,6 @@ import {
     ScrollView,
     StyleSheet,
     Alert,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,6 +23,8 @@ import DishDetailModal, {
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { getMenu } from "@/src/server/general/menu";
+
+import Loading from "@/src/client/components/Loading";
 
 // ============================================================================
 // Types
@@ -237,8 +238,7 @@ export default function MenuScreen({
 
     const renderLoadingState = () => (
         <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка меню...</Text>
+            <Loading text={"Загрузка меню"} />
         </View>
     );
 

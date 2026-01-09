@@ -6,7 +6,6 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,8 +18,6 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 
 import { useManager } from "@/src/contexts/ManagerProvider";
 import SegmentedControl from "@/src/client/components/Tabs";
-import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
-import { icons } from "@/src/client/icons/icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import DocumentCard, {
     DetailRow,
@@ -34,6 +31,7 @@ import {
 import { getWarehouseDocuments } from "@/src/server/general/warehouse";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
+import Loading from "@/src/client/components/Loading";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { sizes } from "@/src/utils/utils";
 
@@ -290,10 +288,7 @@ export default function StorageScreen() {
             >
                 {loading ? (
                     <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
+                        <Loading text={"Загрузка данных"} />
                     </View>
                 ) : (
                     <>

@@ -6,11 +6,11 @@ import {
     TouchableOpacity,
     ScrollView,
     StyleSheet,
-    ActivityIndicator,
     Modal,
 } from "react-native";
 
 import { getMenu } from "@/src/server/general/menu";
+import Loading from "@/src/client/components/Loading";
 
 // ============================================================================
 // Types
@@ -157,12 +157,7 @@ export default function MenuPicker({
     // Render Functions
     // ========================================================================
 
-    const renderLoadingState = () => (
-        <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>Загрузка меню...</Text>
-        </View>
-    );
+    const renderLoadingState = () => <Loading text={"Загрузка меню"} />;
 
     const renderErrorState = () => (
         <View style={styles.errorContainer}>

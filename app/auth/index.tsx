@@ -8,7 +8,6 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { login as loginRequest } from "@/src/server/auth";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import Loading from "@/src/client/components/Loading";
 
 const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
@@ -231,7 +231,7 @@ export default function Login() {
             activeOpacity={0.8}
         >
             {loading ? (
-                <ActivityIndicator size="small" color="#2C2D2E" />
+                <Loading />
             ) : (
                 <Text style={styles.loginButtonText}>Войти</Text>
             )}

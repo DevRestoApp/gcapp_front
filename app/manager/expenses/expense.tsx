@@ -22,6 +22,7 @@ import { CommentInput } from "@/src/client/components/form/Comment";
 import { NumberInput } from "@/src/client/components/form/NumberInput";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
+import Loading from "@/src/client/components/Loading";
 
 export default function ExpenseScreen() {
     const router = useRouter();
@@ -118,12 +119,7 @@ export default function ExpenseScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
+                    <Loading text={"Загрузка данных"} />
                 ) : (
                     <>
                         {renderHeader()}

@@ -25,6 +25,7 @@ import AddQuestModal, {
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useCeo } from "@/src/contexts/CeoProvider";
+import Loading from "@/src/client/components/Loading";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
@@ -195,12 +196,7 @@ export default function QuestManagementScreen() {
     );
 
     // Render loading state
-    const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
-        </View>
-    );
+    const renderLoadingState = () => <Loading text={"Загрузка квестов"} />;
 
     // Render quest item
     const renderQuestItem = ({ item }: { item: QuestEmployees }) => (
