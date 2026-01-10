@@ -20,7 +20,6 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 import Loading from "@/src/client/components/Loading";
 
 const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
-
 // ============================================================================
 // Types
 // ============================================================================
