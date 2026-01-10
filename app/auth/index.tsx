@@ -20,7 +20,6 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
-
 // ============================================================================
 // Types
 // ============================================================================
