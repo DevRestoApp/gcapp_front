@@ -7,7 +7,6 @@ import {
     StyleSheet,
     StatusBar,
     Image,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -22,11 +21,12 @@ import { useManager } from "@/src/contexts/ManagerProvider";
 import EmployeeCardFines from "@/src/client/components/ceo/EmployeeCardFines";
 import { MaterialIcons } from "@expo/vector-icons";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
+import Loading from "@/src/client/components/Loading";
 
 export default function IndexScreen() {
     const router = useRouter();
 
-    // Get data from context instead of local state
+    // Get data from context instead of the local state
     const {
         employees,
         shifts,
@@ -34,8 +34,6 @@ export default function IndexScreen() {
         quests,
         loading,
         queryInputs,
-        error,
-        refetch,
         analytics,
         setDate: setInputDate,
     } = useManager();
@@ -269,10 +267,7 @@ export default function IndexScreen() {
             >
                 {loading ? (
                     <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
+                        <Loading text={"Загрузка данных"} />
                     </View>
                 ) : (
                     <>

@@ -13,9 +13,9 @@ import {
     TouchableOpacity,
     StyleSheet,
     Dimensions,
-    ActivityIndicator,
 } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
+import Loading from "@/src/client/components/Loading";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -25,6 +25,7 @@ interface Dish {
     description: string;
     price: string;
     image: string;
+    category?: string;
 }
 
 interface DishDetailModalProps {
@@ -147,7 +148,7 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         />
                         {imageLoading && (
                             <View style={styles.imageLoader}>
-                                <ActivityIndicator size="large" color="#fff" />
+                                <Loading />
                             </View>
                         )}
                     </>

@@ -5,7 +5,6 @@ import {
     FlatList,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
     TouchableOpacity,
 } from "react-native";
@@ -23,6 +22,7 @@ import AddQuestModal, {
 } from "@/src/client/components/modals/AddQuestModal";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
+import Loading from "@/src/client/components/Loading";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
@@ -206,9 +206,8 @@ export default function QuestManagementScreen() {
 
     // Render loading state
     const renderLoadingState = () => (
-        <View style={loadingStyles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={loadingStyles.loadingText}>Загрузка квестов...</Text>
+        <View>
+            <Loading text={"Загрузка квестов"} />
         </View>
     );
 

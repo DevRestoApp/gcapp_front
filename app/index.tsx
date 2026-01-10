@@ -7,12 +7,12 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import Loading from "@/src/client/components/Loading";
 
 // ============================================================================
 // Types
@@ -21,7 +21,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 interface Role {
     id: string;
     title: string;
-    description: string;
+    description?: string;
     icon: string;
 }
 
@@ -178,7 +178,7 @@ export default function RolePicker({
             activeOpacity={0.8}
         >
             {isLoading ? (
-                <ActivityIndicator size="small" color="#2C2D2E" />
+                <Loading />
             ) : (
                 <Text style={styles.loginButtonText}>Войти</Text>
             )}

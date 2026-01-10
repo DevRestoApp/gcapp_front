@@ -19,6 +19,7 @@ import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { Ionicons } from "@expo/vector-icons";
 import StorageForm from "./forms";
+import Loading from "@/src/client/components/Loading";
 
 export default function AddScreen() {
     const router = useRouter();
@@ -69,12 +70,7 @@ export default function AddScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
-                        <Text style={loadingStyles.loadingText}>
-                            Загрузка данных...
-                        </Text>
-                    </View>
+                    <Loading text={"Загрузка данных"} />
                 ) : (
                     <>
                         {renderHeader()}
