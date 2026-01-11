@@ -58,7 +58,7 @@ export default function ExpensesReports() {
                 title: "Итого чистая прибыль",
                 value: gross_profit.toFixed(2),
                 date: filters.date.slice(0, 5) ?? "",
-                type: "income",
+                type: (gross_profit || 0) > 0 ? "income" : "expense",
             },
         ];
 

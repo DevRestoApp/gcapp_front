@@ -86,6 +86,9 @@ export default function AnalyticsScreen() {
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
+                    showPeriodSelector={true}
+                    showDateSelector={true}
+                    showLocationSelector={true}
                 />
                 <Loading />
             </View>
@@ -105,6 +108,9 @@ export default function AnalyticsScreen() {
                     onDateChange={setDate}
                     onPeriodChange={setPeriod}
                     onLocationChange={setLocation}
+                    showPeriodSelector={true}
+                    showDateSelector={true}
+                    showLocationSelector={true}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -125,6 +131,9 @@ export default function AnalyticsScreen() {
                 onPeriodChange={setPeriod}
                 onLocationChange={setLocation}
                 organizations={organizations}
+                showPeriodSelector={true}
+                showDateSelector={true}
+                showLocationSelector={true}
             />
 
             <ScrollView

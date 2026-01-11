@@ -27,6 +27,7 @@ import DocumentCard, {
 import {
     WarehouseDocumentsItemType,
     WarehouseDocumentsOutput,
+    WarehouseDocumentsType,
 } from "@/src/server/types/storage";
 import { getWarehouseDocuments } from "@/src/server/general/warehouse";
 
@@ -35,40 +36,10 @@ import Loading from "@/src/client/components/Loading";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { sizes } from "@/src/utils/utils";
 
-const formatDataItem = (item: any, index: number, itemType: string) => {
-    const tableNumber =
-        item.name ||
-        item.item ||
-        item.reason ||
-        item.source ||
-        `Элемент ${index + 1}`;
-
-    const rawAmount = item.amount || item.quantity || 0;
-    const formattedAmount =
-        typeof rawAmount === "number"
-            ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
-            : rawAmount;
-
-    const time = item.time || "";
-    let formattedType = "positive";
-    if (itemType === "negative") {
-        formattedType = "negative";
-    }
-
-    return {
-        id: item.id || index,
-        tableNumber,
-        amount: formattedAmount,
-        time,
-        type: formattedType,
-    };
-};
-
 export default function StorageScreen() {
     const router = useRouter();
 
     const {
-        selectedStorageTab,
         locations,
         setSelectedStorageTab,
         queryInputs,
@@ -174,7 +145,7 @@ export default function StorageScreen() {
     const renderAddButton = () => {
         return (
             <TouchableOpacity
-                onPress={() => router.push(`/manager/expenses/${activeTab}`)}
+                onPress={() => router.push(`/manager/storage/add`)}
                 style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
@@ -213,7 +184,7 @@ export default function StorageScreen() {
             return `${day}.${month}.${year}`;
         };
 
-        let data = null;
+        let data: WarehouseDocumentsType[] | null = [];
         if (activeTab === "receipts") {
             data = receipts;
         }

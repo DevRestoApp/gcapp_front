@@ -60,7 +60,7 @@ export type createWarehouseDocumentIncomingInvoiceType = {
     items: createWarehouseDocumentIncomingInvoiceItemType[];
 };
 
-interface WarehouseDocumentsType {
+export interface WarehouseDocumentsType {
     id: number;
     iiko_id: string;
     document_type: string;
