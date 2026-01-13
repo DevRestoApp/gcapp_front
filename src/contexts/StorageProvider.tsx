@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
+// TODO прописать типы для документа
 interface Document {
     id: string;
 }
