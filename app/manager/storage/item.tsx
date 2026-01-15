@@ -77,12 +77,14 @@ export default function StorageScreen() {
         </View>
     );
 
-    const renderSubmitButton = async () => {
+    const renderSubmitButton = () => {
         const submitDisabled = document?.items.length === 0;
         const onSubmit = async () => {
             if (isNew) {
+                console.log("create");
                 await createWarehouseDocumentWrapper(document);
             } else {
+                console.log("update");
                 await updateWarehouseDocumentWrapper(document?.id, document);
             }
         };
@@ -172,7 +174,8 @@ export default function StorageScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {renderItemList()}
-                {renderSubmitButton()}
+
+                <View style={styles.section}>{renderSubmitButton()}</View>
             </ScrollView>
             {renderAddButton()}
         </SafeAreaView>
@@ -189,6 +192,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 128,
+        gap: 16,
     },
     headerSection: {
         gap: 16,

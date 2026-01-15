@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { Alert } from "react-native";
 
@@ -13,41 +13,38 @@ import { FormTextInput } from "@/src/client/components/form/TextInput";
 import { DatePickerButton } from "@/src/client/components/form/DatePicker";
 import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 import SegmentedControl from "@/src/client/components/Tabs";
-import MenuPicker, { MenuItem } from "@/src/client/components/form/MenuPicker";
 import { useManager } from "@/src/contexts/ManagerProvider";
-import { Day } from "@/src/client/types/waiter";
-import { createWarehouseDocumentIncomingInvoice } from "@/src/server/general/warehouse";
+import { useStorage } from "@/src/contexts/StorageProvider";
 
 export default function StorageForm() {
-    const { selectedStorageTab } = useManager();
-    const router = useRouter(); // Add this import at the top: import { useRouter } from "expo-router";
+    const { selectedStorageTab, loading } = useManager();
+    const { setDocument, fetchStores } = useStorage();
+    const router = useRouter();
 
-    const [days, setDays] = useState<Day[]>([]);
     const [showCalendar, setShowCalendar] = useState(false);
-    const [showMenuPicker, setShowMenuPicker] = useState(false);
-    const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
-        null,
-    );
+    const [storageOptions, setStorageOptions] = useState([]);
 
-    const [activeTab, setActiveTab] = useState<"general" | "content">(
-        "general",
-    );
+    const [activeTab, setActiveTab] = useState<"general">("general");
 
-    const storageOptions = [
-        { label: "Продуктовый", value: "products" },
-        { label: "Второй", value: "second" },
-        { label: "Третий", value: "third" },
-        { label: "Четвертый", value: "fourth" },
-    ];
+    useEffect(() => {
+        const loadStores = async () => {
+            try {
+                const options = await fetchStores();
+                setStorageOptions(options);
+            } catch (error) {
+                console.error("Failed to fetch stores:", error);
+            }
+        };
 
-    const tabs = [
-        { label: "Общая инфо.", value: "general" },
-        { label: "Содержимое", value: "content" },
-    ];
+        loadStores();
+    }, []);
+    console.log(storageOptions);
+
+    const tabs = [{ label: "Общая инфо.", value: "general" }];
 
     // Single form state object
     const [formData, setFormData] = useState({
-        storage: "",
+        store_id: "",
         amount: "",
         accountingAmount: "",
         date: "",
@@ -55,18 +52,6 @@ export default function StorageForm() {
         priceType: "",
         deviaton: "",
         supplier: "",
-        itemId: 0,
-        itemName: "",
-        itemQuantity: "",
-        itemUnit: "",
-        itemPurchasePrice: "",
-        itemAccountingQuantity: "",
-        itemCoefficient: "",
-        itemNote: "",
-        itemPrice: "",
-        itemCostPrice: "",
-        itemAmount: "",
-        itemAccountingAmount: "",
     });
 
     // Generic handler for form updates
@@ -78,128 +63,47 @@ export default function StorageForm() {
         handleFormChange("date", selectedDate);
     };
 
-    // Handle menu item selection
-    const handleMenuItemSelect = (item: MenuItem) => {
-        setSelectedMenuItem(item);
-        setFormData((prev) => ({
-            ...prev,
-            itemId: item.id,
-            itemName: item.name,
-        }));
-    };
-
-    // Menu item picker button component
-    const MenuItemPickerButton = () => (
-        <TouchableOpacity
-            style={styles.menuPickerButton}
-            onPress={() => setShowMenuPicker(true)}
-        >
-            <View style={styles.menuPickerContent}>
-                {selectedMenuItem ? (
-                    <View style={styles.selectedItemInfo}>
-                        <Text style={styles.selectedItemName}>
-                            {selectedMenuItem.name}
-                        </Text>
-                        <Text style={styles.selectedItemPrice}>
-                            {selectedMenuItem.price.toLocaleString("ru-RU")} тг
-                        </Text>
-                    </View>
-                ) : (
-                    <Text style={styles.placeholderText}>
-                        Нажмите для выбора товара
-                    </Text>
-                )}
-            </View>
-            <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-    );
-
     const renderFormReceipts = () => {
-        const handleSubmit = async () => {
-            try {
-                // Validate required fields
-                if (!formData.date) {
-                    Alert.alert("Ошибка", "Пожалуйста, выберите дату");
-                    return;
-                }
-                if (!formData.itemId) {
-                    Alert.alert("Ошибка", "Пожалуйста, выберите товар");
-                    return;
-                }
-                if (
-                    !formData.itemQuantity ||
-                    Number(formData.itemQuantity) <= 0
-                ) {
-                    Alert.alert("Ошибка", "Пожалуйста, введите количество");
-                    return;
-                }
-                if (!formData.itemPrice || Number(formData.itemPrice) <= 0) {
-                    Alert.alert("Ошибка", "Пожалуйста, введите цену");
-                    return;
-                }
-
-                const preparedData: any = {
-                    dateIncoming: formData.date,
-                    items: [
-                        {
-                            id: formData.itemId,
-                            amount: Number(formData.itemQuantity),
-                            price: Number(formData.itemPrice),
-                            sum:
-                                Number(formData.itemQuantity) *
-                                Number(formData.itemPrice),
-                        },
-                    ],
-                };
-
-                if (formData.comment) {
-                    preparedData.comment = formData.comment;
-                }
-                if (formData.supplier) {
-                    preparedData.supplier = formData.supplier;
-                }
-                if (formData.storage) {
-                    preparedData.storage = formData.storage;
-                }
-
-                // Make API call
-                await createWarehouseDocumentIncomingInvoice(preparedData);
-
-                // Show success notification
-                Alert.alert("Успешно", "Приходная накладная успешно создана");
-                router.push("/manager/storage");
-                // Reset form
-                setFormData({
-                    storage: "",
-                    amount: "",
-                    accountingAmount: "",
-                    date: "",
-                    comment: "",
-                    priceType: "",
-                    deviaton: "",
-                    supplier: "",
-                    itemId: 0,
-                    itemName: "",
-                    itemQuantity: "",
-                    itemUnit: "",
-                    itemPurchasePrice: "",
-                    itemAccountingQuantity: "",
-                    itemCoefficient: "",
-                    itemNote: "",
-                    itemPrice: "",
-                    itemCostPrice: "",
-                    itemAmount: "",
-                    itemAccountingAmount: "",
-                });
-                setSelectedMenuItem(null);
-                setActiveTab("general");
-            } catch (error: any) {
-                console.error("Error creating document:", error);
-                Alert.alert(
-                    "Ошибка",
-                    error.message || "Не удалось создать приходную накладную",
-                );
+        const handleSubmit = () => {
+            // Validate required fields
+            if (!formData.date) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите дату");
+                return;
             }
+
+            const preparedData: any = {
+                date: formData.date,
+                date_incoming: formData.date,
+                items: [],
+            };
+
+            preparedData.document_type = "RECEIPT";
+            if (formData.comment) {
+                preparedData.comment = formData.comment;
+            }
+            if (formData.supplier) {
+                preparedData.supplier = formData.supplier;
+            }
+            if (formData.store_id) {
+                preparedData.store_id = formData.store_id;
+            }
+
+            // Make API call
+            setDocument(preparedData);
+
+            // Reset form
+            setFormData({
+                store_id: "",
+                amount: "",
+                accountingAmount: "",
+                date: "",
+                comment: "",
+                priceType: "",
+                deviaton: "",
+                supplier: "",
+            });
+            setActiveTab("general");
+            router.push("/manager/storage/item");
         };
 
         return (
@@ -208,120 +112,134 @@ export default function StorageForm() {
                     tabs={tabs}
                     activeTab={activeTab}
                     onTabChange={(value) => {
-                        setActiveTab(value as "general" | "content");
+                        setActiveTab(value as "general");
                     }}
                 />
 
                 <FormContainer
-                    title={`Добавить ${activeTab === "general" ? "общую информацию" : "содержимое"}`}
+                    title={`Добавить общую информацию`}
                     description="Заполните нужную информацию"
                     onSubmit={handleSubmit}
-                    submitText="Сохранить"
+                    submitText="Далее"
                 >
-                    {activeTab === "general" ? (
-                        <View>
-                            <FormField label="Дата">
-                                <DatePickerButton
-                                    value={formData.date}
-                                    onPress={() => setShowCalendar(true)}
-                                    placeholder="Выберите дату"
-                                />
-                            </FormField>
-
-                            <FormField label="Поставщик">
-                                <FormTextInput
-                                    value={formData.supplier}
-                                    onChange={(value) =>
-                                        handleFormChange("supplier", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Склад">
-                                <OptionPicker
-                                    options={storageOptions}
-                                    value={formData.storage}
-                                    onChange={(value) =>
-                                        handleFormChange("storage", value)
-                                    }
-                                    placeholder="Выберите склад"
-                                />
-                            </FormField>
-
-                            <FormField label="Сумма">
-                                <NumberInput
-                                    value={formData.amount}
-                                    onChange={(value) =>
-                                        handleFormChange("amount", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Коментарий">
-                                <CommentInput
-                                    value={formData.comment}
-                                    onChange={(value) =>
-                                        handleFormChange("comment", value)
-                                    }
-                                    placeholder="Напишите коментарий"
-                                />
-                            </FormField>
-
-                            <ReportCalendar
-                                visible={showCalendar}
-                                onClose={() => setShowCalendar(false)}
-                                onDateSelect={handleDateSelect}
-                                initialDate={formData.date}
+                    <View>
+                        <FormField label="Дата">
+                            <DatePickerButton
+                                value={formData.date}
+                                onPress={() => setShowCalendar(true)}
+                                placeholder="Выберите дату"
                             />
-                        </View>
-                    ) : (
-                        <View>
-                            <FormField label="Название товара">
-                                <MenuItemPickerButton />
-                            </FormField>
-                            <FormField label="Количество">
-                                <FormTextInput
-                                    value={formData.itemQuantity}
-                                    onChange={(value) =>
-                                        handleFormChange("itemQuantity", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
+                        </FormField>
 
-                            <FormField label="Цена">
-                                <NumberInput
-                                    value={formData.itemPrice}
-                                    onChange={(value) =>
-                                        handleFormChange("itemPrice", value)
-                                    }
-                                    placeholder="Выберите цену"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-                        </View>
-                    )}
+                        <FormField label="Поставщик">
+                            <FormTextInput
+                                value={formData.supplier}
+                                onChange={(value) =>
+                                    handleFormChange("supplier", value)
+                                }
+                                placeholder="Введите данные"
+                            />
+                        </FormField>
+
+                        <FormField label="Склад">
+                            <OptionPicker
+                                options={storageOptions}
+                                value={formData.store_id}
+                                onChange={(value) =>
+                                    handleFormChange("store_id", value)
+                                }
+                                placeholder="Выберите склад"
+                            />
+                        </FormField>
+
+                        <FormField label="Сумма">
+                            <NumberInput
+                                value={formData.amount}
+                                onChange={(value) =>
+                                    handleFormChange("amount", value)
+                                }
+                                placeholder="Выберите сумму"
+                                currency="тг"
+                                maxLength={20}
+                            />
+                        </FormField>
+
+                        <FormField label="Коментарий">
+                            <CommentInput
+                                value={formData.comment}
+                                onChange={(value) =>
+                                    handleFormChange("comment", value)
+                                }
+                                placeholder="Напишите коментарий"
+                            />
+                        </FormField>
+
+                        <ReportCalendar
+                            visible={showCalendar}
+                            onClose={() => setShowCalendar(false)}
+                            onDateSelect={handleDateSelect}
+                            initialDate={formData.date}
+                        />
+                    </View>
                 </FormContainer>
-
-                <MenuPicker
-                    visible={showMenuPicker}
-                    onClose={() => setShowMenuPicker(false)}
-                    onSelect={handleMenuItemSelect}
-                    selectedItem={selectedMenuItem}
-                    title="Выберите товар"
-                />
             </View>
         );
     };
 
     const renderFormInventory = () => {
-        const handleSubmit = () => {
-            console.log(formData);
+        const handleSubmit = async () => {
+            // Validate required fields
+            if (!formData.date) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите дату");
+                return;
+            }
+
+            const preparedData: any = {
+                date: formData.date,
+                date_incoming: formData.date,
+                items: [],
+            };
+
+            preparedData.document_type = "INVENTORY";
+            if (formData.comment) {
+                preparedData.comment = formData.comment;
+            }
+            if (formData.supplier) {
+                preparedData.supplier = formData.supplier;
+            }
+            if (formData.store_id) {
+                preparedData.store_id = formData.store_id;
+            }
+            if (formData.priceType) {
+                preparedData.priceType = formData.priceType;
+            }
+            if (formData.amount) {
+                preparedData.amount = formData.amount;
+            }
+            if (formData.accountingAmount) {
+                preparedData.accountingAmount = formData.accountingAmount;
+            }
+            if (formData.deviaton) {
+                preparedData.deviaton = formData.deviaton;
+            }
+
+            // Make API call
+            setDocument(preparedData);
+
+            // Reset form
+            setFormData({
+                store_id: "",
+                amount: "",
+                accountingAmount: "",
+                date: "",
+                comment: "",
+                priceType: "",
+                deviaton: "",
+                supplier: "",
+            });
+            setActiveTab("general");
+
+            router.push("/manager/storage/item");
         };
 
         return (
@@ -330,220 +248,143 @@ export default function StorageForm() {
                     tabs={tabs}
                     activeTab={activeTab}
                     onTabChange={(value) => {
-                        setActiveTab(value as "general" | "content");
+                        setActiveTab(value as "general");
                     }}
                 />
 
                 <FormContainer
-                    title={`Добавить ${activeTab === "general" ? "общую информацию" : "содержимое"}`}
+                    title={`Добавить общую информацию`}
                     description="Заполните нужную информацию"
                     onSubmit={handleSubmit}
-                    submitText="Сохранить"
+                    submitText="Далее"
                 >
-                    {activeTab === "general" ? (
-                        <View>
-                            <FormField label="Дата">
-                                <DatePickerButton
-                                    value={formData.date}
-                                    onPress={() => setShowCalendar(true)}
-                                    placeholder="Выберите дату"
-                                />
-                            </FormField>
-
-                            <FormField label="Склад">
-                                <OptionPicker
-                                    options={storageOptions}
-                                    value={formData.storage}
-                                    onChange={(value) =>
-                                        handleFormChange("storage", value)
-                                    }
-                                    placeholder="Выберите склад"
-                                />
-                            </FormField>
-
-                            <FormField label="Тип цены">
-                                <FormTextInput
-                                    value={formData.priceType}
-                                    onChange={(value) =>
-                                        handleFormChange("priceType", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Сумма">
-                                <NumberInput
-                                    value={formData.amount}
-                                    onChange={(value) =>
-                                        handleFormChange("amount", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Учетная сумма">
-                                <NumberInput
-                                    value={formData.accountingAmount}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "accountingAmount",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Отклонение">
-                                <FormTextInput
-                                    value={formData.deviaton}
-                                    onChange={(value) =>
-                                        handleFormChange("deviaton", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Коментарий">
-                                <CommentInput
-                                    value={formData.comment}
-                                    onChange={(value) =>
-                                        handleFormChange("comment", value)
-                                    }
-                                    placeholder="Напишите коментарий"
-                                />
-                            </FormField>
-
-                            <ReportCalendar
-                                visible={showCalendar}
-                                onClose={() => setShowCalendar(false)}
-                                onDateSelect={handleDateSelect}
-                                initialDate={formData.date}
+                    <View>
+                        <FormField label="Дата">
+                            <DatePickerButton
+                                value={formData.date}
+                                onPress={() => setShowCalendar(true)}
+                                placeholder="Выберите дату"
                             />
-                        </View>
-                    ) : (
-                        <View>
-                            <FormField label="Название товара">
-                                <MenuItemPickerButton />
-                            </FormField>
+                        </FormField>
 
-                            <View style={{ flexDirection: "row", gap: 12 }}>
-                                <FormField label="Количество">
-                                    <FormTextInput
-                                        value={formData.itemQuantity}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemQuantity",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
+                        <FormField label="Склад">
+                            <OptionPicker
+                                options={storageOptions}
+                                value={formData.store_id}
+                                onChange={(value) =>
+                                    handleFormChange("store_id", value)
+                                }
+                                placeholder="Выберите склад"
+                            />
+                        </FormField>
 
-                                <FormField label="Единицы">
-                                    <FormTextInput
-                                        value={formData.itemUnit}
-                                        onChange={(value) =>
-                                            handleFormChange("itemUnit", value)
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
-                            </View>
+                        <FormField label="Тип цены">
+                            <FormTextInput
+                                value={formData.priceType}
+                                onChange={(value) =>
+                                    handleFormChange("priceType", value)
+                                }
+                                placeholder="Введите данные"
+                            />
+                        </FormField>
 
-                            <FormField label="Учетное количество">
-                                <FormTextInput
-                                    value={formData.itemAccountingQuantity}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "itemAccountingQuantity",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
+                        <FormField label="Сумма">
+                            <NumberInput
+                                value={formData.amount}
+                                onChange={(value) =>
+                                    handleFormChange("amount", value)
+                                }
+                                placeholder="Выберите сумму"
+                                currency="тг"
+                                maxLength={20}
+                            />
+                        </FormField>
 
-                            <View style={{ flexDirection: "row", gap: 12 }}>
-                                <FormField label="Коэффициент">
-                                    <FormTextInput
-                                        value={formData.itemCoefficient}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemCoefficient",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
+                        <FormField label="Учетная сумма">
+                            <NumberInput
+                                value={formData.accountingAmount}
+                                onChange={(value) =>
+                                    handleFormChange("accountingAmount", value)
+                                }
+                                placeholder="Выберите сумму"
+                                currency="тг"
+                                maxLength={20}
+                            />
+                        </FormField>
 
-                                <FormField label="Себестоимость">
-                                    <FormTextInput
-                                        value={formData.itemCostPrice}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemCostPrice",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
+                        <FormField label="Отклонение">
+                            <FormTextInput
+                                value={formData.deviaton}
+                                onChange={(value) =>
+                                    handleFormChange("deviaton", value)
+                                }
+                                placeholder="Введите данные"
+                            />
+                        </FormField>
 
-                                <FormField label="Сумма">
-                                    <NumberInput
-                                        value={formData.itemAmount}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemAmount",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Выберите сумму"
-                                        currency="тг"
-                                        maxLength={20}
-                                    />
-                                </FormField>
+                        <FormField label="Коментарий">
+                            <CommentInput
+                                value={formData.comment}
+                                onChange={(value) =>
+                                    handleFormChange("comment", value)
+                                }
+                                placeholder="Напишите коментарий"
+                            />
+                        </FormField>
 
-                                <FormField label="Учетная сумма">
-                                    <NumberInput
-                                        value={formData.itemAccountingAmount}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemAccountingAmount",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Выберите сумму"
-                                        currency="тг"
-                                        maxLength={20}
-                                    />
-                                </FormField>
-                            </View>
-                        </View>
-                    )}
+                        <ReportCalendar
+                            visible={showCalendar}
+                            onClose={() => setShowCalendar(false)}
+                            onDateSelect={handleDateSelect}
+                            initialDate={formData.date}
+                        />
+                    </View>
                 </FormContainer>
-
-                <MenuPicker
-                    visible={showMenuPicker}
-                    onClose={() => setShowMenuPicker(false)}
-                    onSelect={handleMenuItemSelect}
-                    selectedItem={selectedMenuItem}
-                    title="Выберите товар"
-                />
             </View>
         );
     };
 
     const renderFormWriteoffs = () => {
         const handleSubmit = () => {
-            console.log(formData);
+            // Validate required fields
+            if (!formData.date) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите дату");
+                return;
+            }
+
+            const preparedData: any = {
+                date: formData.date,
+                date_incoming: formData.date,
+                items: [],
+            };
+
+            preparedData.document_type = "WRITEOFF";
+            if (formData.store_id) {
+                preparedData.store_id = formData.store_id;
+            }
+            if (formData.amount) {
+                preparedData.amount = formData.amount;
+            }
+            if (formData.comment) {
+                preparedData.comment = formData.comment;
+            }
+
+            // Make API call
+            setDocument(preparedData);
+
+            // Reset form
+            setFormData({
+                store_id: "",
+                amount: "",
+                accountingAmount: "",
+                date: "",
+                comment: "",
+                priceType: "",
+                deviaton: "",
+                supplier: "",
+            });
+            setActiveTab("general");
+            router.push("/manager/storage/item");
         };
 
         return (
@@ -552,172 +393,66 @@ export default function StorageForm() {
                     tabs={tabs}
                     activeTab={activeTab}
                     onTabChange={(value) => {
-                        setActiveTab(value as "general" | "content");
+                        setActiveTab(value as "general");
                     }}
                 />
 
                 <FormContainer
-                    title={`Добавить ${activeTab === "general" ? "общую информацию" : "содержимое"}`}
+                    title={`Добавить общую информацию`}
                     description="Заполните нужную информацию"
                     onSubmit={handleSubmit}
-                    submitText="Сохранить"
+                    submitText="Далее"
                 >
-                    {activeTab === "general" ? (
-                        <View>
-                            <FormField label="Дата">
-                                <DatePickerButton
-                                    value={formData.date}
-                                    onPress={() => setShowCalendar(true)}
-                                    placeholder="Выберите дату"
-                                />
-                            </FormField>
-
-                            <FormField label="Склад">
-                                <OptionPicker
-                                    options={storageOptions}
-                                    value={formData.storage}
-                                    onChange={(value) =>
-                                        handleFormChange("storage", value)
-                                    }
-                                    placeholder="Выберите склад"
-                                />
-                            </FormField>
-
-                            <FormField label="Сумма">
-                                <NumberInput
-                                    value={formData.amount}
-                                    onChange={(value) =>
-                                        handleFormChange("amount", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Коментарий">
-                                <CommentInput
-                                    value={formData.comment}
-                                    onChange={(value) =>
-                                        handleFormChange("comment", value)
-                                    }
-                                    placeholder="Напишите коментарий"
-                                />
-                            </FormField>
-
-                            <ReportCalendar
-                                visible={showCalendar}
-                                onClose={() => setShowCalendar(false)}
-                                onDateSelect={handleDateSelect}
-                                initialDate={formData.date}
+                    <View>
+                        <FormField label="Дата">
+                            <DatePickerButton
+                                value={formData.date}
+                                onPress={() => setShowCalendar(true)}
+                                placeholder="Выберите дату"
                             />
-                        </View>
-                    ) : (
-                        <View>
-                            <FormField label="Название товара">
-                                <MenuItemPickerButton />
-                            </FormField>
+                        </FormField>
 
-                            <View style={{ flexDirection: "row", gap: 12 }}>
-                                <FormField label="Количество">
-                                    <FormTextInput
-                                        value={formData.itemQuantity}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemQuantity",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
+                        <FormField label="Склад">
+                            <OptionPicker
+                                options={storageOptions}
+                                value={formData.store_id}
+                                onChange={(value) =>
+                                    handleFormChange("store_id", value)
+                                }
+                                placeholder="Выберите склад"
+                            />
+                        </FormField>
 
-                                <FormField label="Единицы">
-                                    <FormTextInput
-                                        value={formData.itemUnit}
-                                        onChange={(value) =>
-                                            handleFormChange("itemUnit", value)
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
-                            </View>
+                        <FormField label="Сумма">
+                            <NumberInput
+                                value={formData.amount}
+                                onChange={(value) =>
+                                    handleFormChange("amount", value)
+                                }
+                                placeholder="Выберите сумму"
+                                currency="тг"
+                                maxLength={20}
+                            />
+                        </FormField>
 
-                            <FormField label="Учетное количество">
-                                <FormTextInput
-                                    value={formData.itemAccountingQuantity}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "itemAccountingQuantity",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
+                        <FormField label="Коментарий">
+                            <CommentInput
+                                value={formData.comment}
+                                onChange={(value) =>
+                                    handleFormChange("comment", value)
+                                }
+                                placeholder="Напишите коментарий"
+                            />
+                        </FormField>
 
-                            <View style={{ flexDirection: "row", gap: 12 }}>
-                                <FormField label="Коэффициент">
-                                    <FormTextInput
-                                        value={formData.itemCoefficient}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemCoefficient",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
-
-                                <FormField label="Примечание">
-                                    <FormTextInput
-                                        value={formData.itemNote}
-                                        onChange={(value) =>
-                                            handleFormChange("itemNote", value)
-                                        }
-                                        placeholder="Введите данные"
-                                    />
-                                </FormField>
-
-                                <FormField label="Цена">
-                                    <NumberInput
-                                        value={formData.itemPrice}
-                                        onChange={(value) =>
-                                            handleFormChange("itemPrice", value)
-                                        }
-                                        placeholder="Выберите сумму"
-                                        currency="тг"
-                                        maxLength={20}
-                                    />
-                                </FormField>
-
-                                <FormField label="Сумма">
-                                    <NumberInput
-                                        value={formData.itemAmount}
-                                        onChange={(value) =>
-                                            handleFormChange(
-                                                "itemAmount",
-                                                value,
-                                            )
-                                        }
-                                        placeholder="Выберите сумму"
-                                        currency="тг"
-                                        maxLength={20}
-                                    />
-                                </FormField>
-                            </View>
-                        </View>
-                    )}
+                        <ReportCalendar
+                            visible={showCalendar}
+                            onClose={() => setShowCalendar(false)}
+                            onDateSelect={handleDateSelect}
+                            initialDate={formData.date}
+                        />
+                    </View>
                 </FormContainer>
-
-                <MenuPicker
-                    visible={showMenuPicker}
-                    onClose={() => setShowMenuPicker(false)}
-                    onSelect={handleMenuItemSelect}
-                    selectedItem={selectedMenuItem}
-                    title="Выберите товар"
-                />
             </View>
         );
     };
@@ -733,40 +468,3 @@ export default function StorageForm() {
             return null;
     }
 }
-
-const styles = StyleSheet.create({
-    menuPickerButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: "rgba(60, 130, 253, 0.3)",
-    },
-    menuPickerContent: {
-        flex: 1,
-    },
-    selectedItemInfo: {
-        gap: 4,
-    },
-    selectedItemName: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    selectedItemPrice: {
-        color: "#797A80",
-        fontSize: 14,
-    },
-    placeholderText: {
-        color: "#797A80",
-        fontSize: 16,
-    },
-    chevron: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "300",
-    },
-});

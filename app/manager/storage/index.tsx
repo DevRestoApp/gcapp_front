@@ -49,6 +49,8 @@ export default function StorageScreen() {
         setLocation,
     } = useManager();
 
+    const { setIsNew } = useStorage();
+
     const { setDocument } = useStorage();
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<
@@ -129,7 +131,10 @@ export default function StorageScreen() {
     const renderAddButton = () => {
         return (
             <TouchableOpacity
-                onPress={() => router.push(`/manager/storage/add`)}
+                onPress={() => {
+                    setIsNew(true);
+                    router.push(`/manager/storage/add`);
+                }}
                 style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
@@ -213,6 +218,7 @@ export default function StorageScreen() {
                             category={item.items[0]?.item_name || ""}
                             onPress={() => {
                                 setDocument(item);
+                                setIsNew(false);
                                 router.push("/manager/storage/item");
                             }}
                         >
