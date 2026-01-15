@@ -28,7 +28,10 @@ import {
     WarehouseDocumentsItemType,
     WarehouseDocumentsType,
 } from "@/src/server/types/storage";
-import { getWarehouseDocuments } from "@/src/server/general/warehouse";
+import {
+    createWarehouseDocument,
+    getWarehouseDocuments,
+} from "@/src/server/general/warehouse";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
@@ -37,15 +40,19 @@ import { sizes } from "@/src/utils/utils";
 import { HeaderSimple } from "@/src/client/components/reports/headerSimple";
 
 export default function StorageScreen() {
-    const { document } = useStorage();
+    const {
+        document,
+        isNew,
+        createWarehouseDocumentWrapper,
+        updateWarehouseDocumentWrapper,
+    } = useStorage();
     const router = useRouter();
     console.log("doc", document);
 
-    console.log(document);
     const type =
-        document?.type === "receipts"
+        document?.document_type === "RECEIPT"
             ? "Поступление"
-            : document?.type === "inventory"
+            : document?.document_type === "INVENTORY"
               ? "Инвентаризация"
               : "Списание";
 
@@ -69,6 +76,30 @@ export default function StorageScreen() {
             />
         </View>
     );
+
+    const renderSubmitButton = async () => {
+        const submitDisabled = document?.items.length === 0;
+        const onSubmit = async () => {
+            if (isNew) {
+                await createWarehouseDocumentWrapper(document);
+            } else {
+                await updateWarehouseDocumentWrapper(document?.id, document);
+            }
+        };
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.submitButton,
+                    submitDisabled && styles.submitButtonDisabled,
+                ]}
+                onPress={onSubmit}
+                disabled={submitDisabled}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.submitText}>Сохранить</Text>
+            </TouchableOpacity>
+        );
+    };
 
     const renderItemList = () => {
         const formattedDate = (date: string | Date) => {
@@ -109,9 +140,8 @@ export default function StorageScreen() {
                             <DetailRow label={"Цена"} value={item.price} />
                             <DetailRow
                                 label={"Количество"}
-                                value={item.amount}
+                                value={item.quantity}
                             />
-                            <DetailRow label={"asd"} value={"zxc"} />
                         </DocumentCard>
                     )}
                     showsVerticalScrollIndicator={false}
@@ -142,6 +172,7 @@ export default function StorageScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {renderItemList()}
+                {renderSubmitButton()}
             </ScrollView>
             {renderAddButton()}
         </SafeAreaView>
@@ -286,5 +317,21 @@ const styles = StyleSheet.create({
     },
     cardSeparator: {
         height: 16,
+    },
+    submitButton: {
+        height: 44,
+        borderRadius: 20,
+        backgroundColor: "#FFFFFF",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    submitButtonDisabled: {
+        opacity: 0.5,
+    },
+    submitText: {
+        color: "#2C2D2E",
+        fontSize: 16,
+        fontWeight: "600",
+        lineHeight: 24,
     },
 });
