@@ -107,10 +107,6 @@ export default function IndexScreen() {
         <View style={styles.headerSection}>
             <View style={styles.headerRow}>
                 <Text style={styles.headerTitle}>Смена</Text>
-                <View style={styles.timerBadge}>
-                    <Text style={styles.timerIcon}>⏰</Text>
-                    <Text style={styles.timerText}>{shifts?.elapsedTime}</Text>
-                </View>
             </View>
             <Calendar days={days} onDayPress={handleDayPress} />
         </View>

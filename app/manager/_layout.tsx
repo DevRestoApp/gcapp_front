@@ -66,12 +66,12 @@ export default function ManagerLayout() {
                     />
 
                     <Tabs.Screen
-                        name="storage/index"
+                        name="storage"
                         options={{
                             title: "Склад",
                             tabBarIcon: ({ color, size }) => (
                                 <Ionicons
-                                    name="person"
+                                    name="cube"
                                     size={size}
                                     color={color}
                                 />
@@ -132,18 +132,6 @@ export default function ManagerLayout() {
                     />
                     <Tabs.Screen
                         name="expenses/income"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="storage/add"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="storage/forms"
                         options={{
                             href: null,
                         }}

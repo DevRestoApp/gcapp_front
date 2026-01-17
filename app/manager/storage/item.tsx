@@ -12,11 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-import { useManager } from "@/src/contexts/ManagerProvider";
 import { useStorage } from "@/src/contexts/StorageProvider";
 
 import SegmentedControl from "@/src/client/components/Tabs";
@@ -30,111 +28,38 @@ import {
     WarehouseDocumentsItemType,
     WarehouseDocumentsType,
 } from "@/src/server/types/storage";
-import { getWarehouseDocuments } from "@/src/server/general/warehouse";
+import {
+    createWarehouseDocument,
+    getWarehouseDocuments,
+} from "@/src/server/general/warehouse";
 
 import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { sizes } from "@/src/utils/utils";
+import { HeaderSimple } from "@/src/client/components/reports/headerSimple";
 
 export default function StorageScreen() {
-    const router = useRouter();
-
     const {
-        locations,
-        setSelectedStorageTab,
-        queryInputs,
-        setDate,
-        setPeriod,
-        setLocation,
-    } = useManager();
+        document,
+        isNew,
+        createWarehouseDocumentWrapper,
+        updateWarehouseDocumentWrapper,
+    } = useStorage();
+    const router = useRouter();
+    console.log("doc", document);
 
-    const { setIsNew } = useStorage();
-
-    const { setDocument } = useStorage();
-    const [days, setDays] = useState<Day[]>([]);
-    const [activeTab, setActiveTab] = useState<
-        "receipts" | "inventory" | "writeoffs"
-    >("receipts");
-    const [receipts, setReceipts] = useState<
-        WarehouseDocumentsItemType[] | null
-    >(null);
-    const [writeoffs, setWriteoffs] = useState<
-        WarehouseDocumentsItemType[] | null
-    >(null);
-    const [inventory, setInventory] = useState<
-        WarehouseDocumentsItemType[] | null
-    >(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        setSelectedStorageTab(activeTab);
-    }, [activeTab, setSelectedStorageTab]);
-
-    // Extract fetchDocuments as a standalone function
-    const fetchDocuments = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await getWarehouseDocuments({});
-
-            const receipts = response.documents.filter(
-                (doc) => doc.document_type === "RECEIPT",
-            );
-            const writeoffs = response.documents.filter(
-                (doc) => doc.document_type === "WRITEOFF",
-            );
-            const inventory = response.documents.filter(
-                (doc) => doc.document_type === "INVENTORY",
-            );
-            setReceipts(receipts);
-            setWriteoffs(writeoffs);
-            setInventory(inventory);
-        } catch (err: any) {
-            setError(err.message || "Failed to fetch documents");
-            console.error("Error fetching documents:", err);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchDocuments();
-    }, [fetchDocuments]);
-
-    // Refetch when screen comes into focus
-    useFocusEffect(
-        useCallback(() => {
-            fetchDocuments();
-        }, [fetchDocuments]),
-    );
-
-    const renderHeader = () => (
-        <View style={styles.headerSection}>
-            <ReportHeader
-                title="Склад"
-                date={queryInputs.date}
-                period={queryInputs.period}
-                location={queryInputs.organization_id}
-                onBack={() => router.push("/manager")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
-                onLocationChange={setLocation}
-                organizations={locations}
-                showPeriodSelector={false}
-            />
-        </View>
-    );
+    const type =
+        document?.document_type === "RECEIPT"
+            ? "Поступление"
+            : document?.document_type === "INVENTORY"
+              ? "Инвентаризация"
+              : "Списание";
 
     const renderAddButton = () => {
         return (
             <TouchableOpacity
-                onPress={() => {
-                    setIsNew(true);
-                    router.push(`/manager/storage/add`);
-                }}
+                onPress={() => router.push(`/manager/storage/addItem`)}
                 style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
@@ -143,24 +68,38 @@ export default function StorageScreen() {
         );
     };
 
-    const renderTabs = () => {
-        const tabs = [
-            { label: "Поступления", value: "receipts" },
-            { label: "Инвентаризация", value: "inventory" },
-            { label: "Списания", value: "writeoffs" },
-        ];
-
-        return (
-            <SegmentedControl
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={(value) => {
-                    setActiveTab(
-                        value as "receipts" | "inventory" | "writeoffs",
-                    );
-                    setSelectedStorageTab(value);
-                }}
+    const renderHeader = () => (
+        <View style={styles.headerSection}>
+            <HeaderSimple
+                title={type}
+                onBack={() => router.push("/manager/storage")}
             />
+        </View>
+    );
+
+    const renderSubmitButton = () => {
+        const submitDisabled = document?.items.length === 0;
+        const onSubmit = async () => {
+            if (isNew) {
+                console.log("create");
+                await createWarehouseDocumentWrapper(document);
+            } else {
+                console.log("update");
+                await updateWarehouseDocumentWrapper(document?.id, document);
+            }
+        };
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.submitButton,
+                    submitDisabled && styles.submitButtonDisabled,
+                ]}
+                onPress={onSubmit}
+                disabled={submitDisabled}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.submitText}>Сохранить</Text>
+            </TouchableOpacity>
         );
     };
 
@@ -172,19 +111,7 @@ export default function StorageScreen() {
             const year = today.getFullYear();
             return `${day}.${month}.${year}`;
         };
-
-        let data: WarehouseDocumentsType[] | null = [];
-        if (activeTab === "receipts") {
-            data = receipts;
-        }
-        if (activeTab === "inventory") {
-            data = inventory;
-        }
-        if (activeTab === "writeoffs") {
-            data = writeoffs;
-        }
-
-        const limitedData = data?.slice(0, 10) || [];
+        const data = document?.items;
 
         if (!data || data.length === 0) {
             return (
@@ -201,28 +128,22 @@ export default function StorageScreen() {
         return (
             <View style={styles.listContainer}>
                 <FlatList
-                    data={limitedData}
+                    data={data}
                     keyExtractor={(item) =>
                         item.id?.toString() || Math.random().toString()
                     }
                     renderItem={({ item }) => (
                         <DocumentCard
-                            documentNumber={`${
-                                activeTab === "receipts"
-                                    ? "Поступление"
-                                    : activeTab === "inventory"
-                                      ? "Инвентаризация"
-                                      : "Списание"
-                            } №${item.document_number || item.id}`}
-                            timestamp={formattedDate(item.date) || ""}
-                            category={item.items[0]?.item_name || ""}
-                            onPress={() => {
-                                setDocument(item);
-                                setIsNew(false);
-                                router.push("/manager/storage/item");
-                            }}
+                            documentNumber={item?.item_name || ""}
+                            timestamp={formattedDate(item.created_at) || ""}
+                            category=""
+                            onPress={() => {}}
                         >
-                            <CommentRow comment={item.comment ?? ""} />
+                            <DetailRow label={"Цена"} value={item.price} />
+                            <DetailRow
+                                label={"Количество"}
+                                value={item.quantity}
+                            />
                         </DocumentCard>
                     )}
                     showsVerticalScrollIndicator={false}
@@ -245,22 +166,16 @@ export default function StorageScreen() {
                 backgroundColor="rgba(25, 25, 26, 1)"
             />
 
+            {renderHeader()}
+
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {loading ? (
-                    <View style={loadingStyles.loadingContainer}>
-                        <Loading text={"Загрузка данных"} />
-                    </View>
-                ) : (
-                    <>
-                        {renderHeader()}
-                        {renderTabs()}
-                        {renderItemList()}
-                    </>
-                )}
+                {renderItemList()}
+
+                <View style={styles.section}>{renderSubmitButton()}</View>
             </ScrollView>
             {renderAddButton()}
         </SafeAreaView>
@@ -277,6 +192,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 128,
+        gap: 16,
     },
     headerSection: {
         gap: 16,
@@ -405,5 +321,21 @@ const styles = StyleSheet.create({
     },
     cardSeparator: {
         height: 16,
+    },
+    submitButton: {
+        height: 44,
+        borderRadius: 20,
+        backgroundColor: "#FFFFFF",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    submitButtonDisabled: {
+        opacity: 0.5,
+    },
+    submitText: {
+        color: "#2C2D2E",
+        fontSize: 16,
+        fontWeight: "600",
+        lineHeight: 24,
     },
 });

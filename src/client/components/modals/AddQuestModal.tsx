@@ -9,6 +9,8 @@ import {
     ScrollView,
 } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
+import MenuPicker, { MenuItem } from "@/src/client/components/form/MenuPicker";
+import { Entypo } from "@expo/vector-icons";
 
 // ============================================================================
 // Types
@@ -58,7 +60,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [questName, setQuestName] = useState("");
-        const [itemName, setItemName] = useState("");
         const [amount, setAmount] = useState("");
         const [reward, setReward] = useState("");
         const [selectedEmployee, setSelectedEmployee] =
@@ -67,6 +68,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             useState<Location | null>(null);
         const [showEmployeePicker, setShowEmployeePicker] = useState(false);
         const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+        const [showMenuPicker, setShowMenuPicker] = useState(false);
+        const [selectedMenuItem, setSelectedMenuItem] =
+            useState<MenuItem | null>(null);
 
         // Imperative handle for parent control
         React.useImperativeHandle(ref, () => ({
@@ -78,7 +83,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         // Reset form when modal opens
         const handleOpen = useCallback(() => {
             setQuestName("");
-            setItemName("");
+            setSelectedMenuItem(null);
             setAmount("");
             setReward("");
             setSelectedEmployee(null);
@@ -93,7 +98,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setQuestName("");
             setAmount("");
             setReward("");
-            setItemName("");
+            setSelectedMenuItem(null);
             setSelectedEmployee(null);
             setSelectedLocation(null);
             setShowEmployeePicker(false);
@@ -102,6 +107,11 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             onCancel?.();
             modalRef.current?.close();
         }, [onCancel]);
+
+        const handleMenuItemSelect = (item: MenuItem) => {
+            setSelectedMenuItem(item);
+            console.log("ITEM", item);
+        };
 
         // Handle employee select
         const handleEmployeeSelect = useCallback((employee: Employee) => {
@@ -144,7 +154,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     title: questName.trim(),
                     amount: Number(amount),
                     reward: reward.trim(),
-                    unit: itemName.trim(),
+                    unit: selectedMenuItem.name?.trim() ?? "",
                     employeeId: selectedEmployee?.id,
                     employeeName: selectedEmployee?.name,
                     locationId: selectedLocation?.id,
@@ -331,19 +341,35 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                 </Text>
             </View>
         );
-        const renderItemNameInput = () => (
-            <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Блюдо</Text>
-                <TextInput
-                    style={styles.textInput}
-                    value={itemName}
-                    onChangeText={setItemName}
-                    placeholder="Введите название блюда..."
-                    placeholderTextColor="rgba(121, 122, 128, 1)"
-                    maxLength={100}
-                />
-                <Text style={styles.characterCount}>{itemName.length}/100</Text>
-            </View>
+        const MenuItemPickerButton = () => (
+            <TouchableOpacity
+                style={styles.inputSection}
+                onPress={() => setShowMenuPicker(true)}
+            >
+                <Text style={styles.inputLabel}>Товар</Text>
+                <View style={styles.textInput}>
+                    {selectedMenuItem ? (
+                        <View style={styles.selectedItemInfo}>
+                            <Text style={styles.inputLabel}>
+                                {selectedMenuItem.name}
+                            </Text>
+                            <Text style={styles.selectedItemPrice}>
+                                {selectedMenuItem.price.toLocaleString("ru-RU")}{" "}
+                                тг
+                            </Text>
+                        </View>
+                    ) : (
+                        <Text
+                            style={{
+                                ...styles.placeholderText,
+                                ...styles.selectedItemInfo,
+                            }}
+                        >
+                            Нажмите для выбора товара
+                        </Text>
+                    )}
+                </View>
+            </TouchableOpacity>
         );
 
         const renderAmountInput = () => (
@@ -429,10 +455,17 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                         {renderEmployeePicker()}
                         {renderLocationPicker()}
                         {renderAmountInput()}
-                        {renderItemNameInput()}
+                        {MenuItemPickerButton()}
                         {renderRewardInput()}
                     </View>
                     {renderActions()}
+                    <MenuPicker
+                        visible={showMenuPicker}
+                        onClose={() => setShowMenuPicker(false)}
+                        onSelect={handleMenuItemSelect}
+                        selectedItem={selectedMenuItem}
+                        title="Выберите товар"
+                    />
                 </View>
             </ModalWrapper>
         );
@@ -634,5 +667,38 @@ const styles = StyleSheet.create({
     },
     submitButtonTextDisabled: {
         color: "rgba(255, 255, 255, 0.4)",
+    },
+    menuPickerButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        borderRadius: 12,
+        padding: 16,
+        borderWidth: 1,
+    },
+    menuPickerContent: {
+        flex: 1,
+    },
+    selectedItemInfo: {
+        gap: 4,
+    },
+    selectedItemName: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+    },
+    selectedItemPrice: {
+        color: "#797A80",
+        fontSize: 14,
+    },
+    placeholderText: {
+        color: "#797A80",
+        fontSize: 16,
+    },
+    chevron: {
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "300",
     },
 });

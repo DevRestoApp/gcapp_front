@@ -63,14 +63,16 @@ export function ReportHeader({
 
     const LOCATIONS = useMemo(() => {
         if (organizations && organizations.length > 0) {
-            const result = organizations.map((org) => ({
-                label: org.name,
-                value: String(org.id), // Convert to string for consistent comparison
-            }));
-            result.push({
-                label: "Все точки",
-                value: "",
-            });
+            const result = [
+                {
+                    label: "Все точки",
+                    value: "",
+                },
+                ...organizations.map((org) => ({
+                    label: org.name,
+                    value: String(org.id),
+                })),
+            ];
             return result;
         }
         return [];
@@ -183,7 +185,7 @@ export function ReportHeader({
             </View>
 
             <View style={styles.filtersContainer}>
-                {showDateSelector ?? (
+                {showDateSelector && (
                     <TouchableOpacity
                         style={styles.filterButton}
                         onPress={() => setShowCalendar(true)}
@@ -199,7 +201,7 @@ export function ReportHeader({
                     </TouchableOpacity>
                 )}
 
-                {showPeriodSelector ?? (
+                {showPeriodSelector && (
                     <TouchableOpacity
                         style={[styles.filterButton, styles.filterButtonWide]}
                         onPress={() => setShowPeriodModal(true)}
@@ -215,7 +217,7 @@ export function ReportHeader({
                     </TouchableOpacity>
                 )}
 
-                {showLocationSelector ?? (
+                {showLocationSelector && (
                     <TouchableOpacity
                         style={[styles.filterButton, styles.filterButtonWide]}
                         onPress={() => setShowLocationModal(true)}
