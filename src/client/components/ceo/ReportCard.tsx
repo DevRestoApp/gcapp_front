@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     },
     dateText: {
         color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        lineHeight: 16,
+        fontSize: 14,
+        lineHeight: 20,
     },
     reportTitle: {
         color: "#FFFFFF",
@@ -117,6 +117,8 @@ const styles = StyleSheet.create({
     },
     reportValue: {
         fontSize: 14,
-        lineHeight: 18,
+        fontWeight: "bold",
+        lineHeight: 20,
+        color: "#FFFFFF",
     },
 });

@@ -18,7 +18,7 @@ import { useStorage } from "@/src/contexts/StorageProvider";
 
 export default function StorageForm() {
     const { selectedStorageTab, loading } = useManager();
-    const { setDocument, fetchStores } = useStorage();
+    const { setDocument, fetchStores, document } = useStorage();
     const router = useRouter();
 
     const [showCalendar, setShowCalendar] = useState(false);
@@ -38,7 +38,19 @@ export default function StorageForm() {
 
         loadStores();
     }, []);
-    console.log(storageOptions);
+
+    useEffect(() => {
+        if (document?.items && document.items.length > 0) {
+            const sum = document.items
+                .map((el) => Number(el.amount) || 0)
+                .reduce((a, b) => a + b, 0);
+
+            setFormData((prev) => ({
+                ...prev,
+                accountingAmount: sum.toString(),
+            }));
+        }
+    }, [document?.items]);
 
     const tabs = [{ label: "Общая инфо.", value: "general" }];
 
@@ -153,15 +165,11 @@ export default function StorageForm() {
                         </FormField>
 
                         <FormField label="Сумма">
-                            <NumberInput
-                                value={formData.amount}
-                                onChange={(value) =>
-                                    handleFormChange("amount", value)
-                                }
-                                placeholder="Выберите сумму"
-                                currency="тг"
-                                maxLength={20}
-                            />
+                            <View style={styles.displayField}>
+                                <Text style={styles.displayValue}>
+                                    {formData.accountingAmount || "0"} тг
+                                </Text>
+                            </View>
                         </FormField>
 
                         <FormField label="Коментарий">
@@ -300,16 +308,12 @@ export default function StorageForm() {
                             />
                         </FormField>
 
-                        <FormField label="Учетная сумма">
-                            <NumberInput
-                                value={formData.accountingAmount}
-                                onChange={(value) =>
-                                    handleFormChange("accountingAmount", value)
-                                }
-                                placeholder="Выберите сумму"
-                                currency="тг"
-                                maxLength={20}
-                            />
+                        <FormField label="Сумма">
+                            <View style={styles.displayField}>
+                                <Text style={styles.displayValue}>
+                                    {formData.accountingAmount || "0"} тг
+                                </Text>
+                            </View>
                         </FormField>
 
                         <FormField label="Отклонение">
@@ -424,15 +428,11 @@ export default function StorageForm() {
                         </FormField>
 
                         <FormField label="Сумма">
-                            <NumberInput
-                                value={formData.amount}
-                                onChange={(value) =>
-                                    handleFormChange("amount", value)
-                                }
-                                placeholder="Выберите сумму"
-                                currency="тг"
-                                maxLength={20}
-                            />
+                            <View style={styles.displayField}>
+                                <Text style={styles.displayValue}>
+                                    {formData.accountingAmount || "0"} тг
+                                </Text>
+                            </View>
                         </FormField>
 
                         <FormField label="Коментарий">
@@ -468,3 +468,18 @@ export default function StorageForm() {
             return null;
     }
 }
+
+const styles = StyleSheet.create({
+    displayField: {
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        borderRadius: 16,
+        padding: 16,
+        minHeight: 50,
+        justifyContent: "center",
+    },
+    displayValue: {
+        color: "rgba(121, 122, 128, 1)",
+        fontSize: 16,
+        lineHeight: 22,
+    },
+});
