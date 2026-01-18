@@ -13,20 +13,22 @@ import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
 import Loading from "@/src/client/components/Loading";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 interface MotivationScreenProps {
-    waiterId?: string;
+    waiterId: number;
 }
 
 export default function MotivationScreen({
-    waiterId = "waiter-123",
+    waiterId = 0,
 }: MotivationScreenProps) {
+    const { quests, fetchQuest } = useWaiter();
+
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
-    const [quests, setQuests] = useState<Quest[]>([]);
     const [loading, setLoading] = useState(false);
 
     // Initialize calendar days
@@ -56,67 +58,16 @@ export default function MotivationScreen({
         setSelectedDate(todayStr);
 
         // Fetch quests for today
-        fetchQuests(todayStr);
+        loadQuests(todayStr);
     }, []);
 
-    // Fetch quests from database/API
-    const fetchQuests = useCallback(
+    // Fetch quests using context
+    const loadQuests = useCallback(
         async (date: string) => {
             setLoading(true);
 
             try {
-                // Replace with your actual API endpoint
-                // const response = await fetch(`/api/waiter/${waiterId}/quests?date=${date}`);
-                // const data = await response.json();
-
-                // Simulated API response
-                await new Promise((resolve) => setTimeout(resolve, 500));
-
-                const mockQuests: Quest[] = [
-                    {
-                        id: "1",
-                        title: "Квест на сегодня",
-                        description: "Продай 15 десерт",
-                        reward: 15000,
-                        current: 3,
-                        target: 15,
-                        unit: "десерт",
-                        completed: false,
-                    },
-                    {
-                        id: "2",
-                        title: "Квест на сегодня",
-                        description: "Lorem Ipsum is simpl...",
-                        reward: 15000,
-                        current: 3,
-                        target: 15,
-                        unit: "десерт",
-                        completed: false,
-                    },
-                    {
-                        id: "3",
-                        title: "Квест на сегодня",
-                        description:
-                            "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-                        reward: 15000,
-                        current: 3,
-                        target: 15,
-                        unit: "десерт",
-                        completed: false,
-                    },
-                    {
-                        id: "4",
-                        title: "Квест на сегодня",
-                        description: "Продай 20 стейк",
-                        reward: 5000,
-                        current: 20,
-                        target: 20,
-                        unit: "стейк",
-                        completed: true,
-                    },
-                ];
-
-                setQuests(mockQuests);
+                await fetchQuest(waiterId, { date });
             } catch (error) {
                 console.error("Error fetching quests:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить квесты");
@@ -124,7 +75,7 @@ export default function MotivationScreen({
                 setLoading(false);
             }
         },
-        [waiterId],
+        [waiterId, fetchQuest],
     );
 
     // Handle day selection
@@ -148,9 +99,9 @@ export default function MotivationScreen({
             });
 
             setSelectedDate(dateStr);
-            fetchQuests(dateStr);
+            loadQuests(dateStr);
         },
-        [days, fetchQuests],
+        [days, loadQuests],
     );
 
     // Render header

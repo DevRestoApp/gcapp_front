@@ -18,6 +18,8 @@ import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { RoomsType, TablesType } from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
 
+// TODO Ошибка в типах, айдишники то стринг то инт
+// TODO Необходимо больше фильтров при загрузке, чтобы он показывал помещение по орге сразу
 export default function NewOrder() {
     const router = useRouter();
     const { fetchTables, fetchRooms } = useWaiter();

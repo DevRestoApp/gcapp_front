@@ -5,15 +5,27 @@ import {
     TablesType,
     RoomInputsType,
     TablesInputsType,
+    WaiterQuestsInputType,
+    WaiterQuestsType,
 } from "@/src/server/types/waiter";
 
-import { getRooms, getTables } from "@/src/server/waiter/general";
+import {
+    getRooms,
+    getTables,
+    getWaiterQuests,
+} from "@/src/server/waiter/general";
+import { getQuests } from "@/src/server/ceo/generals";
 
 interface WaiterContextType {
     rooms: RoomsType[];
     tables: TablesType[];
+    quests: WaiterQuestsType[];
     fetchRooms: (inputs: RoomInputsType) => Promise<RoomsType[]>;
     fetchTables: (inputs: TablesInputsType) => Promise<TablesType[]>;
+    fetchQuest: (
+        id: number,
+        inputs: WaiterQuestsInputType,
+    ) => Promise<WaiterQuestsType[]>;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -21,6 +33,7 @@ const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
 export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [rooms, setRooms] = useState<RoomsType[]>([]);
     const [tables, setTables] = useState<TablesType[]>([]);
+    const [quests, setQuests] = useState<WaiterQuestsType[]>([]);
 
     const fetchRooms = async (inputs: RoomInputsType): Promise<RoomsType[]> => {
         try {
@@ -42,7 +55,23 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
             setTables(response);
             return response;
         } catch (error) {
-            console.error("Error fetching rooms:", error);
+            console.error("Error fetching tables:", error);
+            throw error;
+        }
+    };
+
+    const fetchQuest = async (
+        id: number,
+        inputs: WaiterQuestsInputType,
+    ): Promise<WaiterQuestsType[]> => {
+        try {
+            console.log("fetchQuest", id, inputs);
+            const response = await getWaiterQuests(id, inputs);
+
+            setQuests(response);
+            return response;
+        } catch (error) {
+            console.error("Error fetching quests:", error);
             throw error;
         }
     };
@@ -52,8 +81,10 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
             value={{
                 rooms,
                 tables,
+                quests,
                 fetchRooms,
                 fetchTables,
+                fetchQuest,
             }}
         >
             {children}
