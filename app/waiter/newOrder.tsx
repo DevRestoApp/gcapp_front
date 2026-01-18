@@ -13,84 +13,66 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
 
-interface Room {
-    id: string;
-    name: string;
-}
-
-interface Table {
-    id: string;
-    number: string;
-}
+import { RoomsType, TablesType } from "@/src/server/types/waiter";
+import Loading from "@/src/client/components/Loading";
 
 export default function NewOrder() {
     const router = useRouter();
+    const { fetchTables, fetchRooms } = useWaiter();
 
     // State
     const [selectedTable, setSelectedTable] = useState("");
-    const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [tables, setTables] = useState<Table[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [selectedRoom, setSelectedRoom] = useState<RoomsType | null>(null);
+    const [rooms, setRooms] = useState<RoomsType[]>([]);
+    const [tables, setTables] = useState<TablesType[]>([]);
+    const [roomsLoading, setRoomsLoading] = useState(true);
+    const [tablesLoading, setTablesLoading] = useState(false);
 
-    // TODO: Fetch rooms from API
+    // Fetch rooms on mount
     useEffect(() => {
-        const fetchRooms = async () => {
+        const loadRooms = async () => {
             try {
-                setLoading(true);
-                // TODO: Replace with actual API call
-                // const response = await fetch('/api/rooms');
-                // const data = await response.json();
-                // setRooms(data);
+                setRoomsLoading(true);
+                const response = await fetchRooms({});
+                setRooms(response);
 
-                // Mock data for now
-                const mockRooms: Room[] = [
-                    { id: "1", name: "Общий зал" },
-                    { id: "2", name: "Открытая VIP-беседка" },
-                    { id: "3", name: "Летняя терраса" },
-                    { id: "4", name: "VIP-залы" },
-                ];
-                setRooms(mockRooms);
-                setSelectedRoom(mockRooms[0]); // Select first room by default
+                // Auto-select first room if available
+                if (response && response.length > 0) {
+                    setSelectedRoom(response[0]);
+                }
             } catch (error) {
                 console.error("Error fetching rooms:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить помещения");
             } finally {
-                setLoading(false);
+                setRoomsLoading(false);
             }
         };
 
-        fetchRooms();
+        loadRooms();
     }, []);
 
-    // TODO: Fetch tables from API based on selected room
+    // Fetch tables when room changes
     useEffect(() => {
         if (!selectedRoom) return;
 
-        const fetchTables = async () => {
+        const loadTables = async () => {
             try {
-                // TODO: Replace with actual API call
-                // const response = await fetch(`/api/tables?roomId=${selectedRoom.id}`);
-                // const data = await response.json();
-                // setTables(data);
-
-                // Mock data for now
-                const mockTables: Table[] = [
-                    { id: "1", number: "1" },
-                    { id: "2", number: "2" },
-                    { id: "3", number: "3" },
-                    { id: "4", number: "4" },
-                    { id: "5", number: "5" },
-                ];
-                setTables(mockTables);
+                setTablesLoading(true);
+                const response = await fetchTables({
+                    room_id: selectedRoom.id,
+                });
+                setTables(response);
             } catch (error) {
                 console.error("Error fetching tables:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить столы");
+            } finally {
+                setTablesLoading(false);
             }
         };
 
-        fetchTables();
+        loadTables();
     }, [selectedRoom]);
 
     // Handlers
@@ -98,65 +80,98 @@ export default function NewOrder() {
         setSelectedTable(value);
     };
 
-    const handleRoomSelect = (room: Room) => {
+    const handleRoomSelect = (room: RoomsType) => {
         setSelectedRoom(room);
-        setSelectedTable(""); // Reset table selection when room changes
+        setSelectedTable(""); // Reset table when room changes
     };
 
     const handleAddDish = () => {
-        // TODO: Validate that table is selected
         if (!selectedTable.trim()) {
             Alert.alert("Ошибка", "Пожалуйста, выберите стол");
             return;
         }
 
+        // TODO: Save selected table and room to context or pass as params
         router.push("/waiter/menu");
     };
 
     // Render functions
-    const renderTableSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Стол</Text>
-            <TextInput
-                value={selectedTable}
-                onChangeText={handleTableChange}
-                placeholder="Введите номер стола"
-                placeholderTextColor="#797A80"
-                style={styles.input}
-                keyboardType="number-pad"
-            />
-        </View>
-    );
+    const renderTableSection = () => {
+        if (tablesLoading) {
+            return (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Стол</Text>
+                    <Loading text="Загрузка столов" />
+                </View>
+            );
+        }
 
-    const renderRoomSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Выберите помещение</Text>
-            <View style={styles.roomsContainer}>
-                {rooms.map((room) => (
-                    <TouchableOpacity
-                        key={room.id}
-                        onPress={() => handleRoomSelect(room)}
-                        style={[
-                            styles.roomButton,
-                            selectedRoom?.id === room.id &&
-                                styles.roomButtonActive,
-                        ]}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            style={[
-                                styles.roomButtonText,
-                                selectedRoom?.id === room.id &&
-                                    styles.roomButtonTextActive,
-                            ]}
-                        >
-                            {room.name}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Стол</Text>
+                <TextInput
+                    value={selectedTable}
+                    onChangeText={handleTableChange}
+                    placeholder="Введите номер стола"
+                    placeholderTextColor="#797A80"
+                    style={styles.input}
+                    keyboardType="number-pad"
+                />
             </View>
-        </View>
-    );
+        );
+    };
+
+    const renderRoomSection = () => {
+        if (roomsLoading) {
+            return (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Выберите помещение</Text>
+                    <Loading text="Загрузка помещений" />
+                </View>
+            );
+        }
+
+        if (rooms.length === 0) {
+            return (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Выберите помещение</Text>
+                    <Text style={styles.emptyText}>
+                        Нет доступных помещений
+                    </Text>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Выберите помещение</Text>
+                <View style={styles.roomsContainer}>
+                    {rooms.map((room) => (
+                        <TouchableOpacity
+                            key={room.id}
+                            onPress={() => handleRoomSelect(room)}
+                            style={[
+                                styles.roomButton,
+                                selectedRoom?.id === room.id &&
+                                    styles.roomButtonActive,
+                            ]}
+                            activeOpacity={0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.roomButtonText,
+                                    selectedRoom?.id === room.id &&
+                                        styles.roomButtonTextActive,
+                                ]}
+                            >
+                                {room.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
+        );
+    };
 
     const renderDishesSection = () => (
         <View style={styles.section}>
@@ -185,13 +200,14 @@ export default function NewOrder() {
         </View>
     );
 
-    if (loading) {
+    // Show loading only on initial load
+    if (roomsLoading && rooms.length === 0) {
         return (
             <SafeAreaView
                 style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <View style={styles.loadingContainer}>
-                    <Text style={styles.loadingText}>Загрузка...</Text>
+                    <Loading text="Загрузка данных" />
                 </View>
             </SafeAreaView>
         );
@@ -206,8 +222,8 @@ export default function NewOrder() {
             >
                 <View style={styles.content}>
                     <Text style={styles.pageTitle}>Новый заказ</Text>
-                    {renderTableSection()}
                     {renderRoomSection()}
+                    {renderTableSection()}
                     {renderDishesSection()}
                 </View>
             </ScrollView>
@@ -234,10 +250,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-    },
-    loadingText: {
-        color: "#fff",
-        fontSize: 16,
     },
     pageTitle: {
         color: "#fff",
@@ -310,6 +322,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "rgba(255, 255, 255, 0.6)",
         textAlign: "center",
+    },
+    emptyText: {
+        fontSize: 16,
+        color: "rgba(255, 255, 255, 0.6)",
+        textAlign: "center",
+        padding: 16,
     },
     addButton: {
         width: "100%",
