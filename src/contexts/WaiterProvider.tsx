@@ -7,25 +7,32 @@ import {
     TablesInputsType,
     WaiterQuestsInputType,
     WaiterQuestsType,
+    WaiterSalaryInputType,
+    WaiterSalaryType,
 } from "@/src/server/types/waiter";
 
 import {
     getRooms,
     getTables,
     getWaiterQuests,
+    getWaiterSalary,
 } from "@/src/server/waiter/general";
-import { getQuests } from "@/src/server/ceo/generals";
 
 interface WaiterContextType {
     rooms: RoomsType[];
     tables: TablesType[];
     quests: WaiterQuestsType[];
+    salary: WaiterSalaryType | null;
     fetchRooms: (inputs: RoomInputsType) => Promise<RoomsType[]>;
     fetchTables: (inputs: TablesInputsType) => Promise<TablesType[]>;
     fetchQuest: (
-        id: number,
+        waiter_id: number,
         inputs: WaiterQuestsInputType,
     ) => Promise<WaiterQuestsType[]>;
+    fetchSalary: (
+        waiter_id: number,
+        inputs: WaiterSalaryInputType,
+    ) => Promise<WaiterSalaryType | null>;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -34,6 +41,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [rooms, setRooms] = useState<RoomsType[]>([]);
     const [tables, setTables] = useState<TablesType[]>([]);
     const [quests, setQuests] = useState<WaiterQuestsType[]>([]);
+    const [salary, setSalary] = useState<WaiterSalaryType | null>(null);
 
     const fetchRooms = async (inputs: RoomInputsType): Promise<RoomsType[]> => {
         try {
@@ -61,14 +69,28 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const fetchQuest = async (
-        id: number,
+        waiter_id: number,
         inputs: WaiterQuestsInputType,
     ): Promise<WaiterQuestsType[]> => {
         try {
-            console.log("fetchQuest", id, inputs);
-            const response = await getWaiterQuests(id, inputs);
+            console.log("fetchQuest", waiter_id, inputs);
+            const response = await getWaiterQuests(waiter_id, inputs);
 
             setQuests(response);
+            return response;
+        } catch (error) {
+            console.error("Error fetching quests:", error);
+            throw error;
+        }
+    };
+    const fetchSalary = async (
+        waiter_id: number,
+        inputs: WaiterSalaryInputType,
+    ): Promise<WaiterSalaryType> => {
+        try {
+            const response = await getWaiterSalary(waiter_id, inputs);
+
+            setSalary(response);
             return response;
         } catch (error) {
             console.error("Error fetching quests:", error);
@@ -82,9 +104,11 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 rooms,
                 tables,
                 quests,
+                salary,
                 fetchRooms,
                 fetchTables,
                 fetchQuest,
+                fetchSalary,
             }}
         >
             {children}
