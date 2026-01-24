@@ -104,3 +104,16 @@ export interface WaiterSalaryType {
         },
     ];
 }
+
+export interface WaiterShiftStatusInputType {
+    date?: string | null | undefined;
+    organization_id?: number;
+}
+export interface WaiterShiftStatusType {
+    isActive: boolean;
+    shiftId: string;
+    startTime: string;
+    elapsedTime: string;
+}
+
+export type OrganizationIdType = number | null | undefined;

@@ -20,15 +20,9 @@ type ModalType = "start" | "edit";
 
 interface ShiftTimeModalProps {
     type: ModalType;
-    onShiftStart?: (time: string) => void;
-    onShiftEdit?: (time: string) => void;
+    onShiftStart?: () => Promise<void> | void;
+    onShiftEdit?: (time: string) => Promise<void> | void;
     initialTime?: string;
-    // TODO: Add additional props as needed
-    // shiftId?: string;
-    // employeeName?: string;
-    // date?: string;
-    // onSuccess?: () => void;
-    // onError?: (error: Error) => void;
 }
 
 const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
@@ -38,7 +32,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
         const [isProcessing, setIsProcessing] = useState(false);
 
         const isStartMode = type === "start";
-        const isEditMode = type === "edit";
 
         // Expose modal methods to parent component
         useImperativeHandle(ref, () => ({
@@ -76,7 +69,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
         // Handle modal open
         const handleModalOpen = useCallback(() => {
-            // For edit mode, keep the initialTime
             if (isStartMode) {
                 setTime(getCurrentTime());
             } else if (initialTime) {
@@ -100,21 +92,25 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                 return;
             }
 
+            if (!onShiftStart) {
+                console.error("onShiftStart callback is not provided");
+                return;
+            }
+
             setIsProcessing(true);
 
             try {
-                // Simulate API call or processing
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                // Call the parent's shift start function
+                await onShiftStart();
 
-                console.log("Смена начата в:", time);
-                onShiftStart?.(time);
-
+                // Close modal after successful start
                 modalRef.current?.close();
 
                 Alert.alert("Смена начата", `Время начала смены: ${time}`, [
                     { text: "OK" },
                 ]);
             } catch (error) {
+                console.error("Failed to start shift:", error);
                 Alert.alert(
                     "Ошибка",
                     "Не удалось начать смену. Попробуйте снова.",
@@ -136,47 +132,44 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                 return;
             }
 
+            if (!onShiftEdit) {
+                console.error("onShiftEdit callback is not provided");
+                return;
+            }
+
             setIsProcessing(true);
 
             try {
-                // Simulate API call or processing
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-
-                console.log("Время смены изменено на:", time);
-                onShiftEdit?.(time);
-
+                await onShiftEdit(time);
                 modalRef.current?.close();
+
+                Alert.alert("Время изменено", `Новое время: ${time}`, [
+                    { text: "OK" },
+                ]);
             } catch (error) {
-                console.error(error);
+                console.error("Failed to edit shift:", error);
+                Alert.alert(
+                    "Ошибка",
+                    "Не удалось изменить время. Попробуйте снова.",
+                    [{ text: "OK" }],
+                );
             } finally {
                 setIsProcessing(false);
             }
         }, [time, isValidTime, onShiftEdit]);
 
-        // Get modal content based on type
-        const getModalContent = () => {
-            if (isStartMode) {
-                return {
-                    title: "Начало смены",
-                    subtitle: "Для начала смены нужно заполнить информацию",
-                    primaryButtonText: isProcessing
-                        ? "Начинаем..."
-                        : "Начать смену",
-                    onPrimaryAction: handleStartShift,
-                };
-            } else {
-                return {
-                    title: "Изменить время",
-                    subtitle: "Укажите новое время начала смены",
-                    primaryButtonText: isProcessing
-                        ? "Сохраняем..."
-                        : "Сохранить",
-                    onPrimaryAction: handleEditShift,
-                };
-            }
-        };
-
-        const modalContent = getModalContent();
+        const modalTitle = isStartMode ? "Начало смены" : "Изменить время";
+        const modalSubtitle = isStartMode
+            ? "Для начала смены нужно заполнить информацию"
+            : "Укажите новое время начала смены";
+        const primaryButtonText = isStartMode
+            ? isProcessing
+                ? "Начинаем..."
+                : "Начать смену"
+            : isProcessing
+              ? "Сохраняем..."
+              : "Сохранить";
+        const primaryAction = isStartMode ? handleStartShift : handleEditShift;
 
         return (
             <>
@@ -206,12 +199,8 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                     <View style={styles.modalInner}>
                         {/* Header */}
                         <View style={styles.header}>
-                            <Text style={styles.title}>
-                                {modalContent.title}
-                            </Text>
-                            <Text style={styles.subtitle}>
-                                {modalContent.subtitle}
-                            </Text>
+                            <Text style={styles.title}>{modalTitle}</Text>
+                            <Text style={styles.subtitle}>{modalSubtitle}</Text>
                         </View>
 
                         {/* Time input section */}
@@ -223,6 +212,7 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                                 <TextInput
                                     value={time}
                                     onChangeText={handleTimeChange}
+                                    placeholder="09:30"
                                     placeholderTextColor="#797A80"
                                     style={[
                                         styles.timeInput,
@@ -233,9 +223,8 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                                     keyboardType="numeric"
                                     maxLength={5}
                                     returnKeyType="done"
-                                    onSubmitEditing={
-                                        modalContent.onPrimaryAction
-                                    }
+                                    onSubmitEditing={primaryAction}
+                                    editable={!isProcessing}
                                 />
                                 {!isValidTime(time) && time.length > 0 && (
                                     <Text style={styles.errorText}>
@@ -247,77 +236,42 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
                         {/* Actions */}
                         <View style={styles.actions}>
-                            {isStartMode ? (
-                                <>
-                                    {/* Start mode: Cancel + Start buttons */}
-                                    <TouchableOpacity
-                                        style={styles.cancelButton}
-                                        onPress={() =>
-                                            modalRef.current?.close()
-                                        }
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.cancelButtonText}>
-                                            Отмена
-                                        </Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.primaryButton,
-                                            styles.primaryButtonStart,
-                                            (!isValidTime(time) ||
-                                                isProcessing) &&
-                                                styles.primaryButtonDisabled,
-                                        ]}
-                                        onPress={modalContent.onPrimaryAction}
-                                        disabled={
-                                            !isValidTime(time) || isProcessing
-                                        }
-                                        activeOpacity={0.8}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.primaryButtonText,
-                                                (!isValidTime(time) ||
-                                                    isProcessing) &&
-                                                    styles.primaryButtonTextDisabled,
-                                            ]}
-                                        >
-                                            {modalContent.primaryButtonText}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </>
-                            ) : (
-                                <>
-                                    {/* Edit mode: Single save button */}
-                                    <TouchableOpacity
-                                        style={[
-                                            styles.primaryButton,
-                                            styles.primaryButtonEdit,
-                                            (!isValidTime(time) ||
-                                                isProcessing) &&
-                                                styles.primaryButtonDisabled,
-                                        ]}
-                                        onPress={modalContent.onPrimaryAction}
-                                        disabled={
-                                            !isValidTime(time) || isProcessing
-                                        }
-                                        activeOpacity={0.8}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.primaryButtonText,
-                                                (!isValidTime(time) ||
-                                                    isProcessing) &&
-                                                    styles.primaryButtonTextDisabled,
-                                            ]}
-                                        >
-                                            {modalContent.primaryButtonText}
-                                        </Text>
-                                    </TouchableOpacity>
-                                </>
+                            {isStartMode && (
+                                <TouchableOpacity
+                                    style={styles.cancelButton}
+                                    onPress={() => modalRef.current?.close()}
+                                    activeOpacity={0.7}
+                                    disabled={isProcessing}
+                                >
+                                    <Text style={styles.cancelButtonText}>
+                                        Отмена
+                                    </Text>
+                                </TouchableOpacity>
                             )}
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.primaryButton,
+                                    isStartMode
+                                        ? styles.primaryButtonStart
+                                        : styles.primaryButtonEdit,
+                                    (!isValidTime(time) || isProcessing) &&
+                                        styles.primaryButtonDisabled,
+                                ]}
+                                onPress={primaryAction}
+                                disabled={!isValidTime(time) || isProcessing}
+                                activeOpacity={0.8}
+                            >
+                                <Text
+                                    style={[
+                                        styles.primaryButtonText,
+                                        (!isValidTime(time) || isProcessing) &&
+                                            styles.primaryButtonTextDisabled,
+                                    ]}
+                                >
+                                    {primaryButtonText}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </ModalWrapper>
@@ -430,10 +384,10 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     primaryButtonStart: {
-        flex: 2, // Takes more space in start mode
+        flex: 2,
     },
     primaryButtonEdit: {
-        flex: 1, // Full width in edit mode
+        flex: 1,
     },
     primaryButtonDisabled: {
         backgroundColor: "rgba(43,43,44,1)",

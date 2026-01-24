@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
-    ScrollView,
-} from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
 import ActiveShiftWrapper from "@/src/client/components/waiter/ActiveShiftWrapper";
 import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-// TODO переписать на получение из storage либо из базы
-const isActive = false;
+import { useWaiter } from "@/src/contexts/WaiterProvider";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function Index() {
+    const { user } = useAuth();
+    const { fetchShiftStatus, startShift, shiftStatus } = useWaiter();
     const [days, setDays] = useState<Day[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
     useEffect(() => {
+        initializeCalendar();
+    }, []);
+
+    // Fetch shift status when selected date changes
+    useEffect(() => {
+        if (selectedDate && user?.id) {
+            const formattedDate = formatDateForAPI(selectedDate);
+            fetchShiftStatus(user.id, { date: formattedDate });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedDate, user?.id]); // Only depend on selectedDate and user.id
+
+    const initializeCalendar = () => {
         const today = new Date();
         const weekDays: Day[] = [];
 
@@ -35,20 +44,46 @@ export default function Index() {
         }
 
         setDays(weekDays);
+        setSelectedDate(today);
+    };
 
-        // Set today's date as selected
-        const todayStr = today.toLocaleDateString("ru-RU", {
+    const formatDateForAPI = (date: Date): string => {
+        return date.toLocaleDateString("ru-RU", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
         });
-        setSelectedDate(todayStr);
-    }, []);
+    };
 
     const handleDayPress = (index: number) => {
-        // положить какую нибудь логику по нажатию на день календаря
+        // Update active day in calendar
         setDays((prev) => prev.map((d, i) => ({ ...d, active: i === index })));
+
+        // Calculate the actual date for the pressed day
+        const today = new Date();
+        const pressedDate = new Date(today);
+        pressedDate.setDate(today.getDate() - (6 - index));
+
+        setSelectedDate(pressedDate);
     };
+
+    const handleShiftStart = async () => {
+        if (!user?.id) {
+            console.error("User ID not found");
+            throw new Error("User ID not found");
+        }
+
+        try {
+            // organization_id can be null as per requirements
+            await startShift(user.id, user.organization_id || null);
+        } catch (error) {
+            console.error("Failed to start shift:", error);
+            throw error; // Re-throw so modal can handle it
+        }
+    };
+
+    // Determine if shift is active based on shiftStatus from context
+    const isActive = shiftStatus?.isActive || false;
 
     return (
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
@@ -56,15 +91,11 @@ export default function Index() {
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
 
-            <View>
-                <Calendar days={days} onDayPress={handleDayPress} />
-            </View>
-
-            {/* Контент */}
+            <Calendar days={days} onDayPress={handleDayPress} />
 
             {isActive ? (
                 <ScrollView>
-                    <ActiveShiftWrapper></ActiveShiftWrapper>
+                    <ActiveShiftWrapper />
                 </ScrollView>
             ) : (
                 <ScrollView
@@ -72,7 +103,7 @@ export default function Index() {
                     contentContainerStyle={{ alignItems: "center" }}
                 >
                     <Text style={styles.greetingSmall}>
-                        Добрый день, Адилет!
+                        Добрый день, {user?.name || "Адилет"}!
                     </Text>
                     <Text style={styles.greetingBig}>
                         Начните сегодняшнюю смену
@@ -83,15 +114,10 @@ export default function Index() {
                         <Text style={styles.cardTitle}>
                             Обслуживать 15 стол
                         </Text>
-                        <TouchableOpacity>
-                            <ShiftTimeModal
-                                type="start"
-                                onShiftStart={(time) =>
-                                    // can put some action
-                                    console.log(time)
-                                }
-                            />
-                        </TouchableOpacity>
+                        <ShiftTimeModal
+                            type="start"
+                            onShiftStart={handleShiftStart}
+                        />
                     </View>
                 </ScrollView>
             )}
@@ -137,5 +163,4 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         marginBottom: 16,
     },
-    startButtonText: { color: "#2C2D2E", fontWeight: "600", fontSize: 16 },
 });
