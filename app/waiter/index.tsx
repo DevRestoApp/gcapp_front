@@ -13,7 +13,7 @@ import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 // TODO переписать на получение из storage либо из базы
-const isActive = true;
+const isActive = false;
 
 export default function Index() {
     const [days, setDays] = useState<Day[]>([]);

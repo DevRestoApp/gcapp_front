@@ -81,11 +81,57 @@ export default function StorageScreen() {
         const submitDisabled = document?.items.length === 0;
         const onSubmit = async () => {
             if (isNew) {
-                console.log("create");
-                await createWarehouseDocumentWrapper(document);
-            } else {
-                console.log("update");
-                await updateWarehouseDocumentWrapper(document?.id, document);
+                let preparedData = {};
+                const type = document?.document_type;
+                if (document?.document_type === "RECEPIT") {
+                    preparedData = {
+                        dateIncoming: document.dateIncoming,
+
+                        items: document.items,
+                    };
+                    if (document.comment) {
+                        preparedData.comment = document.comment;
+                    }
+                    if (document.invoice) {
+                        preparedData.invoice = document.invoice;
+                    }
+                    if (document.supplier) {
+                        preparedData.supplier = document.supplier;
+                    }
+                }
+                if (document?.document_type === "WRITEOFF") {
+                    preparedData = {
+                        account_id: document.account_id,
+                        items: document.items,
+                    };
+                    if (document.date) {
+                        preparedData.date = document.date;
+                    }
+                    if (document.invoice) {
+                        preparedData.invoice = document.invoice;
+                    }
+                    if (document.supplier) {
+                        preparedData.supplier = document.supplier;
+                    }
+                }
+                if (document?.document_type === "INVENTORY") {
+                    preparedData = {
+                        dateIncoming: document.dateIncoming,
+
+                        items: document.items,
+                    };
+                    if (document.comment) {
+                        preparedData.comment = document.comment;
+                    }
+                    if (document.invoice) {
+                        preparedData.invoice = document.invoice;
+                    }
+                    if (document.supplier) {
+                        preparedData.supplier = document.supplier;
+                    }
+                }
+
+                await createWarehouseDocumentWrapper(type, preparedData);
             }
         };
         return (

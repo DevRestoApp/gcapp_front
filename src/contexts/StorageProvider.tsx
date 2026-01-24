@@ -1,6 +1,8 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import {
-    createWarehouseDocument,
+    createWarehouseDocumentIncomingInvoice,
+    createWarehouseDocumentInventory,
+    createWarehouseDocumentWriteoff,
     getWarehouseStore,
     updateWarehouseDocument,
 } from "@/src/server/general/warehouse";
@@ -24,9 +26,12 @@ interface StorageContextType {
     isNew: boolean | null;
     setIsNew: (bool: boolean | null) => void;
     fetchStores: () => Promise<StoreOption[]>;
-    createWarehouseDocumentWrapper: (inputs: any) => Promise<void>;
+    createWarehouseDocumentWrapper: (
+        type: string | undefined,
+        inputs: any,
+    ) => Promise<void>;
     updateWarehouseDocumentWrapper: (
-        document_id: number | undefined,
+        document_id: number,
         inputs: any,
     ) => Promise<void>;
 }
@@ -55,15 +60,26 @@ export const StorageProvider = ({
     const [document, setDocument] = useState<WarehouseDocument | null>(null);
     const [isNew, setIsNew] = useState<boolean | null>(null);
 
-    const createWarehouseDocumentWrapper = useCallback(async (inputs: any) => {
-        // TODO: type this based on createWarehouseDocument params
-        try {
-            await createWarehouseDocument(inputs);
-        } catch (e) {
-            console.error("Error creating warehouse document:", e);
-            throw e; // Re-throw so caller can handle
-        }
-    }, []);
+    const createWarehouseDocumentWrapper = useCallback(
+        async (type: string, inputs: any) => {
+            // TODO: type this based on createWarehouseDocument params
+            try {
+                if (type === "RECEIPT") {
+                    await createWarehouseDocumentIncomingInvoice(inputs);
+                }
+                if (type === "INVENTORY") {
+                    await createWarehouseDocumentInventory(inputs);
+                }
+                if (type === "WRITEOFF") {
+                    await createWarehouseDocumentWriteoff(inputs);
+                }
+            } catch (e) {
+                console.error("Error creating warehouse document:", e);
+                throw e; // Re-throw so caller can handle
+            }
+        },
+        [],
+    );
 
     const updateWarehouseDocumentWrapper = useCallback(
         async (document_id: number, inputs: any) => {

@@ -85,7 +85,7 @@ export default function StorageForm() {
 
             const preparedData: any = {
                 date: formData.date,
-                date_incoming: formData.date,
+                dateIncoming: formData.date,
                 items: [],
             };
 
@@ -204,7 +204,7 @@ export default function StorageForm() {
 
             const preparedData: any = {
                 date: formData.date,
-                date_incoming: formData.date,
+                dateIncoming: formData.date,
                 items: [],
             };
 
@@ -358,7 +358,7 @@ export default function StorageForm() {
 
             const preparedData: any = {
                 date: formData.date,
-                date_incoming: formData.date,
+                dateIncoming: formData.date,
                 items: [],
             };
 
