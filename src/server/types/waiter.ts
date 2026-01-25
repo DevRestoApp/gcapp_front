@@ -117,3 +117,35 @@ export interface WaiterShiftStatusType {
 }
 
 export type OrganizationIdType = number | null | undefined;
+
+export interface WaiterOrdersInputType {
+    organization_id?: number;
+    user_id?: number;
+    state?: string | null;
+    date?: string;
+    limit?: number;
+    offset?: number;
+}
+
+type OrderItemsType = {
+    productId: number;
+    amount: number;
+    price: number;
+    sum: number;
+    comment: string;
+};
+export interface createOrderInputType {
+    organization_id: number;
+    tableId: number;
+    waiterId: number;
+    guests: number;
+    items: OrderItemsType[];
+    comment: string;
+}
+
+// TODO добавить тип для any[]
+export interface OrderType {
+    success: boolean;
+    message: string;
+    orders: any[];
+}

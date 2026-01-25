@@ -11,9 +11,12 @@ import {
     WaiterSalaryType,
     WaiterShiftStatusInputType,
     WaiterShiftStatusType,
+    WaiterOrdersInputType,
+    OrderType,
 } from "@/src/server/types/waiter";
 
 import {
+    getOrders,
     getRooms,
     getTables,
     getWaiterQuests,
@@ -35,6 +38,7 @@ interface WaiterContextType {
     quests: WaiterQuestsType[];
     salary: WaiterSalaryType | null;
     shiftStatus: WaiterShiftStatusType | null;
+    orders: OrderType | null;
     fetchRooms: (inputs: RoomInputsType) => Promise<RoomsType[]>;
     fetchTables: (inputs: TablesInputsType) => Promise<TablesType[]>;
     fetchQuest: (
@@ -57,6 +61,7 @@ interface WaiterContextType {
         waiter_id: number,
         organization_id?: OrganizationIdType,
     ) => Promise<void>;
+    fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -66,6 +71,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [tables, setTables] = useState<TablesType[]>([]);
     const [quests, setQuests] = useState<WaiterQuestsType[]>([]);
     const [salary, setSalary] = useState<WaiterSalaryType | null>(null);
+    const [orders, setOrders] = useState<WaiterOrdersInputType | null>(null);
     const [shiftStatus, setShiftStatus] =
         useState<WaiterShiftStatusType | null>(null);
 
@@ -132,13 +138,31 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         [],
     );
 
+    const fetchOrders = useCallback(
+        async (inputs: WaiterOrdersInputType): Promise<WaiterSalaryType> => {
+            try {
+                console.log("fetchOrders", inputs);
+                const response = await getOrders(inputs);
+                setOrders(response.orders);
+                console.log("end");
+                return response;
+            } catch (error) {
+                console.error("Error fetching salary:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     const fetchShiftStatus = useCallback(
         async (
             waiter_id: number,
             inputs: WaiterShiftStatusInputType,
         ): Promise<WaiterShiftStatusType> => {
             try {
+                console.log("fetchShiftStatus", waiter_id, inputs);
                 const response = await getWaiterShiftStatus(waiter_id, inputs);
+                console.log("res", response);
                 setShiftStatus(response);
                 return response;
             } catch (error) {
@@ -155,9 +179,6 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
             try {
                 // Call the API function, not itself!
                 await startShiftAPI(waiter_id, organization_id);
-
-                // Optionally refresh shift status after starting
-                // await fetchShiftStatus(waiter_id, { date: new Date().toISOString() });
             } catch (e) {
                 console.error("Error starting shift", e);
                 throw e;
@@ -172,8 +193,8 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 // Call the API function, not itself!
                 await endShiftAPI(waiter_id, organization_id);
 
-                // Optionally refresh shift status after ending
-                // await fetchShiftStatus(waiter_id, { date: new Date().toISOString() });
+                // Clear shift status after ending
+                setShiftStatus(null);
             } catch (e) {
                 console.error("Error ending shift", e);
                 throw e;
@@ -189,12 +210,14 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 tables,
                 quests,
                 salary,
+                orders,
                 shiftStatus,
                 fetchRooms,
                 fetchTables,
                 fetchQuest,
                 fetchSalary,
                 fetchShiftStatus,
+                fetchOrders,
                 startShift,
                 endShift,
             }}

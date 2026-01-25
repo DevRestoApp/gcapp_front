@@ -18,18 +18,15 @@ import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-
-interface SalaryScreenProps {
-    waiter_id: number;
-    organizationId?: number;
-}
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // TODO убрать моку =0
-export default function SalaryScreen({
-    waiter_id = 0,
-    organizationId = 0,
-}: SalaryScreenProps) {
+export default function SalaryScreen() {
+    const { user } = useAuth();
     const { salary, quests, fetchSalary, fetchQuest } = useWaiter();
+
+    const waiter_id = user.id;
+    const organizationId = user.organization_id || null;
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -70,17 +67,17 @@ export default function SalaryScreen({
         async (date: string) => {
             setLoading(true);
 
+            const params = {
+                date,
+            };
+            if (organizationId) {
+                params["organization_id"] = organizationId;
+            }
             try {
                 // Fetch both salary and quests data
                 await Promise.all([
-                    fetchSalary(waiter_id, {
-                        date,
-                        organization_id: organizationId,
-                    }),
-                    fetchQuest(waiter_id, {
-                        date,
-                        organization_id: organizationId,
-                    }),
+                    fetchSalary(waiter_id, params),
+                    fetchQuest(waiter_id, params),
                 ]);
             } catch (error) {
                 console.error("Error fetching data:", error);

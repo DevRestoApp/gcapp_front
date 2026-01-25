@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     ScrollView,
     Pressable,
     TouchableOpacity,
+    ActivityIndicator,
 } from "react-native";
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
@@ -31,38 +32,51 @@ export default function Index() {
     const {
         fetchQuest,
         fetchShiftStatus,
-        fetchOrder,
+        fetchOrders,
         startShift,
         endShift,
         shiftStatus,
         quests,
         orders,
     } = useWaiter();
+
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [isLoading, setIsLoading] = useState(false);
+    const [isStartingShift, setIsStartingShift] = useState(false);
+    const [isEndingShift, setIsEndingShift] = useState(false);
     const shiftCloseModalRef = useRef<ShiftCloseModalRef>(null);
 
+    // Initialize calendar once on mount
     useEffect(() => {
         initializeCalendar();
     }, []);
 
-    // Fetch shift status when selected date changes
-    useEffect(() => {
+    // Fetch data when dependencies change
+    const fetchData = useCallback(async () => {
         if (!selectedDate || !user?.id) return;
 
-        const run = async () => {
+        setIsLoading(true);
+        try {
             const formattedDate = formatDateForAPI(selectedDate);
 
-            await fetchShiftStatus(user.id, { date: formattedDate });
-            await fetchQuest(user.id, { date: formattedDate });
-            await fetchOrder({
-                user_id: user.id,
-            });
-        };
+            // Execute all fetches in parallel for better performance
+            await Promise.all([
+                fetchShiftStatus(user.id, { date: formattedDate }),
+                fetchQuest(user.id, { date: formattedDate }),
+                fetchOrders({ user_id: user.id }),
+            ]);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [selectedDate, user?.id, fetchShiftStatus, fetchQuest, fetchOrders]);
 
-        run();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedDate, user?.id]);
+    // Fetch data when selected date or user changes
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const initializeCalendar = () => {
         const today = new Date();
@@ -107,15 +121,17 @@ export default function Index() {
             throw new Error("User ID not found");
         }
 
+        setIsStartingShift(true);
         try {
             await startShift(user.id, user.organization_id || null);
 
-            // Refresh shift status after starting
-            const formattedDate = formatDateForAPI(selectedDate);
-            await fetchShiftStatus(user.id, { date: formattedDate });
+            // Refresh data after starting shift
+            await fetchData();
         } catch (error) {
             console.error("Failed to start shift:", error);
             throw error;
+        } finally {
+            setIsStartingShift(false);
         }
     };
 
@@ -135,18 +151,20 @@ export default function Index() {
             return;
         }
 
+        setIsEndingShift(true);
         try {
             await endShift(user.id, user.organization_id || null);
 
             console.log("Shift closed:", data);
 
-            // Refresh shift status after ending
-            const formattedDate = formatDateForAPI(selectedDate);
-            await fetchShiftStatus(user.id, { date: formattedDate });
+            // Refresh data after ending shift
+            await fetchData();
 
             // TODO: Navigate to report or summary screen
         } catch (error) {
             console.error("Failed to end shift:", error);
+        } finally {
+            setIsEndingShift(false);
         }
     };
 
@@ -170,17 +188,37 @@ export default function Index() {
                     </TouchableOpacity>
                 </View>
             );
-        } else {
-            return <View></View>;
         }
+        return null;
     };
 
     const renderOrderCard = () => {
-        return <ActiveOrdersSection orders={orders} />;
+        if (!orders) {
+            return null;
+        }
+        return <ActiveOrdersSection orders={orders} isLoading={isLoading} />;
     };
 
     // const isActive = shiftStatus?.isActive || false;
-    const isActive = true; //tempo
+    const isActive = true; // Remove tempo
+
+    // Loading state UI
+    if (isLoading && !shiftStatus) {
+        return (
+            <View
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Смена</Text>
+                </View>
+                <Calendar days={days} onDayPress={handleDayPress} />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>Загрузка...</Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
@@ -195,6 +233,13 @@ export default function Index() {
                     style={styles.activeShiftContainer}
                     contentContainerStyle={styles.activeShiftContent}
                 >
+                    {/* Loading overlay for data refresh */}
+                    {isLoading && (
+                        <View style={styles.refreshIndicator}>
+                            <ActivityIndicator size="small" color="#fff" />
+                        </View>
+                    )}
+
                     {/* Top row - Timer and Earnings */}
                     <View style={styles.row}>
                         <View style={styles.half}>
@@ -217,15 +262,10 @@ export default function Index() {
                     {/* Divider */}
                     <View style={styles.divider} />
 
-                    {/* Motivation Card
-                     //TODO добавить апи
-                     */}
-
+                    {/* Motivation Card */}
                     {renderMotivationCard()}
 
-                    {/* Active Orders
-                     // TODO add api for orders
-                     */}
+                    {/* Active Orders */}
                     {renderOrderCard()}
 
                     {/* End Shift Button */}
@@ -234,12 +274,21 @@ export default function Index() {
                             style={[
                                 ButtonStyles.buttonWhite,
                                 styles.endShiftButton,
+                                isEndingShift && styles.buttonDisabled,
                             ]}
                             onPress={handleOpenCloseModal}
+                            disabled={isEndingShift}
                         >
-                            <Text style={styles.endShiftButtonText}>
-                                Закончить смену
-                            </Text>
+                            {isEndingShift ? (
+                                <ActivityIndicator
+                                    size="small"
+                                    color="#2C2D2E"
+                                />
+                            ) : (
+                                <Text style={styles.endShiftButtonText}>
+                                    Закончить смену
+                                </Text>
+                            )}
                         </Pressable>
                     </View>
 
@@ -273,6 +322,7 @@ export default function Index() {
                         <ShiftTimeModal
                             type="start"
                             onShiftStart={handleShiftStart}
+                            isLoading={isStartingShift}
                         />
                     </View>
                 </ScrollView>
@@ -297,6 +347,27 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.24,
+    },
+
+    // Loading states
+    loadingContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 12,
+    },
+    loadingText: {
+        color: "#fff",
+        fontSize: 16,
+    },
+    refreshIndicator: {
+        position: "absolute",
+        top: 8,
+        right: 16,
+        zIndex: 10,
+    },
+    buttonDisabled: {
+        opacity: 0.6,
     },
 
     // Inactive shift styles

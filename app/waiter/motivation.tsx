@@ -17,15 +17,12 @@ import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useAuth } from "@/src/contexts/AuthContext";
 
-interface MotivationScreenProps {
-    waiterId: number;
-}
-
-export default function MotivationScreen({
-    waiterId = 0,
-}: MotivationScreenProps) {
+export default function MotivationScreen() {
     const { quests, fetchQuest } = useWaiter();
+    const { user } = useAuth();
+    const waiter_id = user?.id;
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
@@ -67,15 +64,15 @@ export default function MotivationScreen({
             setLoading(true);
 
             try {
-                await fetchQuest(waiterId, { date });
+                await Promise.all([fetchQuest(waiter_id, { date })]);
             } catch (error) {
-                console.error("Error fetching quests:", error);
-                Alert.alert("Ошибка", "Не удалось загрузить квесты");
+                console.error("Error fetching data:", error);
+                Alert.alert("Ошибка", "Не удалось загрузить данные");
             } finally {
                 setLoading(false);
             }
         },
-        [waiterId, fetchQuest],
+        [waiter_id, fetchQuest],
     );
 
     // Handle day selection
