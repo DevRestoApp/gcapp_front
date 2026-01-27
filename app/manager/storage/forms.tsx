@@ -9,6 +9,7 @@ import { FormField } from "@/src/client/components/form/FormFields";
 import { OptionPicker } from "@/src/client/components/form/OptionPicker";
 import { CommentInput } from "@/src/client/components/form/Comment";
 import { NumberInput } from "@/src/client/components/form/NumberInput";
+import { ClearNumberInput } from "@/src/client/components/form/ClearNumberInput";
 import { FormTextInput } from "@/src/client/components/form/TextInput";
 import { DatePickerButton } from "@/src/client/components/form/DatePicker";
 import { ReportCalendar } from "@/src/client/components/reports/Calendar";
@@ -18,7 +19,8 @@ import { useStorage } from "@/src/contexts/StorageProvider";
 
 export default function StorageForm() {
     const { selectedStorageTab, loading } = useManager();
-    const { setDocument, fetchStores, document } = useStorage();
+    const { setDocument, fetchStores, document, fetchAccounts, accounts } =
+        useStorage();
     const router = useRouter();
 
     const [showCalendar, setShowCalendar] = useState(false);
@@ -40,6 +42,19 @@ export default function StorageForm() {
     }, []);
 
     useEffect(() => {
+        const loadAccounts = async () => {
+            try {
+                await fetchAccounts();
+                // accounts will be available from context after this
+            } catch (error) {
+                console.error("Failed to fetch accounts:", error);
+            }
+        };
+
+        loadAccounts();
+    }, []);
+
+    useEffect(() => {
         if (document?.items && document.items.length > 0) {
             const sum = document.items
                 .map((el) => Number(el.amount) || 0)
@@ -55,16 +70,7 @@ export default function StorageForm() {
     const tabs = [{ label: "Общая инфо.", value: "general" }];
 
     // Single form state object
-    const [formData, setFormData] = useState({
-        store_id: "",
-        amount: "",
-        accountingAmount: "",
-        date: "",
-        comment: "",
-        priceType: "",
-        deviaton: "",
-        supplier: "",
-    });
+    const [formData, setFormData] = useState({});
 
     // Generic handler for form updates
     const handleFormChange = (field: string, value: string | number) => {
@@ -75,7 +81,8 @@ export default function StorageForm() {
         handleFormChange("date", selectedDate);
     };
 
-    const renderFormReceipts = () => {
+    const renderFormIncomingInvoice = () => {
+        console.log("renderFormIncomingInvoice");
         const handleSubmit = () => {
             // Validate required fields
             if (!formData.date) {
@@ -84,36 +91,22 @@ export default function StorageForm() {
             }
 
             const preparedData: any = {
-                date: formData.date,
                 dateIncoming: formData.date,
+                //TODO убрать моку после
+                supplier: "707a8ef8-60c0-f07e-018a-f452cbcd454b",
+                invoice: "INV-001",
                 items: [],
             };
 
-            preparedData.document_type = "RECEIPT";
             if (formData.comment) {
                 preparedData.comment = formData.comment;
-            }
-            if (formData.supplier) {
-                preparedData.supplier = formData.supplier;
-            }
-            if (formData.store_id) {
-                preparedData.store_id = formData.store_id;
             }
 
             // Make API call
             setDocument(preparedData);
 
             // Reset form
-            setFormData({
-                store_id: "",
-                amount: "",
-                accountingAmount: "",
-                date: "",
-                comment: "",
-                priceType: "",
-                deviaton: "",
-                supplier: "",
-            });
+            setFormData({});
             setActiveTab("general");
             router.push("/manager/storage/item");
         };
@@ -143,33 +136,80 @@ export default function StorageForm() {
                             />
                         </FormField>
 
-                        <FormField label="Поставщик">
-                            <FormTextInput
-                                value={formData.supplier}
+                        <FormField label="Коментарий">
+                            <CommentInput
+                                value={formData.comment}
                                 onChange={(value) =>
-                                    handleFormChange("supplier", value)
+                                    handleFormChange("comment", value)
                                 }
-                                placeholder="Введите данные"
+                                placeholder="Напишите коментарий"
                             />
                         </FormField>
 
-                        <FormField label="Склад">
-                            <OptionPicker
-                                options={storageOptions}
-                                value={formData.store_id}
-                                onChange={(value) =>
-                                    handleFormChange("store_id", value)
-                                }
-                                placeholder="Выберите склад"
-                            />
-                        </FormField>
+                        <ReportCalendar
+                            visible={showCalendar}
+                            onClose={() => setShowCalendar(false)}
+                            onDateSelect={handleDateSelect}
+                            initialDate={formData.date}
+                        />
+                    </View>
+                </FormContainer>
+            </View>
+        );
+    };
 
-                        <FormField label="Сумма">
-                            <View style={styles.displayField}>
-                                <Text style={styles.displayValue}>
-                                    {formData.accountingAmount || "0"} тг
-                                </Text>
-                            </View>
+    const renderFormOutgoingInvoice = () => {
+        console.log("renderFormOutgoingInvoice");
+        const handleSubmit = () => {
+            // Validate required fields
+            if (!formData.date) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите дату");
+                return;
+            }
+
+            const preparedData: any = {
+                dateIncoming: formData.date,
+                //TODO убрать моку после
+                accountToCode: "001",
+                items: [],
+            };
+
+            if (formData.comment) {
+                preparedData.comment = formData.comment;
+            }
+
+            // Make API call
+            setDocument(preparedData);
+
+            // Reset form
+            setFormData({});
+            setActiveTab("general");
+            router.push("/manager/storage/item");
+        };
+
+        return (
+            <View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={(value) => {
+                        setActiveTab(value as "general");
+                    }}
+                />
+
+                <FormContainer
+                    title={`Добавить общую информацию`}
+                    description="Заполните нужную информацию"
+                    onSubmit={handleSubmit}
+                    submitText="Далее"
+                >
+                    <View>
+                        <FormField label="Дата">
+                            <DatePickerButton
+                                value={formData.date}
+                                onPress={() => setShowCalendar(true)}
+                                placeholder="Выберите дату"
+                            />
                         </FormField>
 
                         <FormField label="Коментарий">
@@ -203,48 +243,27 @@ export default function StorageForm() {
             }
 
             const preparedData: any = {
-                date: formData.date,
                 dateIncoming: formData.date,
                 items: [],
+                accountSurplusCode: "5.10",
+                accountShortageCode: "5.09",
             };
 
-            preparedData.document_type = "INVENTORY";
             if (formData.comment) {
                 preparedData.comment = formData.comment;
             }
-            if (formData.supplier) {
-                preparedData.supplier = formData.supplier;
+            if (formData.accountSurplusCode) {
+                preparedData.accountSurplusCode = formData.accountSurplusCode;
             }
-            if (formData.store_id) {
-                preparedData.store_id = formData.store_id;
-            }
-            if (formData.priceType) {
-                preparedData.priceType = formData.priceType;
-            }
-            if (formData.amount) {
-                preparedData.amount = formData.amount;
-            }
-            if (formData.accountingAmount) {
-                preparedData.accountingAmount = formData.accountingAmount;
-            }
-            if (formData.deviaton) {
-                preparedData.deviaton = formData.deviaton;
+            if (formData.accountShortageCode) {
+                preparedData.accountShortageCode = formData.accountShortageCode;
             }
 
             // Make API call
             setDocument(preparedData);
 
             // Reset form
-            setFormData({
-                store_id: "",
-                amount: "",
-                accountingAmount: "",
-                date: "",
-                comment: "",
-                priceType: "",
-                deviaton: "",
-                supplier: "",
-            });
+            setFormData({});
             setActiveTab("general");
 
             router.push("/manager/storage/item");
@@ -275,7 +294,7 @@ export default function StorageForm() {
                             />
                         </FormField>
 
-                        <FormField label="Склад">
+                        {/*<FormField label="Склад">
                             <OptionPicker
                                 options={storageOptions}
                                 value={formData.store_id}
@@ -324,6 +343,34 @@ export default function StorageForm() {
                                 }
                                 placeholder="Введите данные"
                             />
+                        </FormField>*/}
+
+                        <FormField label="Код счета для излишков">
+                            <ClearNumberInput
+                                value={formData.accountSurplusCode}
+                                onChange={(value) =>
+                                    handleFormChange(
+                                        "accountSurplusCode",
+                                        value,
+                                    )
+                                }
+                                placeholder="5.10"
+                                maxLength={20}
+                            />
+                        </FormField>
+
+                        <FormField label="Код счета для недостачи">
+                            <ClearNumberInput
+                                value={formData.accountShortageCode}
+                                onChange={(value) =>
+                                    handleFormChange(
+                                        "accountShortageCode",
+                                        value,
+                                    )
+                                }
+                                placeholder="5.09"
+                                maxLength={20}
+                            />
                         </FormField>
 
                         <FormField label="Коментарий">
@@ -349,6 +396,7 @@ export default function StorageForm() {
     };
 
     const renderFormWriteoffs = () => {
+        console.log("RENDERED WRITEOFFS");
         const handleSubmit = () => {
             // Validate required fields
             if (!formData.date) {
@@ -358,16 +406,11 @@ export default function StorageForm() {
 
             const preparedData: any = {
                 date: formData.date,
-                dateIncoming: formData.date,
                 items: [],
             };
 
-            preparedData.document_type = "WRITEOFF";
-            if (formData.store_id) {
-                preparedData.store_id = formData.store_id;
-            }
-            if (formData.amount) {
-                preparedData.amount = formData.amount;
+            if (formData.account_id) {
+                preparedData.account_id = formData.account_id;
             }
             if (formData.comment) {
                 preparedData.comment = formData.comment;
@@ -377,16 +420,7 @@ export default function StorageForm() {
             setDocument(preparedData);
 
             // Reset form
-            setFormData({
-                store_id: "",
-                amount: "",
-                accountingAmount: "",
-                date: "",
-                comment: "",
-                priceType: "",
-                deviaton: "",
-                supplier: "",
-            });
+            setFormData({});
             setActiveTab("general");
             router.push("/manager/storage/item");
         };
@@ -416,23 +450,21 @@ export default function StorageForm() {
                             />
                         </FormField>
 
-                        <FormField label="Склад">
+                        <FormField label="Счет">
                             <OptionPicker
-                                options={storageOptions}
-                                value={formData.store_id}
+                                options={accounts.map((el) => {
+                                    return {
+                                        label: el.name,
+                                        value: el.id,
+                                    };
+                                })}
+                                value={formData.account_id}
                                 onChange={(value) =>
-                                    handleFormChange("store_id", value)
+                                    handleFormChange("account_id", value)
                                 }
-                                placeholder="Выберите склад"
+                                placeholder="Выберите счет"
+                                enableSearch={true}
                             />
-                        </FormField>
-
-                        <FormField label="Сумма">
-                            <View style={styles.displayField}>
-                                <Text style={styles.displayValue}>
-                                    {formData.accountingAmount || "0"} тг
-                                </Text>
-                            </View>
                         </FormField>
 
                         <FormField label="Коментарий">
@@ -458,8 +490,10 @@ export default function StorageForm() {
     };
 
     switch (selectedStorageTab) {
-        case "receipts":
-            return renderFormReceipts();
+        case "incomingInvoice":
+            return renderFormIncomingInvoice();
+        case "outgoingInvoice":
+            return renderFormOutgoingInvoice();
         case "inventory":
             return renderFormInventory();
         case "writeoffs":

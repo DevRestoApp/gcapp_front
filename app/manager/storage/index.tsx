@@ -37,6 +37,13 @@ import Loading from "@/src/client/components/Loading";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { sizes } from "@/src/utils/utils";
 
+const tabLabelMap: Record<string, string> = {
+    incomingInvoice: "Приходная накладная",
+    outgoingInvoice: "Расходная накладная",
+    inventory: "Инвентаризация",
+    writeoffs: "Акт списания",
+};
+
 export default function StorageScreen() {
     const router = useRouter();
 
@@ -54,15 +61,18 @@ export default function StorageScreen() {
     const { setDocument } = useStorage();
     const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<
-        "receipts" | "inventory" | "writeoffs"
-    >("receipts");
-    const [receipts, setReceipts] = useState<
-        WarehouseDocumentsItemType[] | null
-    >(null);
+        "incomingInvoice" | "outgoingInvoice" | "inventory" | "writeoffs"
+    >("incomingInvoice");
     const [writeoffs, setWriteoffs] = useState<
         WarehouseDocumentsItemType[] | null
     >(null);
     const [inventory, setInventory] = useState<
+        WarehouseDocumentsItemType[] | null
+    >(null);
+    const [incomingInvoice, setIncomingInvoice] = useState<
+        WarehouseDocumentsItemType[] | null
+    >(null);
+    const [outgoingInvoice, setOutgoingInvoice] = useState<
         WarehouseDocumentsItemType[] | null
     >(null);
     const [loading, setLoading] = useState(false);
@@ -75,28 +85,32 @@ export default function StorageScreen() {
     // Extract fetchDocuments as a standalone function
     const fetchDocuments = useCallback(async () => {
         try {
+            // TODO проверить почему documents тянется 2 раза за раз
             setLoading(true);
             setError(null);
 
             const response = await getWarehouseDocuments({});
 
-            const receipts = response.documents.filter(
-                (doc) => doc.document_type === "RECEIPT",
-            );
+            setLoading(false);
             const writeoffs = response.documents.filter(
                 (doc) => doc.document_type === "WRITEOFF",
             );
             const inventory = response.documents.filter(
                 (doc) => doc.document_type === "INVENTORY",
             );
-            setReceipts(receipts);
+            const incomingInvoice = response.documents.filter(
+                (doc) => doc.document_type === "INCOMING_INVOICE",
+            );
+            const outgoingInvoice = response.documents.filter(
+                (doc) => doc.document_type === "OUTGOING_INVOICE",
+            );
             setWriteoffs(writeoffs);
             setInventory(inventory);
+            setIncomingInvoice(incomingInvoice);
+            setOutgoingInvoice(outgoingInvoice);
         } catch (err: any) {
             setError(err.message || "Failed to fetch documents");
             console.error("Error fetching documents:", err);
-        } finally {
-            setLoading(false);
         }
     }, []);
 
@@ -145,9 +159,10 @@ export default function StorageScreen() {
 
     const renderTabs = () => {
         const tabs = [
-            { label: "Поступления", value: "receipts" },
+            { label: "Приходная накладная", value: "incomingInvoice" },
+            { label: "Расходная накладная", value: "outgoingInvoice" },
             { label: "Инвентаризация", value: "inventory" },
-            { label: "Списания", value: "writeoffs" },
+            { label: "Акт списания", value: "writeoffs" },
         ];
 
         return (
@@ -156,10 +171,15 @@ export default function StorageScreen() {
                 activeTab={activeTab}
                 onTabChange={(value) => {
                     setActiveTab(
-                        value as "receipts" | "inventory" | "writeoffs",
+                        value as
+                            | "incomingInvoice"
+                            | "outgoingInvoice"
+                            | "inventory"
+                            | "writeoffs",
                     );
                     setSelectedStorageTab(value);
                 }}
+                maxColumns={2}
             />
         );
     };
@@ -174,8 +194,11 @@ export default function StorageScreen() {
         };
 
         let data: WarehouseDocumentsType[] | null = [];
-        if (activeTab === "receipts") {
-            data = receipts;
+        if (activeTab === "incomingInvoice") {
+            data = incomingInvoice;
+        }
+        if (activeTab === "outgoingInvoice") {
+            data = outgoingInvoice;
         }
         if (activeTab === "inventory") {
             data = inventory;
@@ -207,13 +230,7 @@ export default function StorageScreen() {
                     }
                     renderItem={({ item }) => (
                         <DocumentCard
-                            documentNumber={`${
-                                activeTab === "receipts"
-                                    ? "Поступление"
-                                    : activeTab === "inventory"
-                                      ? "Инвентаризация"
-                                      : "Списание"
-                            } №${item.document_number || item.id}`}
+                            documentNumber={`${tabLabelMap[activeTab]} №${item.document_number || item.id}`}
                             timestamp={formattedDate(item.date) || ""}
                             category={item.items[0]?.item_name || ""}
                             onPress={() => {

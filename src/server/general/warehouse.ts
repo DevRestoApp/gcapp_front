@@ -20,6 +20,11 @@ export async function getWarehouseStore() {
     return res.data?.data;
 }
 
+export async function getDocumentsAccounts() {
+    const res = await api.get("/documents/accounts");
+    return res.data;
+}
+
 export async function updateWarehouseDocument(
     document_id: number,
     data:
