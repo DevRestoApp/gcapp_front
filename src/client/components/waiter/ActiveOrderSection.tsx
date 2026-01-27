@@ -1,20 +1,32 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Dimensions,
+    ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 
 import OrderItem from "./OrderItem";
 import AddOrder from "./AddOrder";
 
-const { width: screenWidth } = Dimensions.get("window");
+// API Order type
+interface ApiOrder {
+    id: number;
+    organization_name: string;
+    table: string | null;
+    room: string;
+    status: string;
+    sum_order: number;
+    final_sum: number | null;
+    bank_commission: number | null;
+    items: any[];
+}
 
-interface Order {
+// Component Order type (for display)
+interface DisplayOrder {
     id: string;
     tableNumber: string;
     description: string;
@@ -22,62 +34,61 @@ interface Order {
 }
 
 interface ActiveOrdersSectionProps {
-    orders?: Order[];
+    orders?: ApiOrder[] | null;
     onNewOrder?: () => void;
     onOrderClick?: (orderId: string) => void;
     showScrollIndicator?: boolean;
     maxHeight?: number;
+    isLoading?: boolean;
 }
 
-const defaultOrders: Order[] = [
-    {
-        id: "1",
-        tableNumber: "12-стол",
-        description: "Паста Болоньезе, Лазанья, итальянский рыбный суп",
-        amount: "12 064 тг",
-    },
-    {
-        id: "2",
-        tableNumber: "19-стол",
-        description: "Паста Болоньезе, Лазанья, итальянский рыбный суп",
-        amount: "15 064 тг",
-    },
-    {
-        id: "3",
-        tableNumber: "15-стол",
-        description: "Паста Болоньезе, Лазанья, итальянский рыбный суп",
-        amount: "120 064 тг",
-    },
-    {
-        id: "4",
-        tableNumber: "8-стол",
-        description: "Паста Болоньезе, Лазанья, итальянский рыбный суп",
-        amount: "89 064 тг",
-    },
-    {
-        id: "5",
-        tableNumber: "3-стол",
-        description: "Паста Болоньезе, Лазанья, итальянский рыбный суп",
-        amount: "67 064 тг",
-    },
-];
-
-// Plus icon component
-const PlusIcon = () => (
-    <View style={styles.plusIcon}>
-        <View style={styles.plusHorizontal} />
-        <View style={styles.plusVertical} />
-    </View>
-);
-
 export default function ActiveOrdersSection({
-    orders = defaultOrders,
+    orders,
     onNewOrder,
     onOrderClick,
     showScrollIndicator = false,
     maxHeight,
+    isLoading = false,
 }: ActiveOrdersSectionProps) {
     const router = useRouter();
+
+    // Transform API orders to display format
+    const displayOrders = useMemo(() => {
+        if (!orders) return null;
+
+        return orders.map((order) => {
+            // Determine table number display
+            const tableNumber = order.table
+                ? `${order.table}-стол`
+                : order.room || "Без стола";
+
+            // Create description from items or show count
+            let description = "";
+            if (order.items && order.items.length > 0) {
+                // If items have names, join them
+                const itemNames = order.items
+                    .map((item) => item.name || item.title)
+                    .filter(Boolean);
+
+                description =
+                    itemNames.length > 0
+                        ? itemNames.join(", ")
+                        : `${order.items.length} позиций`;
+            } else {
+                description = "Заказ создан";
+            }
+
+            // Format amount
+            const amount = `${order.sum_order.toLocaleString("ru-RU")} тг`;
+
+            return {
+                id: order.id.toString(),
+                tableNumber,
+                description,
+                amount,
+            } as DisplayOrder;
+        });
+    }, [orders]);
 
     const handleNewOrder = useCallback(() => {
         onNewOrder?.();
@@ -86,39 +97,58 @@ export default function ActiveOrdersSection({
     const handleOrderClick = useCallback(
         (orderId: string) => {
             onOrderClick?.(orderId);
-            router.push(`/waiter/order`);
+            router.push(`/waiter/order/${orderId}`);
         },
-        [onOrderClick],
+        [onOrderClick, router],
     );
 
     // Render header section
     const renderHeader = () => (
         <View style={styles.header}>
             <Text style={styles.title}>Активные заказы</Text>
+            <AddOrder onNewOrder={handleNewOrder} />
+        </View>
+    );
 
-            <AddOrder></AddOrder>
+    // Render loading state
+    const renderLoading = () => (
+        <View style={styles.loadingState}>
+            <ActivityIndicator size="small" color="#ffffff" />
+            <Text style={styles.loadingText}>Загрузка заказов...</Text>
+        </View>
+    );
+
+    // Render empty state
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Нет активных заказов</Text>
+            <TouchableOpacity
+                onPress={handleNewOrder}
+                style={styles.emptyStateButton}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.emptyStateButtonText}>
+                    Создать первый заказ
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 
     // Render orders list
     const renderOrdersList = () => {
-        if (orders.length === 0) {
-            return (
-                <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>
-                        Нет активных заказов
-                    </Text>
-                    <TouchableOpacity
-                        onPress={handleNewOrder}
-                        style={styles.emptyStateButton}
-                        activeOpacity={0.7}
-                    >
-                        <Text style={styles.emptyStateButtonText}>
-                            Создать первый заказ
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            );
+        // Handle loading state
+        if (isLoading) {
+            return renderLoading();
+        }
+
+        // Handle null/undefined orders (still loading initial data)
+        if (!displayOrders) {
+            return renderLoading();
+        }
+
+        // Handle empty orders array
+        if (displayOrders.length === 0) {
+            return renderEmptyState();
         }
 
         const scrollViewStyle = maxHeight
@@ -132,7 +162,7 @@ export default function ActiveOrdersSection({
                 showsVerticalScrollIndicator={showScrollIndicator}
                 nestedScrollEnabled
             >
-                {orders.map((order, index) => (
+                {displayOrders.map((order) => (
                     <OrderItem
                         key={order.id}
                         id={order.id}
@@ -158,7 +188,6 @@ const styles = StyleSheet.create({
     container: {
         width: "100%",
         alignSelf: "center",
-        paddingHorizontal: 16,
         gap: 20,
     },
 
@@ -173,50 +202,16 @@ const styles = StyleSheet.create({
         lineHeight: 28,
     },
 
-    // New order button styles
-    newOrderButton: {
-        flexDirection: "row",
+    // Loading state styles
+    loadingState: {
         alignItems: "center",
         justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#ffffff",
-        paddingHorizontal: 16,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        paddingVertical: 40,
+        gap: 12,
     },
-    newOrderButtonText: {
-        color: "#000000",
-        fontSize: 16,
-        fontWeight: "600",
-        lineHeight: 24,
-    },
-
-    // Plus icon styles
-    plusIcon: {
-        width: 20,
-        height: 20,
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-    },
-    plusHorizontal: {
-        position: "absolute",
-        width: 12,
-        height: 2,
-        backgroundColor: "#111213",
-        borderRadius: 1,
-    },
-    plusVertical: {
-        position: "absolute",
-        width: 2,
-        height: 12,
-        backgroundColor: "#111213",
-        borderRadius: 1,
+    loadingText: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 14,
     },
 
     // Orders list styles

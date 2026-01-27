@@ -9,7 +9,7 @@ import React, {
 import { storage } from "../server/storage";
 
 type User = {
-    id: string;
+    id: number;
     email: string;
     role: string;
 };

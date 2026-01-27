@@ -11,6 +11,7 @@ interface SegmentedControlProps {
     activeTab: string;
     onTabChange: (value: string) => void;
     containerStyle?: object;
+    maxColumns?: number; // Maximum columns per row
 }
 
 export default function SegmentedControl({
@@ -18,16 +19,31 @@ export default function SegmentedControl({
     activeTab,
     onTabChange,
     containerStyle,
+    maxColumns = 3,
 }: SegmentedControlProps) {
+    const useGridLayout = tabs.length > maxColumns;
+    const columns = useGridLayout ? maxColumns : tabs.length;
+
     return (
         <View style={[styles.segmentedControlContainer, containerStyle]}>
-            <View style={styles.segmentedControl}>
+            <View
+                style={[
+                    styles.segmentedControl,
+                    useGridLayout && styles.segmentedControlGrid,
+                ]}
+            >
                 {tabs.map((tab) => (
                     <TouchableOpacity
                         key={tab.value}
                         onPress={() => onTabChange(tab.value)}
                         style={[
                             styles.segmentButton,
+                            useGridLayout
+                                ? {
+                                      width: `${100 / columns - 0.5}%`,
+                                      minWidth: 70,
+                                  }
+                                : { flex: 1 },
                             activeTab === tab.value &&
                                 styles.segmentButtonActive,
                         ]}
@@ -61,8 +77,10 @@ const styles = StyleSheet.create({
         padding: 2,
         gap: 2,
     },
+    segmentedControlGrid: {
+        flexWrap: "wrap",
+    },
     segmentButton: {
-        flex: 1,
         height: 32,
         borderRadius: 8,
         alignItems: "center",

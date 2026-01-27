@@ -374,7 +374,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
         const renderAmountInput = () => (
             <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Сумма</Text>
+                <Text style={styles.inputLabel}>Количество</Text>
                 <View style={styles.amountInputContainer}>
                     <TextInput
                         style={styles.amountInput}

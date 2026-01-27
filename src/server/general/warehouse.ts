@@ -20,19 +20,9 @@ export async function getWarehouseStore() {
     return res.data?.data;
 }
 
-export async function createWarehouseDocument(
-    data:
-        | createWarehouseDocumentWriteoffType
-        | createWarehouseDocumentInventoryType
-        | createWarehouseDocumentIncomingInvoiceType,
-) {
-    try {
-        const res = await api.post("/documents", data);
-
-        return res.data;
-    } catch (error) {
-        console.log(error);
-    }
+export async function getDocumentsAccounts() {
+    const res = await api.get("/documents/accounts");
+    return res.data;
 }
 
 export async function updateWarehouseDocument(
@@ -45,4 +35,30 @@ export async function updateWarehouseDocument(
     const res = await api.put(`/documents/${document_id}`, data);
 
     return res.data;
+}
+
+export async function createWarehouseDocumentWriteoff(
+    data: createWarehouseDocumentWriteoffType,
+) {
+    const res = await api.post("/documents/writeoff", data);
+
+    return res.data;
+}
+export async function createWarehouseDocumentInventory(
+    data: createWarehouseDocumentInventoryType,
+) {
+    const res = await api.post("/documents/inventory", data);
+
+    return res.data;
+}
+export async function createWarehouseDocumentIncomingInvoice(
+    data: createWarehouseDocumentIncomingInvoiceType,
+) {
+    try {
+        const res = await api.post("/documents/incoming-invoice", data);
+
+        return res.data;
+    } catch (error) {
+        console.log(error);
+    }
 }

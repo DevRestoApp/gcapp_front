@@ -5,6 +5,8 @@ import {
     RoomInputsType,
     WaiterQuestsInputType,
     WaiterSalaryInputType,
+    WaiterShiftStatusInputType,
+    WaiterOrdersInputType,
 } from "@/src/server/types/waiter";
 
 export async function getTables(filters: TablesInputsType) {
@@ -35,8 +37,25 @@ export async function getWaiterSalary(
     filters: WaiterSalaryInputType,
 ) {
     const params = checkFilters(filters);
-    console.log("url", `/waiter/${waiter_id}/salary`);
     const res = await api.get(`/waiter/${waiter_id}/salary`, { params });
+
+    return res.data;
+}
+
+export async function getWaiterShiftStatus(
+    waiter_id: number,
+    filters: WaiterShiftStatusInputType,
+) {
+    const params = checkFilters(filters);
+    const res = await api.get(`/waiter/${waiter_id}/shift/status`, { params });
+
+    return res.data;
+}
+
+export async function getOrders(filters: WaiterOrdersInputType) {
+    const params = checkFilters(filters);
+
+    const res = await api.get(`/orders`, { params });
 
     return res.data;
 }

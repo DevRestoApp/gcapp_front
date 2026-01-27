@@ -80,3 +80,11 @@ export interface WarehouseDocumentsOutput {
     documents: WarehouseDocumentsType[];
     total: number;
 }
+export type WarehouseDocumentsAccountsType = {
+    id: number;
+    iiko_id: string;
+    name: string;
+    code: string;
+    type: string;
+    system: boolean;
+};
