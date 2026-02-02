@@ -22,11 +22,11 @@ import { useAuth } from "@/src/contexts/AuthContext";
 
 // TODO убрать моку =0
 export default function SalaryScreen() {
-    const { user } = useAuth();
+    const { user, selectedLocation } = useAuth();
     const { salary, quests, fetchSalary, fetchQuest } = useWaiter();
 
     const waiter_id = user.id;
-    const organizationId = user.organization_id || null;
+    const organizationId = selectedLocation || null;
 
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");

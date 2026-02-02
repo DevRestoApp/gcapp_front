@@ -4,14 +4,17 @@ import React, {
     useState,
     ReactNode,
     useEffect,
+    useCallback,
 } from "react";
 
 import { storage } from "../server/storage";
+import { getOrganizationsData } from "@/src/server/general/organizations";
 
 type User = {
     id: number;
     email: string;
     role: string;
+    organization_id: number;
 };
 
 type AuthContextType = {
@@ -19,13 +22,44 @@ type AuthContextType = {
     token: string | null | undefined; // undefined = ещё загружается
     login: (user: User, token: string) => Promise<void>;
     logout: () => Promise<void>;
+    locations: any[];
+    selectedLocation: number | null;
+    setSelectedLocation: (organization_id: number) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const fetchOrganizations = async (): Promise<any> => {
+    try {
+        const response = await getOrganizationsData();
+        return response.organizations;
+    } catch (e) {
+        console.log(e);
+        return null;
+    }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null | undefined>(undefined);
+    const [locations, setLocations] = useState<any[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<number | null>(
+        null,
+    );
+
+    const fetchAll = useCallback(async () => {
+        try {
+            const organizations = await fetchOrganizations();
+
+            setLocations(organizations);
+        } catch (err: any) {
+            console.error("❌ Error fetching Manager data:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchAll();
+    }, [fetchAll]);
 
     useEffect(() => {
         const load = async () => {
@@ -55,7 +89,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                token,
+                login,
+                logout,
+                locations,
+                setSelectedLocation,
+                selectedLocation,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
