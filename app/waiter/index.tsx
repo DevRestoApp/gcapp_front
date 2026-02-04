@@ -199,8 +199,7 @@ export default function Index() {
         return <ActiveOrdersSection orders={orders} isLoading={isLoading} />;
     };
 
-    // const isActive = shiftStatus?.isActive || false;
-    const isActive = true; // Remove tempo
+    const isActive = shiftStatus?.isActive || false;
 
     // Loading state UI
     if (isLoading && !shiftStatus) {
