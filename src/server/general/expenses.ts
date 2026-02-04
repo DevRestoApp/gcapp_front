@@ -47,3 +47,9 @@ export async function getSuppliersData() {
 
     return res.data;
 }
+
+export async function getPayoutTypesData() {
+    const res = await api.get("/documents/pay-out-types");
+
+    return res.data;
+}

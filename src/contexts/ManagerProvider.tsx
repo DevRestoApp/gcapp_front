@@ -18,11 +18,13 @@ import {
 } from "@/src/server/ceo/generals";
 import { getEmployeesData } from "@/src/server/general/employees";
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
-import type {
+import type { AccountsTypeOutput } from "@/src/server/types/storage";
+import {
     AddExpensesInputType,
     AddExpensesType,
     ExpensesDataInputType,
     ExpensesDataType,
+    GetPayoutTypes,
     GetSupplierType,
     UpdateExpensesInputType,
 } from "@/src/server/types/expenses";
@@ -33,7 +35,9 @@ import {
     updateExpense,
     deleteExpense,
     getSuppliersData,
+    getPayoutTypesData,
 } from "@/src/server/general/expenses";
+import { getDocumentsAccounts } from "@/src/server/general/warehouse";
 
 // ============================================================================
 // Types
@@ -102,6 +106,10 @@ interface ManagerContextType {
         filters: ExpensesDataInputType,
     ) => Promise<ExpensesDataType>;
     fetchSuppliersData: () => Promise<GetSupplierType>;
+    fetchPayoutTypesData: () => Promise<GetPayoutTypes>;
+    fetchAccountsData: () => Promise<AccountsTypeOutput | null>;
+    accounts: AccountsTypeOutput | null;
+    payoutTypes: GetPayoutTypes[] | null;
     expenses: ExpensesDataType | null;
     suppliers: GetSupplierType | null;
     addExpenseAction: (body: AddExpensesInputType) => Promise<void>;
@@ -281,6 +289,10 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [quests, setQuests] = useState<Quest | null>(null);
     const [expenses, setExpenses] = useState<ExpensesDataType | null>(null);
     const [suppliers, setSuppliers] = useState<GetSupplierType | null>(null);
+    const [payoutTypes, setPayoutTypes] = useState<GetPayoutTypes[] | null>(
+        null,
+    );
+    const [accounts, setAccounts] = useState<AccountsTypeOutput | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -349,6 +361,42 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 suppliers: [],
                 total: 0,
             };
+        }
+    };
+
+    const fetchPayoutTypesData = async (): Promise<GetPayoutTypes[]> => {
+        try {
+            setLoading(true);
+
+            const response = await getPayoutTypesData();
+
+            setPayoutTypes(response);
+            setLoading(false);
+            return response;
+        } catch (e) {
+            console.log(`Error: ${e}`);
+            setPayoutTypes(null);
+            return null;
+        }
+    };
+    const fetchAccountsData = async (): Promise<AccountsTypeOutput[]> => {
+        try {
+            setLoading(true);
+
+            const response = await getDocumentsAccounts();
+
+            const filtered = response.accounts.filter(
+                (el) => el.type === "EXPENSES",
+            );
+
+            console.log("filtered", filtered);
+            setAccounts(filtered);
+            setLoading(false);
+            return null;
+        } catch (e) {
+            console.log(`Error: ${e}`);
+            setAccounts(null);
+            return null;
         }
     };
 
@@ -492,6 +540,10 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         clearError,
         fetchExpensesData,
         fetchSuppliersData,
+        fetchPayoutTypesData,
+        fetchAccountsData,
+        accounts,
+        payoutTypes,
         expenses,
         suppliers,
         addExpenseAction,

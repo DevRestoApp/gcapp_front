@@ -69,3 +69,12 @@ export interface GetSupplierType {
     suppliers: Supplier[];
     total: number;
 }
+
+export type GetPayoutTypes = {
+    id: string;
+    account_name: string;
+    chief_account_name: string;
+    transactionType: string;
+    counteragentType: string;
+    comment: string;
+};

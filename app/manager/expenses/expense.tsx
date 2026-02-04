@@ -25,16 +25,12 @@ import Loading from "@/src/client/components/Loading";
 import { Ionicons } from "@expo/vector-icons";
 
 import type { Supplier } from "@/src/server/types/expenses";
+import type {
+    GetPayoutTypes,
+    WarehouseDocumentsAccountsType,
+} from "@/src/server/types/expenses";
 import { DatePickerButton } from "@/src/client/components/form/DatePicker";
 import { ReportCalendar } from "@/src/client/components/reports/Calendar";
-
-const CATEGORY_OPTIONS = [
-    { label: "Аренда", value: "rent" },
-    { label: "Зарплата", value: "salary" },
-    { label: "Ком. услуга", value: "utility" },
-    { label: "Товары", value: "goods" },
-    { label: "Другое", value: "other" },
-];
 
 export default function ExpenseScreen() {
     const router = useRouter();
@@ -43,51 +39,104 @@ export default function ExpenseScreen() {
         loading,
         locations,
         suppliers,
+        accounts,
+        payoutTypes,
         fetchSuppliersData,
+        fetchAccountsData,
+        fetchPayoutTypesData,
         addExpenseAction,
     } = useManager();
+    console.log("accounts", accounts);
 
     useEffect(() => {
-        fetchSuppliersData();
+        // Fetch all required data on mount
+        const fetchData = async () => {
+            await Promise.all([
+                fetchSuppliersData(),
+                fetchAccountsData(),
+                fetchPayoutTypesData(),
+            ]);
+        };
+        fetchData();
     }, []);
 
-    // Form states
-    const [category, setCategory] = useState("");
     const [amount, setAmount] = useState("");
     const [comment, setComment] = useState("");
-    const [date, setDate] = useState(""); // This will be in format "DD.MM.YYYY"
+    const [date, setDate] = useState("");
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
         null,
     );
+    const [selectedAccount, setSelectedAccount] =
+        useState<WarehouseDocumentsAccountsType | null>(null);
+    const [selectedPayoutType, setSelectedPayoutType] =
+        useState<GetPayoutTypes | null>(null);
+    const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
+
+    // Modal states
     const [showSupplierModal, setShowSupplierModal] = useState(false);
+    const [showAccountModal, setShowAccountModal] = useState(false);
+    const [showOrganizationModal, setShowOrganizationModal] = useState(false);
+    const [showPayoutTypeModal, setShowPayoutTypeModal] = useState(false);
     const [showCalendar, setShowCalendar] = useState(false);
 
+    // Lists
     const suppliersList = suppliers?.suppliers || [];
+    const accountsList = accounts || [];
+    const payoutTypesList = payoutTypes || [];
+    const organizationsList = locations;
 
+    // Handlers
     const handleSupplierSelect = (supplier: Supplier) => {
         setSelectedSupplier(supplier);
         setShowSupplierModal(false);
     };
 
+    const handleAccountSelect = (account: WarehouseDocumentsAccountsType) => {
+        setSelectedAccount(account);
+        setShowAccountModal(false);
+    };
+
+    const handlePayoutTypeSelect = (payoutType: GetPayoutTypes) => {
+        setSelectedPayoutType(payoutType);
+        setShowPayoutTypeModal(false);
+    };
+
+    const handleDateSelect = (selectedDate: string) => {
+        setDate(selectedDate);
+        setShowCalendar(false);
+    };
+
+    // TODO добавить тип везде по manager у organization ManagerProvider etc
+    const handleOrganizationSelect = (organization: any) => {
+        setSelectedOrganization(organization);
+        setShowOrganizationModal(false);
+    };
+
+    // Label getters
     const getSupplierLabel = () => {
         if (!selectedSupplier) return "Выбрать поставщика...";
         return selectedSupplier.name;
     };
 
-    // Handle date selection from calendar
-    const handleDateSelect = (selectedDate: string) => {
-        setDate(selectedDate); // selectedDate is already in "DD.MM.YYYY" format
-        setShowCalendar(false);
+    const getAccountLabel = () => {
+        if (!selectedAccount) return "Выбрать счет...";
+        return selectedAccount.name;
+    };
+
+    const getPayoutTypeLabel = () => {
+        if (!selectedPayoutType) return "Выбрать тип выплаты...";
+        return selectedPayoutType.account_name;
+    };
+
+    const getOrganizationIdLabel = () => {
+        if (!selectedOrganization) return "Выбрать организацию";
+        return selectedOrganization.name;
     };
 
     const handleSubmit = async () => {
         // Validation
         if (!date) {
             alert("Пожалуйста, выберите дату");
-            return;
-        }
-        if (!category) {
-            alert("Пожалуйста, выберите категорию");
             return;
         }
         if (!amount || parseFloat(amount) <= 0) {
@@ -98,18 +147,29 @@ export default function ExpenseScreen() {
             alert("Пожалуйста, выберите поставщика");
             return;
         }
+        if (!selectedAccount) {
+            alert("Пожалуйста, выберите счет");
+            return;
+        }
+        if (!selectedPayoutType) {
+            alert("Пожалуйста, выберите тип выплаты");
+            return;
+        }
+        if (!selectedOrganization) {
+            alert("Пожалуйста, выберите организацию");
+            return;
+        }
 
         try {
             await addExpenseAction({
-                expense_type: category,
+                organization_id: selectedOrganization.id,
+                expense_type: selectedPayoutType.id,
                 amount: parseFloat(amount),
                 date: date,
                 comment: comment || "",
-                supplier_id: selectedSupplier.id,
-                organization_id: null, // or get from context if needed
+                account_id: String(selectedAccount.id),
             });
 
-            // Navigate back on success
             router.push("/manager/expenses");
         } catch (error) {
             console.error("Error adding expense:", error);
@@ -136,16 +196,17 @@ export default function ExpenseScreen() {
         </View>
     );
 
+    // Supplier Picker
     const renderSupplierPicker = () => (
         <TouchableOpacity
-            style={styles.supplierPickerButton}
+            style={styles.pickerButton}
             onPress={() => setShowSupplierModal(true)}
             disabled={loading}
         >
             <Text
                 style={[
-                    styles.supplierPickerText,
-                    !selectedSupplier && styles.supplierPickerPlaceholder,
+                    styles.pickerText,
+                    !selectedSupplier && styles.pickerPlaceholder,
                 ]}
                 numberOfLines={1}
             >
@@ -155,6 +216,67 @@ export default function ExpenseScreen() {
         </TouchableOpacity>
     );
 
+    // Account Picker
+    const renderAccountPicker = () => (
+        <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={() => setShowAccountModal(true)}
+            disabled={loading}
+        >
+            <Text
+                style={[
+                    styles.pickerText,
+                    !selectedAccount && styles.pickerPlaceholder,
+                ]}
+                numberOfLines={1}
+            >
+                {getAccountLabel()}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+    );
+
+    // Payout Type Picker
+    const renderPayoutTypePicker = () => (
+        <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={() => setShowPayoutTypeModal(true)}
+            disabled={loading}
+        >
+            <Text
+                style={[
+                    styles.pickerText,
+                    !selectedPayoutType && styles.pickerPlaceholder,
+                ]}
+                numberOfLines={1}
+            >
+                {getPayoutTypeLabel()}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+    );
+
+    // Organization Picker
+    const renderOrganizationPicker = () => (
+        <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={() => setShowOrganizationModal(true)}
+            disabled={loading}
+        >
+            <Text
+                style={[
+                    styles.pickerText,
+                    !selectedPayoutType && styles.pickerPlaceholder,
+                ]}
+                numberOfLines={1}
+            >
+                {getOrganizationIdLabel()}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+    );
+
+    // Supplier Modal
     const renderSupplierModal = () => (
         <Modal
             visible={showSupplierModal}
@@ -223,6 +345,215 @@ export default function ExpenseScreen() {
         </Modal>
     );
 
+    // Account Modal
+    const renderAccountModal = () => (
+        <Modal
+            visible={showAccountModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowAccountModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowAccountModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Выберите счет</Text>
+                    </View>
+                    <FlatList
+                        data={accountsList}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id === selectedAccount?.id &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() => handleAccountSelect(item)}
+                            >
+                                <View style={styles.modalItemContent}>
+                                    <Text
+                                        style={[
+                                            styles.modalItemText,
+                                            item.id === selectedAccount?.id &&
+                                                styles.modalItemTextSelected,
+                                        ]}
+                                    >
+                                        {item.name}
+                                    </Text>
+                                    {item.code && (
+                                        <Text style={styles.modalItemSubtext}>
+                                            Код: {item.code} • Тип: {item.type}
+                                        </Text>
+                                    )}
+                                </View>
+                                {item.id === selectedAccount?.id && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных счетов
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
+    const renderOrganizationModal = () => (
+        <Modal
+            visible={showOrganizationModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowOrganizationModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowOrganizationModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Выберите счет</Text>
+                    </View>
+                    <FlatList
+                        data={organizationsList}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id === selectedOrganization?.id &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() => handleOrganizationSelect(item)}
+                            >
+                                <View style={styles.modalItemContent}>
+                                    <Text
+                                        style={[
+                                            styles.modalItemText,
+                                            item.id ===
+                                                selectedOrganization?.id &&
+                                                styles.modalItemTextSelected,
+                                        ]}
+                                    >
+                                        {item.name}
+                                    </Text>
+                                    {item.code && (
+                                        <Text style={styles.modalItemSubtext}>
+                                            Код: {item.code} • Тип: {item.type}
+                                        </Text>
+                                    )}
+                                </View>
+                                {item.id === selectedOrganization?.id && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных счетов
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
+    // Payout Type Modal
+    const renderPayoutTypeModal = () => (
+        <Modal
+            visible={showPayoutTypeModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowPayoutTypeModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowPayoutTypeModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>
+                            Выберите тип выплаты
+                        </Text>
+                    </View>
+                    <FlatList
+                        data={payoutTypesList}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id === selectedPayoutType?.id &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() => handlePayoutTypeSelect(item)}
+                            >
+                                <View style={styles.modalItemContent}>
+                                    <Text
+                                        style={[
+                                            styles.modalItemText,
+                                            item.id ===
+                                                selectedPayoutType?.id &&
+                                                styles.modalItemTextSelected,
+                                        ]}
+                                    >
+                                        {item.account_name}
+                                    </Text>
+                                    {item.chief_account_name && (
+                                        <Text style={styles.modalItemSubtext}>
+                                            {item.chief_account_name}
+                                        </Text>
+                                    )}
+                                    {item.comment && (
+                                        <Text style={styles.modalItemSubtext}>
+                                            {item.comment}
+                                        </Text>
+                                    )}
+                                </View>
+                                {item.id === selectedPayoutType?.id && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных типов выплат
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
     const renderForm = () => (
         <FormContainer
             title="Добавить расходы"
@@ -238,16 +569,17 @@ export default function ExpenseScreen() {
                 />
             </FormField>
 
-            <FormField label="Категория">
-                <OptionPicker
-                    options={CATEGORY_OPTIONS}
-                    value={category}
-                    onChange={setCategory}
-                    placeholder="Выберите статью"
-                />
+            <FormField label="Организация">
+                {renderOrganizationPicker()}
             </FormField>
 
             <FormField label="Поставщик">{renderSupplierPicker()}</FormField>
+
+            <FormField label="Счет">{renderAccountPicker()}</FormField>
+
+            <FormField label="Тип выплаты">
+                {renderPayoutTypePicker()}
+            </FormField>
 
             <FormField label="Сумма">
                 <NumberInput
@@ -290,9 +622,14 @@ export default function ExpenseScreen() {
                     </>
                 )}
             </ScrollView>
-            {renderSupplierModal()}
 
-            {/* Calendar Modal - Fixed Implementation */}
+            {/* Modals */}
+            {renderSupplierModal()}
+            {renderAccountModal()}
+            {renderPayoutTypeModal()}
+            {renderOrganizationModal()}
+
+            {/* Calendar Modal */}
             <ReportCalendar
                 visible={showCalendar}
                 onClose={() => setShowCalendar(false)}
@@ -318,8 +655,8 @@ const styles = StyleSheet.create({
         gap: 16,
     },
 
-    // Supplier Picker
-    supplierPickerButton: {
+    // Picker Button (unified for all pickers)
+    pickerButton: {
         flexDirection: "row",
         paddingHorizontal: 16,
         paddingVertical: 14,
@@ -329,13 +666,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: "rgba(35, 35, 36, 1)",
     },
-    supplierPickerText: {
+    pickerText: {
         flex: 1,
         color: "#FFFFFF",
         fontSize: 16,
         lineHeight: 20,
     },
-    supplierPickerPlaceholder: {
+    pickerPlaceholder: {
         color: "#797A80",
     },
 
