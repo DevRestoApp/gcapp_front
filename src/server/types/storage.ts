@@ -88,3 +88,7 @@ export type WarehouseDocumentsAccountsType = {
     type: string;
     system: boolean;
 };
+
+export interface AccountsTypeOutput {
+    accounts: WarehouseDocumentsAccountsType[];
+}

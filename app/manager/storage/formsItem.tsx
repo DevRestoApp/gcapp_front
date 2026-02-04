@@ -19,6 +19,7 @@ export default function StorageForm() {
     const { document, setDocument } = useStorage();
     const router = useRouter();
     console.log("DOC", document);
+    console.log("selectedStorageTab", selectedStorageTab);
 
     const [showMenuPicker, setShowMenuPicker] = useState(false);
     const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
@@ -88,15 +89,15 @@ export default function StorageForm() {
         </TouchableOpacity>
     );
 
-    const renderFormReceipts = () => {
+    const renderFormIncomingInvoice = () => {
         const handleSubmit = async () => {
             if (!formDataItems.item_id) {
                 Alert.alert("Ошибка", "Пожалуйста, выберите товар");
                 return;
             }
             if (
-                !formDataItems.quantity ||
-                Number(formDataItems.quantity) <= 0
+                !formDataItems.amount ||
+                Number(formDataItems.quantity.amount) <= 0
             ) {
                 Alert.alert("Ошибка", "Пожалуйста, введите количество");
                 return;
@@ -112,21 +113,91 @@ export default function StorageForm() {
             };
             setDocument(preparedData);
             // Reset form
-            setFormDataItems({
-                item_id: 0,
-                item_name: "",
-                quantity: "",
-                itemUnit: "",
-                itemPurchasePrice: "",
-                itemAccountingQuantity: "",
-                itemCoefficient: "",
-                itemNote: "",
-                price: "",
-                itemCostPrice: "",
-                amount: "",
-                itemAccountingAmount: "",
-                created_at: document.date,
-            });
+            setFormDataItems({});
+            setSelectedMenuItem(null);
+            router.push("/manager/storage/item");
+        };
+
+        return (
+            <View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={(value) => {
+                        setActiveTab(value as "content");
+                    }}
+                />
+
+                <FormContainer
+                    title={"Добавить содержимое"}
+                    description="Заполните нужную информацию"
+                    onSubmit={handleSubmit}
+                    submitText="Сохранить"
+                >
+                    <View>
+                        <FormField label="Название товара">
+                            <MenuItemPickerButton />
+                        </FormField>
+                        <FormField label="Количество">
+                            <FormTextInput
+                                value={formDataItems.quantity}
+                                onChange={(value) =>
+                                    handleFormChange("quantity", value)
+                                }
+                                placeholder="Введите данные"
+                            />
+                        </FormField>
+
+                        <FormField label="Цена">
+                            <NumberInput
+                                value={formDataItems.price}
+                                onChange={(value) =>
+                                    handleFormChange("price", value)
+                                }
+                                placeholder="Выберите цену"
+                                currency="тг"
+                                maxLength={20}
+                            />
+                        </FormField>
+                    </View>
+                </FormContainer>
+
+                <MenuPicker
+                    visible={showMenuPicker}
+                    onClose={() => setShowMenuPicker(false)}
+                    onSelect={handleMenuItemSelect}
+                    selectedItem={selectedMenuItem}
+                    title="Выберите товар"
+                />
+            </View>
+        );
+    };
+
+    const renderFormOutgoingInvoice = () => {
+        const handleSubmit = async () => {
+            if (!formDataItems.item_id) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите товар");
+                return;
+            }
+            if (
+                !formDataItems.amount ||
+                Number(formDataItems.quantity.amount) <= 0
+            ) {
+                Alert.alert("Ошибка", "Пожалуйста, введите количество");
+                return;
+            }
+            if (!formDataItems.price || Number(formDataItems.price) <= 0) {
+                Alert.alert("Ошибка", "Пожалуйста, введите цену");
+                return;
+            }
+
+            const preparedData: any = {
+                ...document,
+                items: [...document.items, formDataItems],
+            };
+            setDocument(preparedData);
+            // Reset form
+            setFormDataItems({});
             setSelectedMenuItem(null);
             router.push("/manager/storage/item");
         };
@@ -193,14 +264,10 @@ export default function StorageForm() {
                 return;
             }
             if (
-                !formDataItems.quantity ||
-                Number(formDataItems.quantity) <= 0
+                !formDataItems.amount ||
+                Number(formDataItems.quantity.amount) <= 0
             ) {
                 Alert.alert("Ошибка", "Пожалуйста, введите количество");
-                return;
-            }
-            if (!formDataItems.price || Number(formDataItems.price) <= 0) {
-                Alert.alert("Ошибка", "Пожалуйста, введите цену");
                 return;
             }
 
@@ -210,21 +277,7 @@ export default function StorageForm() {
             };
             setDocument(preparedData);
             // Reset form
-            setFormDataItems({
-                item_id: 0,
-                item_name: "",
-                quantity: "",
-                itemUnit: "",
-                itemPurchasePrice: "",
-                itemAccountingQuantity: "",
-                itemCoefficient: "",
-                itemNote: "",
-                price: "",
-                itemCostPrice: "",
-                amount: "",
-                itemAccountingAmount: "",
-                created_at: document.date,
-            });
+            setFormDataItems({});
             setSelectedMenuItem(null);
             router.push("/manager/storage/item");
         };
@@ -250,92 +303,15 @@ export default function StorageForm() {
                             <MenuItemPickerButton />
                         </FormField>
 
-                        <View style={{ flexDirection: "row", gap: 12 }}>
-                            <FormField label="Количество">
-                                <FormTextInput
-                                    value={formDataItems.quantity}
-                                    onChange={(value) =>
-                                        handleFormChange("quantity", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Единицы">
-                                <FormTextInput
-                                    value={formDataItems.itemUnit}
-                                    onChange={(value) =>
-                                        handleFormChange("itemUnit", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-                        </View>
-
-                        <FormField label="Учетное количество">
+                        <FormField label="Количество">
                             <FormTextInput
-                                value={formDataItems.itemAccountingQuantity}
+                                value={formDataItems.amount}
                                 onChange={(value) =>
-                                    handleFormChange(
-                                        "itemAccountingQuantity",
-                                        value,
-                                    )
+                                    handleFormChange("amount", value)
                                 }
                                 placeholder="Введите данные"
                             />
                         </FormField>
-
-                        <View style={{ flexDirection: "row", gap: 12 }}>
-                            <FormField label="Коэффициент">
-                                <FormTextInput
-                                    value={formDataItems.itemCoefficient}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "itemCoefficient",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Себестоимость">
-                                <FormTextInput
-                                    value={formDataItems.itemCostPrice}
-                                    onChange={(value) =>
-                                        handleFormChange("itemCostPrice", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Сумма">
-                                <NumberInput
-                                    value={formDataItems.amount}
-                                    onChange={(value) =>
-                                        handleFormChange("amount", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Учетная сумма">
-                                <NumberInput
-                                    value={formDataItems.itemAccountingAmount}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "itemAccountingAmount",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-                        </View>
                     </View>
                 </FormContainer>
 
@@ -356,15 +332,8 @@ export default function StorageForm() {
                 Alert.alert("Ошибка", "Пожалуйста, выберите товар");
                 return;
             }
-            if (
-                !formDataItems.quantity ||
-                Number(formDataItems.quantity) <= 0
-            ) {
+            if (!formDataItems.amount || Number(formDataItems.amount) <= 0) {
                 Alert.alert("Ошибка", "Пожалуйста, введите количество");
-                return;
-            }
-            if (!formDataItems.price || Number(formDataItems.price) <= 0) {
-                Alert.alert("Ошибка", "Пожалуйста, введите цену");
                 return;
             }
 
@@ -374,21 +343,7 @@ export default function StorageForm() {
             };
             setDocument(preparedData);
             // Reset form
-            setFormDataItems({
-                item_id: 0,
-                item_name: "",
-                quantity: "",
-                itemUnit: "",
-                itemPurchasePrice: "",
-                itemAccountingQuantity: "",
-                itemCoefficient: "",
-                itemNote: "",
-                price: "",
-                itemCostPrice: "",
-                amount: "",
-                itemAccountingAmount: "",
-                created_at: document.date,
-            });
+            setFormDataItems({});
             setSelectedMenuItem(null);
             router.push("/manager/storage/item");
         };
@@ -414,89 +369,15 @@ export default function StorageForm() {
                             <MenuItemPickerButton />
                         </FormField>
 
-                        <View style={{ flexDirection: "row", gap: 12 }}>
-                            <FormField label="Количество">
-                                <FormTextInput
-                                    value={formDataItems.quantity}
-                                    onChange={(value) =>
-                                        handleFormChange("quantity", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Единицы">
-                                <FormTextInput
-                                    value={formDataItems.itemUnit}
-                                    onChange={(value) =>
-                                        handleFormChange("itemUnit", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-                        </View>
-
-                        <FormField label="Учетное количество">
+                        <FormField label="Количество">
                             <FormTextInput
-                                value={formDataItems.itemAccountingQuantity}
+                                value={formDataItems.amount}
                                 onChange={(value) =>
-                                    handleFormChange(
-                                        "itemAccountingQuantity",
-                                        value,
-                                    )
+                                    handleFormChange("amount", value)
                                 }
                                 placeholder="Введите данные"
                             />
                         </FormField>
-
-                        <View style={{ flexDirection: "row", gap: 12 }}>
-                            <FormField label="Коэффициент">
-                                <FormTextInput
-                                    value={formDataItems.itemCoefficient}
-                                    onChange={(value) =>
-                                        handleFormChange(
-                                            "itemCoefficient",
-                                            value,
-                                        )
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Примечание">
-                                <FormTextInput
-                                    value={formDataItems.itemNote}
-                                    onChange={(value) =>
-                                        handleFormChange("itemNote", value)
-                                    }
-                                    placeholder="Введите данные"
-                                />
-                            </FormField>
-
-                            <FormField label="Цена">
-                                <NumberInput
-                                    value={formDataItems.price}
-                                    onChange={(value) =>
-                                        handleFormChange("price", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-
-                            <FormField label="Сумма">
-                                <NumberInput
-                                    value={formDataItems.amount}
-                                    onChange={(value) =>
-                                        handleFormChange("amount", value)
-                                    }
-                                    placeholder="Выберите сумму"
-                                    currency="тг"
-                                    maxLength={20}
-                                />
-                            </FormField>
-                        </View>
                     </View>
                 </FormContainer>
 
@@ -512,8 +393,10 @@ export default function StorageForm() {
     };
 
     switch (selectedStorageTab) {
-        case "receipts":
-            return renderFormReceipts();
+        case "incomingInvoice":
+            return renderFormIncomingInvoice();
+        case "outgoingInvoice":
+            return renderFormOutgoingInvoice();
         case "inventory":
             return renderFormInventory();
         case "writeoffs":

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
     View,
     Text,
@@ -7,12 +7,16 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
+    Modal,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
 // Types
@@ -25,9 +29,17 @@ interface Role {
     icon: string;
 }
 
+interface Organization {
+    name: string;
+    code: string;
+    id: number;
+    is_active: boolean;
+}
+
 interface RolePickerProps {
     onRoleSelect?: (roleId: string) => void;
     availableRoles?: Role[];
+    locations?: Organization[];
 }
 
 // ============================================================================
@@ -69,8 +81,41 @@ export default function RolePicker({
     availableRoles = DEFAULT_ROLES,
 }: RolePickerProps = {}) {
     const router = useRouter();
+    const { locations } = useAuth();
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState<string>("");
+    const [showLocationModal, setShowLocationModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // ========================================================================
+    // Computed Values
+    // ========================================================================
+
+    const LOCATIONS = useMemo(() => {
+        if (locations && locations.length > 0) {
+            return locations
+                .filter((org) => org.is_active)
+                .map((org) => ({
+                    label: org.name,
+                    value: String(org.id),
+                }));
+        }
+        return [];
+    }, [locations]);
+
+    const needsLocationSelection = selectedRole === "waiter";
+    const canProceed =
+        selectedRole && (!needsLocationSelection || selectedLocation);
+
+    // ========================================================================
+    // Helper Functions
+    // ========================================================================
+
+    const getLocationLabel = (value: string) => {
+        if (!value) return "Выбрать локацию...";
+        const item = LOCATIONS.find((l) => l.value === value);
+        return item ? item.label : "Выбрать локацию...";
+    };
 
     // ========================================================================
     // Event Handlers
@@ -79,32 +124,27 @@ export default function RolePicker({
     const handleRoleSelect = useCallback(
         (roleId: string) => {
             setSelectedRole(roleId);
+            // Reset location when changing role
+            if (roleId !== "waiter") {
+                setSelectedLocation("");
+            }
             onRoleSelect?.(roleId);
         },
         [onRoleSelect],
     );
 
+    const handleLocationSelect = useCallback((locationId: string) => {
+        setSelectedLocation(locationId);
+        setShowLocationModal(false);
+    }, []);
+
     const handleLogin = useCallback(async () => {
         if (!selectedRole) return;
+        if (needsLocationSelection && !selectedLocation) return;
 
         setIsLoading(true);
 
         try {
-            // API Integration Point: Authenticate with selected role
-            // Example:
-            // const response = await fetch('YOUR_API_URL/api/auth/role', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({ roleId: selectedRole }),
-            // });
-            // const data = await response.json();
-            //
-            // if (data.success) {
-            //   // Store auth token/session
-            //   await AsyncStorage.setItem('authToken', data.token);
-            //   await AsyncStorage.setItem('userRole', selectedRole);
-            // }
-
             // Simulate API call
             await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
 
@@ -113,6 +153,9 @@ export default function RolePicker({
                 NAVIGATION_ROUTES[
                     selectedRole as keyof typeof NAVIGATION_ROUTES
                 ] || "/";
+
+            // You can pass location as a route param if needed
+            // router.replace(`${route}?locationId=${selectedLocation}`);
             router.replace(route);
         } catch (error) {
             console.error("Error during role selection:", error);
@@ -121,7 +164,7 @@ export default function RolePicker({
         } finally {
             setIsLoading(false);
         }
-    }, [selectedRole, router]);
+    }, [selectedRole, selectedLocation, needsLocationSelection, router]);
 
     // ========================================================================
     // Render Functions
@@ -167,14 +210,100 @@ export default function RolePicker({
         </View>
     );
 
+    const renderLocationPicker = () => {
+        if (!needsLocationSelection) return null;
+
+        return (
+            <View style={styles.locationPickerContainer}>
+                <Text style={styles.locationPickerLabel}>Выберите локацию</Text>
+                <TouchableOpacity
+                    style={styles.locationPickerButton}
+                    onPress={() => setShowLocationModal(true)}
+                    disabled={isLoading}
+                >
+                    <Text
+                        style={[
+                            styles.locationPickerText,
+                            !selectedLocation &&
+                                styles.locationPickerPlaceholder,
+                        ]}
+                        numberOfLines={1}
+                    >
+                        {getLocationLabel(selectedLocation)}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    const renderLocationModal = () => (
+        <Modal
+            visible={showLocationModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowLocationModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowLocationModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Выберите локацию</Text>
+                    </View>
+                    <FlatList
+                        data={LOCATIONS}
+                        keyExtractor={(item) => item.value}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.value === selectedLocation &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() => handleLocationSelect(item.value)}
+                            >
+                                <Text
+                                    style={[
+                                        styles.modalItemText,
+                                        item.value === selectedLocation &&
+                                            styles.modalItemTextSelected,
+                                    ]}
+                                >
+                                    {item.label}
+                                </Text>
+                                {item.value === selectedLocation && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных локаций
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
     const renderLoginButton = () => (
         <TouchableOpacity
             style={[
                 styles.loginButton,
-                (!selectedRole || isLoading) && styles.loginButtonDisabled,
+                (!canProceed || isLoading) && styles.loginButtonDisabled,
             ]}
             onPress={handleLogin}
-            disabled={!selectedRole || isLoading}
+            disabled={!canProceed || isLoading}
             activeOpacity={0.8}
         >
             {isLoading ? (
@@ -208,10 +337,13 @@ export default function RolePicker({
                 >
                     {renderHeader()}
                     {renderRoleCards()}
+                    {renderLocationPicker()}
                 </ScrollView>
 
                 {renderBottomSection()}
             </View>
+
+            {renderLocationModal()}
         </SafeAreaView>
     );
 }
@@ -288,11 +420,94 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
     },
-    roleDescription: {
+
+    // Location Picker
+    locationPickerContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 24,
+        gap: 12,
+    },
+    locationPickerLabel: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "600",
+        letterSpacing: -0.24,
+    },
+    locationPickerButton: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        borderRadius: 20,
+        backgroundColor: "rgba(35, 35, 36, 1)",
+    },
+    locationPickerText: {
+        flex: 1,
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+    },
+    locationPickerPlaceholder: {
         color: "#797A80",
-        fontSize: 14,
-        fontWeight: "400",
-        lineHeight: 18,
+    },
+
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalContent: {
+        backgroundColor: "#1C1C1E",
+        borderRadius: 20,
+        width: "85%",
+        maxHeight: "60%",
+        overflow: "hidden",
+    },
+    modalHeader: {
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalTitle: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    modalItem: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalItemSelected: {
+        backgroundColor: "rgba(60, 130, 253, 0.1)",
+    },
+    modalItemText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+        flex: 1,
+    },
+    modalItemTextSelected: {
+        color: "#FFFFFF",
+        fontWeight: "600",
+    },
+    emptyContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    emptyText: {
+        color: "#797A80",
+        fontSize: 16,
     },
 
     // Bottom Section
@@ -320,19 +535,5 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         lineHeight: 24,
         textAlign: "center",
-    },
-
-    // Home Indicator
-    homeIndicatorContainer: {
-        width: "100%",
-        height: 34,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    homeIndicator: {
-        width: 131,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: "#fff",
     },
 });

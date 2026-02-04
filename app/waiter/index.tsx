@@ -28,7 +28,7 @@ import { useRouter } from "expo-router";
 
 export default function Index() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, selectedLocation } = useAuth();
     const {
         fetchQuest,
         fetchShiftStatus,
@@ -123,7 +123,7 @@ export default function Index() {
 
         setIsStartingShift(true);
         try {
-            await startShift(user.id, user.organization_id || null);
+            await startShift(user.id, selectedLocation || null);
 
             // Refresh data after starting shift
             await fetchData();
@@ -153,7 +153,7 @@ export default function Index() {
 
         setIsEndingShift(true);
         try {
-            await endShift(user.id, user.organization_id || null);
+            await endShift(user.id, selectedLocation || null);
 
             console.log("Shift closed:", data);
 
@@ -199,8 +199,7 @@ export default function Index() {
         return <ActiveOrdersSection orders={orders} isLoading={isLoading} />;
     };
 
-    // const isActive = shiftStatus?.isActive || false;
-    const isActive = true; // Remove tempo
+    const isActive = shiftStatus?.isActive || false;
 
     // Loading state UI
     if (isLoading && !shiftStatus) {

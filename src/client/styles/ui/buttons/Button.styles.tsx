@@ -29,8 +29,8 @@ export const ButtonStyles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         position: "absolute",
-        bottom: 16 * scale,
-        right: 16 * scale,
+        bottom: 16 + scale,
+        right: 16 + scale,
     },
     addButtonManagerText: {
         color: "#000000",

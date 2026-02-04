@@ -84,50 +84,29 @@ const ShiftCloseModal = React.forwardRef<
         const handleCloseShift = useCallback(async () => {
             const endTime = getCurrentTime();
             const duration = calculateDuration();
+            setIsClosing(true);
 
-            Alert.alert(
-                "Подтвердите закрытие смены",
-                `Время начала: ${startTime}\nВремя окончания: ${endTime}\nПродолжительность: ${duration}\n\nЗаказов продано: ${totalOrdersSold}\nОбщая выручка: ${totalRevenue.toLocaleString()} тг`,
-                [
-                    {
-                        text: "Отмена",
-                        style: "cancel",
-                    },
-                    {
-                        text: "Закрыть смену",
-                        onPress: async () => {
-                            setIsClosing(true);
+            try {
+                onCloseShift?.({
+                    startTime,
+                    endTime,
+                    totalOrdersSold,
+                    totalRevenue,
+                    duration,
+                });
 
-                            try {
-                                // Simulate API call
-                                await new Promise((resolve) =>
-                                    setTimeout(resolve, 1000),
-                                );
+                Alert.alert(
+                    "Смена закрыта",
+                    "Смена успешно завершена. Хорошей работы!",
+                    [{ text: "OK" }],
+                );
 
-                                onCloseShift?.({
-                                    startTime,
-                                    endTime,
-                                    totalOrdersSold,
-                                    totalRevenue,
-                                    duration,
-                                });
-
-                                Alert.alert(
-                                    "Смена закрыта",
-                                    "Смена успешно завершена. Хорошей работы!",
-                                    [{ text: "OK" }],
-                                );
-
-                                handleClose();
-                            } catch (error) {
-                                console.log(error);
-                            } finally {
-                                setIsClosing(false);
-                            }
-                        },
-                    },
-                ],
-            );
+                handleClose();
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setIsClosing(false);
+            }
         }, [
             startTime,
             totalOrdersSold,

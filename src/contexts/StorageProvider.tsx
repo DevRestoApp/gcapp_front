@@ -7,7 +7,10 @@ import {
     getWarehouseStore,
     updateWarehouseDocument,
 } from "@/src/server/general/warehouse";
-import { WarehouseDocumentsAccountsType } from "@/src/server/types/storage";
+import {
+    WarehouseDocumentsAccountsType,
+    AccountsTypeOutput,
+} from "@/src/server/types/storage";
 
 // TODO: Define proper document type based on your warehouse document structure
 interface WarehouseDocument {
@@ -20,9 +23,6 @@ interface WarehouseDocument {
 interface StoreOption {
     label: string;
     value: string;
-}
-interface AccountsTypeOutput {
-    accounts: WarehouseDocumentsAccountsType[];
 }
 
 interface StorageContextType {
