@@ -242,7 +242,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedStorageTab, setSelectedStorageTab] =
-        useState<string>("open"); // Set default value
+        useState<string>("incomingInvoice"); // Set default value
     const [selectedExpenseTab, setSelectedExpenseTab] =
         useState<string>("open"); // Added this
 
