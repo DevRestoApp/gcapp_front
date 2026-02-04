@@ -18,7 +18,22 @@ import {
 } from "@/src/server/ceo/generals";
 import { getEmployeesData } from "@/src/server/general/employees";
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
+import type {
+    AddExpensesInputType,
+    AddExpensesType,
+    ExpensesDataInputType,
+    ExpensesDataType,
+    GetSupplierType,
+    UpdateExpensesInputType,
+} from "@/src/server/types/expenses";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
+import {
+    getExpensesData,
+    addExpenses,
+    updateExpense,
+    deleteExpense,
+    getSuppliersData,
+} from "@/src/server/general/expenses";
 
 // ============================================================================
 // Types
@@ -83,6 +98,18 @@ interface ManagerContextType {
     setSelectedExpenseTab: (tab: string) => void;
     createFineAction: (inputs: FineInputsType) => Promise<void>;
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
+    fetchExpensesData: (
+        filters: ExpensesDataInputType,
+    ) => Promise<ExpensesDataType>;
+    fetchSuppliersData: () => Promise<GetSupplierType>;
+    expenses: ExpensesDataType | null;
+    suppliers: GetSupplierType | null;
+    addExpenseAction: (body: AddExpensesInputType) => Promise<void>;
+    updateExpenseAction: (
+        expense_id: number,
+        body: UpdateExpensesInputType,
+    ) => Promise<void>;
+    deleteExpenseAction: (expense_id: number) => Promise<void>;
 }
 
 interface Shift {
@@ -252,6 +279,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [shifts, setShifts] = useState<Shift | null>(null);
     const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
     const [quests, setQuests] = useState<Quest | null>(null);
+    const [expenses, setExpenses] = useState<ExpensesDataType | null>(null);
+    const [suppliers, setSuppliers] = useState<GetSupplierType | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -262,6 +291,66 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     // ========================================================================
     // Data Fetching - NOW DEPENDS ON INPUTS
     // ========================================================================
+
+    const fetchExpensesData = async (filters: {
+        organization_id?: string;
+        date?: string;
+    }): Promise<ExpensesDataType> => {
+        try {
+            setLoading(true);
+            const preparedFilters = {
+                organization_id: filters.organization_id || null,
+                from_date: filters.date,
+                expense_type: "WRITEOFF",
+            };
+
+            const response = await getExpensesData(preparedFilters);
+
+            setExpenses(response);
+            setLoading(false);
+            return response;
+        } catch (e) {
+            console.log(`Error: ${e}`);
+            setExpenses({
+                success: false,
+                message: `Error: ${e}`,
+                expenses: [],
+                total: 0,
+            });
+            return {
+                success: false,
+                message: `Error: ${e}`,
+                expenses: [],
+                total: 0,
+            };
+        }
+    };
+
+    const fetchSuppliersData = async (): Promise<GetSupplierType> => {
+        try {
+            setLoading(true);
+
+            const response = await getSuppliersData();
+
+            setSuppliers(response);
+            setLoading(false);
+            return response;
+        } catch (e) {
+            console.log(`Error: ${e}`);
+            setSuppliers({
+                success: false,
+                message: `Error: ${e}`,
+                suppliers: [],
+                total: 0,
+            });
+            return {
+                success: false,
+                message: `Error: ${e}`,
+                suppliers: [],
+                total: 0,
+            };
+        }
+    };
 
     const fetchAll = useCallback(async () => {
         try {
@@ -348,6 +437,37 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         [createQuest],
     );
 
+    const addExpenseAction = useCallback(
+        async (body: AddExpensesInputType) => {
+            try {
+                await addExpenses(body);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        [addExpenses],
+    );
+    const updateExpenseAction = useCallback(
+        async (expense_id: number, body: UpdateExpensesInputType) => {
+            try {
+                await updateExpense(expense_id, body);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        [updateExpense],
+    );
+    const deleteExpenseAction = useCallback(
+        async (expense_id: number) => {
+            try {
+                await deleteExpense(expense_id);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        [deleteExpense],
+    );
+
     // Context Value
     const value: ManagerContextType = {
         employees,
@@ -370,6 +490,13 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         createQuestAction,
         refetch,
         clearError,
+        fetchExpensesData,
+        fetchSuppliersData,
+        expenses,
+        suppliers,
+        addExpenseAction,
+        updateExpenseAction,
+        deleteExpenseAction,
     };
 
     return (

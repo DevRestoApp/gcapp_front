@@ -1,18 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
+    TouchableOpacity,
+    Modal,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 import { FormContainer } from "@/src/client/components/form/FormContainer";
@@ -20,94 +20,257 @@ import { FormField } from "@/src/client/components/form/FormFields";
 import { OptionPicker } from "@/src/client/components/form/OptionPicker";
 import { CommentInput } from "@/src/client/components/form/Comment";
 import { NumberInput } from "@/src/client/components/form/NumberInput";
-
 import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
+import { Ionicons } from "@expo/vector-icons";
+
+import type { Supplier } from "@/src/server/types/expenses";
+import { DatePickerButton } from "@/src/client/components/form/DatePicker";
+import { ReportCalendar } from "@/src/client/components/reports/Calendar";
+
+const CATEGORY_OPTIONS = [
+    { label: "Аренда", value: "rent" },
+    { label: "Зарплата", value: "salary" },
+    { label: "Ком. услуга", value: "utility" },
+    { label: "Товары", value: "goods" },
+    { label: "Другое", value: "other" },
+];
 
 export default function ExpenseScreen() {
     const router = useRouter();
 
-    // Get data from context instead of local state
-    const { queryInputs, setDate, setPeriod, setLocation, loading, locations } =
-        useManager();
+    const {
+        loading,
+        locations,
+        suppliers,
+        fetchSuppliersData,
+        addExpenseAction,
+    } = useManager();
+
+    useEffect(() => {
+        fetchSuppliersData();
+    }, []);
 
     // Form states
     const [category, setCategory] = useState("");
     const [amount, setAmount] = useState("");
     const [comment, setComment] = useState("");
+    const [date, setDate] = useState(""); // This will be in format "DD.MM.YYYY"
+    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+        null,
+    );
+    const [showSupplierModal, setShowSupplierModal] = useState(false);
+    const [showCalendar, setShowCalendar] = useState(false);
 
-    // Render header
+    const suppliersList = suppliers?.suppliers || [];
+
+    const handleSupplierSelect = (supplier: Supplier) => {
+        setSelectedSupplier(supplier);
+        setShowSupplierModal(false);
+    };
+
+    const getSupplierLabel = () => {
+        if (!selectedSupplier) return "Выбрать поставщика...";
+        return selectedSupplier.name;
+    };
+
+    // Handle date selection from calendar
+    const handleDateSelect = (selectedDate: string) => {
+        setDate(selectedDate); // selectedDate is already in "DD.MM.YYYY" format
+        setShowCalendar(false);
+    };
+
+    const handleSubmit = async () => {
+        // Validation
+        if (!date) {
+            alert("Пожалуйста, выберите дату");
+            return;
+        }
+        if (!category) {
+            alert("Пожалуйста, выберите категорию");
+            return;
+        }
+        if (!amount || parseFloat(amount) <= 0) {
+            alert("Пожалуйста, введите корректную сумму");
+            return;
+        }
+        if (!selectedSupplier) {
+            alert("Пожалуйста, выберите поставщика");
+            return;
+        }
+
+        try {
+            await addExpenseAction({
+                expense_type: category,
+                amount: parseFloat(amount),
+                date: date,
+                comment: comment || "",
+                supplier_id: selectedSupplier.id,
+                organization_id: null, // or get from context if needed
+            });
+
+            // Navigate back on success
+            router.push("/manager/expenses");
+        } catch (error) {
+            console.error("Error adding expense:", error);
+            alert("Ошибка при добавлении расхода");
+        }
+    };
+
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Расходы"
-                date={queryInputs.date}
-                period={queryInputs.period}
-                location={queryInputs.organization_id}
+                title="Добавить расход"
+                date={""}
+                period={""}
+                location={""}
                 onBack={() => router.push("/manager/expenses")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
-                onLocationChange={setLocation}
-                organizations={locations}
+                onDateChange={() => {}}
+                onPeriodChange={() => {}}
+                onLocationChange={() => {}}
+                organizations={[]}
                 showPeriodSelector={false}
+                showDateSelector={false}
+                showLocationSelector={false}
             />
         </View>
     );
 
-    const renderForm = () => {
-        const categoryOptions = [
-            { label: "Аренда", value: "rent" },
-            { label: "Зарплата", value: "salary" },
-            { label: "Ком. услуга", value: "asd" },
-            { label: "Товары", value: "stuff" },
-            { label: "Другое", value: "other" },
-        ];
-
-        const handleSubmit = () => {
-            console.log({ category, date, comment });
-            // TODO implement proper save handle
-        };
-
-        return (
-            <FormContainer
-                title="Добавить расходы"
-                description="Заполните нужную информацию"
-                onSubmit={handleSubmit}
-                submitText="Сохранить"
+    const renderSupplierPicker = () => (
+        <TouchableOpacity
+            style={styles.supplierPickerButton}
+            onPress={() => setShowSupplierModal(true)}
+            disabled={loading}
+        >
+            <Text
+                style={[
+                    styles.supplierPickerText,
+                    !selectedSupplier && styles.supplierPickerPlaceholder,
+                ]}
+                numberOfLines={1}
             >
-                <FormField label="Категория">
-                    <OptionPicker
-                        options={categoryOptions}
-                        value={category}
-                        onChange={setCategory}
-                        placeholder="Выберите статью"
-                    />
-                </FormField>
-                <FormField label="Сумма">
-                    <NumberInput
-                        value={amount}
-                        onChange={setAmount}
-                        placeholder="Выберите сумму"
-                        currency={"тг"}
-                        maxLength={20}
-                    />
-                </FormField>
+                {getSupplierLabel()}
+            </Text>
+            <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+    );
 
-                <FormField label="Коментарий">
-                    <CommentInput
-                        value={comment}
-                        onChange={setComment}
-                        placeholder="Напишите коментарий"
+    const renderSupplierModal = () => (
+        <Modal
+            visible={showSupplierModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowSupplierModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowSupplierModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>
+                            Выберите поставщика
+                        </Text>
+                    </View>
+                    <FlatList
+                        data={suppliersList}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id === selectedSupplier?.id &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() => handleSupplierSelect(item)}
+                            >
+                                <View style={styles.modalItemContent}>
+                                    <Text
+                                        style={[
+                                            styles.modalItemText,
+                                            item.id === selectedSupplier?.id &&
+                                                styles.modalItemTextSelected,
+                                        ]}
+                                    >
+                                        {item.name}
+                                    </Text>
+                                    {item.code && (
+                                        <Text style={styles.modalItemSubtext}>
+                                            Код: {item.code}
+                                        </Text>
+                                    )}
+                                </View>
+                                {item.id === selectedSupplier?.id && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных поставщиков
+                                </Text>
+                            </View>
+                        }
                     />
-                </FormField>
-            </FormContainer>
-        );
-    };
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
+    const renderForm = () => (
+        <FormContainer
+            title="Добавить расходы"
+            description="Заполните нужную информацию"
+            onSubmit={handleSubmit}
+            submitText="Сохранить"
+        >
+            <FormField label="Дата">
+                <DatePickerButton
+                    value={date}
+                    onPress={() => setShowCalendar(true)}
+                    placeholder="Выберите дату"
+                />
+            </FormField>
+
+            <FormField label="Категория">
+                <OptionPicker
+                    options={CATEGORY_OPTIONS}
+                    value={category}
+                    onChange={setCategory}
+                    placeholder="Выберите статью"
+                />
+            </FormField>
+
+            <FormField label="Поставщик">{renderSupplierPicker()}</FormField>
+
+            <FormField label="Сумма">
+                <NumberInput
+                    value={amount}
+                    onChange={setAmount}
+                    placeholder="Введите сумму"
+                    currency="тг"
+                    maxLength={20}
+                />
+            </FormField>
+
+            <FormField label="Комментарий">
+                <CommentInput
+                    value={comment}
+                    onChange={setComment}
+                    placeholder="Напишите комментарий"
+                />
+            </FormField>
+        </FormContainer>
+    );
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -119,20 +282,27 @@ export default function ExpenseScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <Loading text={"Загрузка данных"} />
+                    <Loading text="Загрузка данных" />
                 ) : (
                     <>
                         {renderHeader()}
-
                         {renderForm()}
                     </>
                 )}
             </ScrollView>
+            {renderSupplierModal()}
+
+            {/* Calendar Modal - Fixed Implementation */}
+            <ReportCalendar
+                visible={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                onDateSelect={handleDateSelect}
+                initialDate={date || undefined}
+            />
         </SafeAreaView>
     );
 }
 
-// ... keep all existing styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -144,146 +314,94 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 128,
     },
-
-    // Header Section
     headerSection: {
         gap: 16,
     },
-    headerRow: {
+
+    // Supplier Picker
+    supplierPickerButton: {
         flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
         alignItems: "center",
         justifyContent: "space-between",
-        height: 56,
-        paddingHorizontal: 16,
-        gap: 16,
+        gap: 8,
+        borderRadius: 20,
+        backgroundColor: "rgba(35, 35, 36, 1)",
     },
-    headerTitle: {
-        color: "#fff",
-        fontSize: 32,
-        fontWeight: "600",
-        letterSpacing: -0.24,
+    supplierPickerText: {
         flex: 1,
-    }, // Section
-    section: {
-        paddingHorizontal: 16,
-        gap: 16,
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
     },
-    sectionTitle: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "bold",
-        lineHeight: 28,
-    },
-    countBadge: {
+    supplierPickerPlaceholder: {
         color: "#797A80",
     },
 
-    // Card
-    card: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
-        padding: 12,
-        gap: 16,
-    },
-
-    // Info Row
-    infoRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-    },
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 16,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         justifyContent: "center",
         alignItems: "center",
     },
-    iconText: {
-        fontSize: 20,
+    modalContent: {
+        backgroundColor: "#1C1C1E",
+        borderRadius: 20,
+        width: "85%",
+        maxHeight: "60%",
+        overflow: "hidden",
     },
-    infoContent: {
+    modalHeader: {
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalTitle: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    modalItem: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalItemSelected: {
+        backgroundColor: "rgba(60, 130, 253, 0.1)",
+    },
+    modalItemContent: {
         flex: 1,
         gap: 4,
     },
-    infoLabel: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        lineHeight: 16,
-    },
-    infoValue: {
-        color: "#fff",
+    modalItemText: {
+        color: "#FFFFFF",
         fontSize: 16,
-        fontWeight: "600",
         lineHeight: 20,
     },
-    chevron: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "300",
-    },
-
-    // Divider
-    divider: {
-        height: 1,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-    },
-
-    // Empty State
-    emptyState: {
-        alignItems: "center",
-        gap: 8,
-    },
-    emptyIcon: {
-        width: 80,
-        height: 80,
-    },
-    emptyText: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 16,
-        textAlign: "center",
-        lineHeight: 20,
-    },
-
-    // Add Button
-    addButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "#fff",
-    },
-    addButtonIcon: {
-        color: "#111213",
-        fontSize: 20,
+    modalItemTextSelected: {
+        color: "#FFFFFF",
         fontWeight: "600",
     },
-    addButtonText: {
-        color: "#2C2D2E",
-        fontSize: 16,
-        fontWeight: "600",
-        textAlign: "center",
-        lineHeight: 24,
+    modalItemSubtext: {
+        color: "#797A80",
+        fontSize: 14,
+        lineHeight: 18,
     },
-    listContainer: {
-        gap: 12,
-    },
-    noDataContainer: {
+    emptyContainer: {
         padding: 40,
         alignItems: "center",
     },
-    noDataText: {
-        color: "#666",
+    emptyText: {
+        color: "#797A80",
         fontSize: 16,
         textAlign: "center",
-    },
-    backButton: {
-        width: 28,
-        height: 28,
-        justifyContent: "center",
-        alignItems: "center",
     },
 });

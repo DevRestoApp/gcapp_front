@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -6,14 +6,11 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    Image,
-    ActivityIndicator,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
@@ -26,10 +23,13 @@ import { icons } from "@/src/client/icons/icons";
 import { useManager } from "@/src/contexts/ManagerProvider";
 import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
+import DocumentCard, {
+    CommentRow,
+    DetailRow,
+} from "@/src/client/components/DocumentCard";
 
 // Helper function to format data items for OrderHistoryCard
 const formatDataItem = (item: any, index: number, itemType: string) => {
-    // Extract the display name
     const tableNumber =
         item.name ||
         item.item ||
@@ -37,19 +37,14 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
         item.source ||
         `Элемент ${index + 1}`;
 
-    // Extract and format the amount
     const rawAmount = item.amount || item.quantity || 0;
     const formattedAmount =
         typeof rawAmount === "number"
             ? `${rawAmount >= 0 ? "+" : ""}${rawAmount.toLocaleString("ru-RU")} тг`
             : rawAmount;
 
-    // Extract time if available, otherwise use current time or empty
     const time = item.time || "";
-    let formattedType = "positive";
-    if (itemType === "negative") {
-        formattedType = "negative";
-    }
+    const formattedType = itemType === "negative" ? "negative" : "positive";
 
     return {
         id: item.id || index,
@@ -63,28 +58,47 @@ const formatDataItem = (item: any, index: number, itemType: string) => {
 export default function ExpensesScreen() {
     const router = useRouter();
 
-    // Get data from context instead of local state
     const {
         setSelectedExpenseTab,
         locations,
         loading,
         error,
-        refetch,
         queryInputs,
         setDate,
         setPeriod,
         setLocation,
+        fetchExpensesData,
+        expenses,
     } = useManager();
 
-    const [days, setDays] = useState<Day[]>([]);
     const [activeTab, setActiveTab] = useState<"expense" | "income">("expense");
 
-    // Set initial value in useEffect instead of during render
+    // Initial data fetch on mount
     useEffect(() => {
         setSelectedExpenseTab("expense");
-    }, []); // Empty dependency array = runs once on mount
+        fetchExpensesData({
+            date: queryInputs.date,
+            period: queryInputs.period,
+            organization_id: queryInputs.organization_id,
+        });
+    }, []); // Only run once on mount
 
-    // Render header
+    // Refetch when queryInputs change (date, period, or location)
+    useEffect(() => {
+        // Skip initial render (already handled by first useEffect)
+        if (
+            queryInputs.date ||
+            queryInputs.period ||
+            queryInputs.organization_id
+        ) {
+            fetchExpensesData({
+                date: queryInputs.date,
+                period: queryInputs.period,
+                organization_id: queryInputs.organization_id,
+            });
+        }
+    }, [queryInputs.date, queryInputs.period, queryInputs.organization_id]);
+
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
@@ -103,10 +117,7 @@ export default function ExpensesScreen() {
     );
 
     const renderTabs = () => {
-        const tabs = [
-            { label: "Расход", value: "expense" },
-            { label: "Доход", value: "income" },
-        ];
+        const tabs = [{ label: "Расход", value: "expense" }];
 
         return (
             <View>
@@ -114,7 +125,7 @@ export default function ExpensesScreen() {
                     tabs={tabs}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
-                ></SegmentedControl>
+                />
             </View>
         );
     };
@@ -132,16 +143,54 @@ export default function ExpensesScreen() {
     };
 
     const renderItemList = () => {
-        if (activeTab === "expense") {
-            // TODO add real data api
+        // Get data from expenses state
+        const expenseData = expenses?.expenses || [];
 
+        const formattedDate = (date: string | Date) => {
+            const today = new Date(date);
+            const day = today.getDate().toString().padStart(2, "0");
+            const month = (today.getMonth() + 1).toString().padStart(2, "0");
+            const year = today.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+
+        if (activeTab === "expense") {
             const currentData = {
-                data: [],
+                data: expenseData,
                 type: "negative",
             };
+
             return currentData.data && currentData.data.length > 0 ? (
                 <View style={styles.listContainer}>
-                    {currentData.data.map((item, index) => {
+                    <FlatList
+                        data={currentData.data}
+                        keyExtractor={(item) =>
+                            item.id?.toString() || Math.random().toString()
+                        }
+                        renderItem={({ item }) => (
+                            <DocumentCard
+                                documentNumber={`#${item.id}`}
+                                timestamp={formattedDate(item.date) || ""}
+                                category={"Расход"}
+                                onPress={() => {
+                                    router.push(`/manager/expenses/${item.id}`);
+                                }}
+                            >
+                                <CommentRow comment={item.comment ?? ""} />
+                                <DetailRow
+                                    label={"Количество"}
+                                    value={String(item.amount) ?? 0}
+                                />
+                            </DocumentCard>
+                        )}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.listContent}
+                        ItemSeparatorComponent={() => (
+                            <View style={styles.cardSeparator} />
+                        )}
+                        scrollEnabled={false}
+                    />
+                    {/*{currentData.data.map((item, index) => {
                         const formattedItem = formatDataItem(
                             item,
                             index,
@@ -153,11 +202,11 @@ export default function ExpensesScreen() {
                                 tableNumber={formattedItem.tableNumber}
                                 amount={formattedItem.amount}
                                 time={formattedItem.time}
-                                icon={icons["dishes"]}
+                                icon={icons["writeoffs"]}
                                 type={currentData.type}
                             />
                         );
-                    })}
+                    })}*/}
                 </View>
             ) : (
                 <View style={styles.noDataContainer}>
@@ -167,11 +216,12 @@ export default function ExpensesScreen() {
                 </View>
             );
         } else {
-            // TODO add real data api
+            // Income tab - currently empty
             const currentData = {
                 data: [],
                 type: "positive",
             };
+
             return currentData.data && currentData.data.length > 0 ? (
                 <View style={styles.listContainer}>
                     {currentData.data.map((item, index) => {
@@ -217,12 +267,15 @@ export default function ExpensesScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <Loading text={"Загрузка данных"} />
+                    <Loading text="Загрузка данных" />
+                ) : error ? (
+                    <View style={styles.noDataContainer}>
+                        <Text style={styles.errorText}>{error}</Text>
+                    </View>
                 ) : (
                     <>
                         {renderHeader()}
                         {renderTabs()}
-
                         {renderItemList()}
                     </>
                 )}
@@ -232,7 +285,6 @@ export default function ExpensesScreen() {
     );
 }
 
-// ... keep all existing styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -244,8 +296,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 128,
     },
-
-    // Header Section
     headerSection: {
         gap: 16,
     },
@@ -255,6 +305,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         height: 56,
         paddingHorizontal: 16,
+        gap: 16,
     },
     headerTitle: {
         color: "#fff",
@@ -262,7 +313,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    }, // Section
+    },
     section: {
         paddingHorizontal: 16,
         gap: 16,
@@ -276,16 +327,12 @@ const styles = StyleSheet.create({
     countBadge: {
         color: "#797A80",
     },
-
-    // Card
     card: {
         backgroundColor: "rgba(35, 35, 36, 1)",
         borderRadius: 20,
         padding: 12,
         gap: 16,
     },
-
-    // Info Row
     infoRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -322,14 +369,10 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "300",
     },
-
-    // Divider
     divider: {
         height: 1,
         backgroundColor: "rgba(43, 43, 44, 1)",
     },
-
-    // Empty State
     emptyState: {
         alignItems: "center",
         gap: 8,
@@ -345,9 +388,12 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     listContainer: {
-        gap: 12,
+        gap: 16,
+        marginLeft: 16,
+        marginRight: 16,
     },
     noDataContainer: {
+        gap: 16,
         padding: 40,
         alignItems: "center",
     },
@@ -355,5 +401,16 @@ const styles = StyleSheet.create({
         color: "#666",
         fontSize: 16,
         textAlign: "center",
+    },
+    errorText: {
+        color: "#ff4444",
+        fontSize: 16,
+        textAlign: "center",
+    },
+    listContent: {
+        paddingBottom: 0,
+    },
+    cardSeparator: {
+        height: 16,
     },
 });
