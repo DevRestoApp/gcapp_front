@@ -82,6 +82,7 @@ export default function RolePicker({
 }: RolePickerProps = {}) {
     const router = useRouter();
     const { locations } = useAuth();
+    console.log("locations", locations);
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [selectedLocation, setSelectedLocation] = useState<string>("");
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -102,6 +103,8 @@ export default function RolePicker({
         }
         return [];
     }, [locations]);
+
+    console.log("LOCATIONS", LOCATIONS);
 
     const needsLocationSelection = selectedRole === "waiter";
     const canProceed =
@@ -124,6 +127,8 @@ export default function RolePicker({
     const handleRoleSelect = useCallback(
         (roleId: string) => {
             setSelectedRole(roleId);
+            console.log("roleId", roleId);
+            console.log("locations", LOCATIONS);
             // Reset location when changing role
             if (roleId !== "waiter") {
                 setSelectedLocation("");

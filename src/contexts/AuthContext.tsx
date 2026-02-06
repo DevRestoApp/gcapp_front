@@ -25,19 +25,11 @@ type AuthContextType = {
     locations: any[];
     selectedLocation: number | null;
     setSelectedLocation: (organization_id: number) => void;
+    setLocations: (locations: any[]) => void;
+    fetchOrganizations: () => Promise<any>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const fetchOrganizations = async (): Promise<any> => {
-    try {
-        const response = await getOrganizationsData();
-        return response.organizations;
-    } catch (e) {
-        console.log(e);
-        return null;
-    }
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -47,19 +39,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         null,
     );
 
-    const fetchAll = useCallback(async () => {
+    const fetchOrganizations = async (): Promise<any> => {
         try {
-            const organizations = await fetchOrganizations();
-
-            setLocations(organizations);
-        } catch (err: any) {
-            console.error("❌ Error fetching Manager data:", err);
+            const response = await getOrganizationsData();
+            setLocations(response.organizations);
+            return response.organizations;
+        } catch (e) {
+            console.log(e);
+            return null;
         }
-    }, []);
-
-    useEffect(() => {
-        fetchAll();
-    }, [fetchAll]);
+    };
 
     useEffect(() => {
         const load = async () => {
@@ -98,6 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 locations,
                 setSelectedLocation,
                 selectedLocation,
+                setLocations,
+                fetchOrganizations,
             }}
         >
             {children}
