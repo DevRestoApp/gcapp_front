@@ -17,6 +17,7 @@ import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 import { RoomsType, TablesType } from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // TODO Ошибка в типах, айдишники то стринг то инт
 // TODO Необходимо больше фильтров при загрузке, чтобы он показывал помещение по орге сразу
@@ -25,6 +26,7 @@ import Loading from "@/src/client/components/Loading";
 export default function NewOrder() {
     const router = useRouter();
     const { fetchTables, fetchRooms } = useWaiter();
+    const { selectedLocation } = useAuth();
 
     // State
     const [selectedTable, setSelectedTable] = useState("");
@@ -38,8 +40,11 @@ export default function NewOrder() {
     useEffect(() => {
         const loadRooms = async () => {
             try {
+                console.log("selectedLocation", selectedLocation);
                 setRoomsLoading(true);
-                const response = await fetchRooms({});
+                const response = await fetchRooms({
+                    organization_id: selectedLocation,
+                });
                 setRooms(response);
 
                 // Auto-select first room if available
