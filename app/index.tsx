@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, {
+    useState,
+    useCallback,
+    useMemo,
+    useEffect,
+    useRef,
+} from "react";
 import {
     View,
     Text,
@@ -81,30 +87,63 @@ export default function RolePicker({
     availableRoles = DEFAULT_ROLES,
 }: RolePickerProps = {}) {
     const router = useRouter();
-    const { locations } = useAuth();
-    console.log("locations", locations);
+    const { fetchOrganizations, selectedLocation, setSelectedLocation } =
+        useAuth();
+
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
-    const [selectedLocation, setSelectedLocation] = useState<string>("");
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
+
+    // Track if we've already fetched organizations for waiter role
+    const hasFetchedOrgs = useRef(false);
+
+    // ========================================================================
+    // Effects
+    // ========================================================================
+
+    // Fetch organizations when waiter role is selected
+    useEffect(() => {
+        const loadOrganizations = async () => {
+            if (selectedRole === "waiter" && !hasFetchedOrgs.current) {
+                setIsFetchingOrgs(true);
+                hasFetchedOrgs.current = true;
+                try {
+                    const orgs = await fetchOrganizations();
+                    setOrganizations(orgs || []);
+                } catch (error) {
+                    console.error("Error fetching organizations:", error);
+                    setOrganizations([]);
+                    hasFetchedOrgs.current = false; // Reset on error so user can retry
+                } finally {
+                    setIsFetchingOrgs(false);
+                }
+            } else if (selectedRole !== "waiter") {
+                // Clear organizations and reset fetch flag when role changes
+                setOrganizations([]);
+                hasFetchedOrgs.current = false;
+            }
+        };
+
+        loadOrganizations();
+    }, [selectedRole]);
 
     // ========================================================================
     // Computed Values
     // ========================================================================
 
     const LOCATIONS = useMemo(() => {
-        if (locations && locations.length > 0) {
-            return locations
+        if (organizations && organizations.length > 0) {
+            return organizations
                 .filter((org) => org.is_active)
                 .map((org) => ({
                     label: org.name,
-                    value: String(org.id),
+                    value: org.id,
                 }));
         }
         return [];
-    }, [locations]);
-
-    console.log("LOCATIONS", LOCATIONS);
+    }, [organizations]);
 
     const needsLocationSelection = selectedRole === "waiter";
     const canProceed =
@@ -127,8 +166,6 @@ export default function RolePicker({
     const handleRoleSelect = useCallback(
         (roleId: string) => {
             setSelectedRole(roleId);
-            console.log("roleId", roleId);
-            console.log("locations", LOCATIONS);
             // Reset location when changing role
             if (roleId !== "waiter") {
                 setSelectedLocation("");
@@ -138,7 +175,7 @@ export default function RolePicker({
         [onRoleSelect],
     );
 
-    const handleLocationSelect = useCallback((locationId: string) => {
+    const handleLocationSelect = useCallback((locationId: number) => {
         setSelectedLocation(locationId);
         setShowLocationModal(false);
     }, []);
@@ -224,19 +261,34 @@ export default function RolePicker({
                 <TouchableOpacity
                     style={styles.locationPickerButton}
                     onPress={() => setShowLocationModal(true)}
-                    disabled={isLoading}
+                    disabled={isLoading || isFetchingOrgs}
                 >
-                    <Text
-                        style={[
-                            styles.locationPickerText,
-                            !selectedLocation &&
-                                styles.locationPickerPlaceholder,
-                        ]}
-                        numberOfLines={1}
-                    >
-                        {getLocationLabel(selectedLocation)}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+                    {isFetchingOrgs ? (
+                        <View style={styles.loadingContainer}>
+                            <Loading />
+                            <Text style={styles.locationPickerText}>
+                                Загрузка локаций...
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
+                            <Text
+                                style={[
+                                    styles.locationPickerText,
+                                    !selectedLocation &&
+                                        styles.locationPickerPlaceholder,
+                                ]}
+                                numberOfLines={1}
+                            >
+                                {getLocationLabel(selectedLocation)}
+                            </Text>
+                            <Ionicons
+                                name="chevron-down"
+                                size={20}
+                                color="#FFFFFF"
+                            />
+                        </>
+                    )}
                 </TouchableOpacity>
             </View>
         );
@@ -305,10 +357,11 @@ export default function RolePicker({
         <TouchableOpacity
             style={[
                 styles.loginButton,
-                (!canProceed || isLoading) && styles.loginButtonDisabled,
+                (!canProceed || isLoading || isFetchingOrgs) &&
+                    styles.loginButtonDisabled,
             ]}
             onPress={handleLogin}
-            disabled={!canProceed || isLoading}
+            disabled={!canProceed || isLoading || isFetchingOrgs}
             activeOpacity={0.8}
         >
             {isLoading ? (
@@ -456,6 +509,12 @@ const styles = StyleSheet.create({
     },
     locationPickerPlaceholder: {
         color: "#797A80",
+    },
+    loadingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        flex: 1,
     },
 
     // Modal

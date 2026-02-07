@@ -3,14 +3,16 @@ import { useRouter } from "expo-router";
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     Image,
     StyleSheet,
     ScrollView,
     Alert,
+    Modal,
+    FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
@@ -19,22 +21,20 @@ import { RoomsType, TablesType } from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
 import { useAuth } from "@/src/contexts/AuthContext";
 
-// TODO Ошибка в типах, айдишники то стринг то инт
-// TODO Необходимо больше фильтров при загрузке, чтобы он показывал помещение по орге сразу
-// TODO поменять текстовый ввод в выборку через модалку как в /manager/storage там есть опшн пикер
-
 export default function NewOrder() {
     const router = useRouter();
     const { fetchTables, fetchRooms } = useWaiter();
     const { selectedLocation } = useAuth();
 
     // State
-    const [selectedTable, setSelectedTable] = useState("");
-    const [selectedRoom, setSelectedRoom] = useState<RoomsType | null>(null);
+    const [selectedTable, setSelectedTable] = useState<string>("");
+    const [selectedRoom, setSelectedRoom] = useState<string>("");
     const [rooms, setRooms] = useState<RoomsType[]>([]);
     const [tables, setTables] = useState<TablesType[]>([]);
     const [roomsLoading, setRoomsLoading] = useState(true);
     const [tablesLoading, setTablesLoading] = useState(false);
+    const [showRoomModal, setShowRoomModal] = useState(false);
+    const [showTableModal, setShowTableModal] = useState(false);
 
     // Fetch rooms on mount
     useEffect(() => {
@@ -49,7 +49,7 @@ export default function NewOrder() {
 
                 // Auto-select first room if available
                 if (response && response.length > 0) {
-                    setSelectedRoom(response[0]);
+                    setSelectedRoom(response[0].id.toString());
                 }
             } catch (error) {
                 console.error("Error fetching rooms:", error);
@@ -60,7 +60,7 @@ export default function NewOrder() {
         };
 
         loadRooms();
-    }, []);
+    }, [selectedLocation]);
 
     // Fetch tables when room changes
     useEffect(() => {
@@ -70,9 +70,11 @@ export default function NewOrder() {
             try {
                 setTablesLoading(true);
                 const response = await fetchTables({
-                    room_id: selectedRoom.id,
+                    room_id: parseInt(selectedRoom),
                 });
                 setTables(response);
+                // Reset selected table when room changes
+                setSelectedTable("");
             } catch (error) {
                 console.error("Error fetching tables:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить столы");
@@ -84,14 +86,28 @@ export default function NewOrder() {
         loadTables();
     }, [selectedRoom]);
 
-    // Handlers
-    const handleTableChange = (value: string) => {
-        setSelectedTable(value);
+    // Helper functions
+    const getRoomLabel = (value: string) => {
+        if (!value) return "Выбрать помещение...";
+        const room = rooms.find((r) => r.id.toString() === value);
+        return room ? room.name : "Выбрать помещение...";
     };
 
-    const handleRoomSelect = (room: RoomsType) => {
-        setSelectedRoom(room);
-        setSelectedTable(""); // Reset table when room changes
+    const getTableLabel = (value: string) => {
+        if (!value) return "Выбрать стол...";
+        const table = tables.find((t) => t.id.toString() === value);
+        return table ? `Стол ${table.number}` : "Выбрать стол...";
+    };
+
+    // Handlers
+    const handleRoomSelect = (roomId: string) => {
+        setSelectedRoom(roomId);
+        setShowRoomModal(false);
+    };
+
+    const handleTableSelect = (tableId: string) => {
+        setSelectedTable(tableId);
+        setShowTableModal(false);
     };
 
     const handleAddDish = () => {
@@ -105,82 +121,207 @@ export default function NewOrder() {
     };
 
     // Render functions
-    const renderTableSection = () => {
-        if (tablesLoading) {
-            return (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Стол</Text>
-                    <Loading text="Загрузка столов" />
-                </View>
-            );
-        }
-
-        return (
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Стол</Text>
-                <TextInput
-                    value={selectedTable}
-                    onChangeText={handleTableChange}
-                    placeholder="Введите номер стола"
-                    placeholderTextColor="#797A80"
-                    style={styles.input}
-                    keyboardType="number-pad"
-                />
-            </View>
-        );
-    };
-
-    const renderRoomSection = () => {
-        if (roomsLoading) {
-            return (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Выберите помещение</Text>
-                    <Loading text="Загрузка помещений" />
-                </View>
-            );
-        }
-
-        if (rooms.length === 0) {
-            return (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Выберите помещение</Text>
-                    <Text style={styles.emptyText}>
-                        Нет доступных помещений
-                    </Text>
-                </View>
-            );
-        }
-
+    const renderRoomPicker = () => {
         return (
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Выберите помещение</Text>
-                <View style={styles.roomsContainer}>
-                    {rooms.map((room) => (
-                        <TouchableOpacity
-                            key={room.id}
-                            onPress={() => handleRoomSelect(room)}
-                            style={[
-                                styles.roomButton,
-                                selectedRoom?.id === room.id &&
-                                    styles.roomButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
+                <TouchableOpacity
+                    style={styles.pickerButton}
+                    onPress={() => setShowRoomModal(true)}
+                    disabled={roomsLoading}
+                >
+                    {roomsLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <Loading />
+                            <Text style={styles.pickerText}>
+                                Загрузка помещений...
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
                             <Text
                                 style={[
-                                    styles.roomButtonText,
-                                    selectedRoom?.id === room.id &&
-                                        styles.roomButtonTextActive,
+                                    styles.pickerText,
+                                    !selectedRoom && styles.pickerPlaceholder,
                                 ]}
+                                numberOfLines={1}
                             >
-                                {room.name}
+                                {getRoomLabel(selectedRoom)}
                             </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                            <Ionicons
+                                name="chevron-down"
+                                size={20}
+                                color="#FFFFFF"
+                            />
+                        </>
+                    )}
+                </TouchableOpacity>
             </View>
         );
     };
+
+    const renderTablePicker = () => {
+        return (
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Стол</Text>
+                <TouchableOpacity
+                    style={styles.pickerButton}
+                    onPress={() => setShowTableModal(true)}
+                    disabled={tablesLoading || !selectedRoom}
+                >
+                    {tablesLoading ? (
+                        <View style={styles.loadingContainer}>
+                            <Loading />
+                            <Text style={styles.pickerText}>
+                                Загрузка столов...
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
+                            <Text
+                                style={[
+                                    styles.pickerText,
+                                    !selectedTable && styles.pickerPlaceholder,
+                                ]}
+                                numberOfLines={1}
+                            >
+                                {getTableLabel(selectedTable)}
+                            </Text>
+                            <Ionicons
+                                name="chevron-down"
+                                size={20}
+                                color="#FFFFFF"
+                            />
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
+        );
+    };
+
+    const renderRoomModal = () => (
+        <Modal
+            visible={showRoomModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowRoomModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowRoomModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>
+                            Выберите помещение
+                        </Text>
+                    </View>
+                    <FlatList
+                        data={rooms}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id.toString() === selectedRoom &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() =>
+                                    handleRoomSelect(item.id.toString())
+                                }
+                            >
+                                <Text
+                                    style={[
+                                        styles.modalItemText,
+                                        item.id.toString() === selectedRoom &&
+                                            styles.modalItemTextSelected,
+                                    ]}
+                                >
+                                    {item.name}
+                                </Text>
+                                {item.id.toString() === selectedRoom && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных помещений
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+
+    const renderTableModal = () => (
+        <Modal
+            visible={showTableModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowTableModal(false)}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={() => setShowTableModal(false)}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Выберите стол</Text>
+                    </View>
+                    <FlatList
+                        data={tables}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalItem,
+                                    item.id.toString() === selectedTable &&
+                                        styles.modalItemSelected,
+                                ]}
+                                onPress={() =>
+                                    handleTableSelect(item.id.toString())
+                                }
+                            >
+                                <Text
+                                    style={[
+                                        styles.modalItemText,
+                                        item.id.toString() === selectedTable &&
+                                            styles.modalItemTextSelected,
+                                    ]}
+                                >
+                                    Стол {item.number}
+                                </Text>
+                                {item.id.toString() === selectedTable && (
+                                    <Ionicons
+                                        name="checkmark"
+                                        size={20}
+                                        color="#FFFFFF"
+                                    />
+                                )}
+                            </TouchableOpacity>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Нет доступных столов
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
 
     const renderDishesSection = () => (
         <View style={styles.section}>
@@ -215,7 +356,7 @@ export default function NewOrder() {
             <SafeAreaView
                 style={[styles.container, backgroundsStyles.generalBg]}
             >
-                <View style={styles.loadingContainer}>
+                <View style={styles.centerLoadingContainer}>
                     <Loading text="Загрузка данных" />
                 </View>
             </SafeAreaView>
@@ -231,11 +372,14 @@ export default function NewOrder() {
             >
                 <View style={styles.content}>
                     <Text style={styles.pageTitle}>Новый заказ</Text>
-                    {renderRoomSection()}
-                    {renderTableSection()}
+                    {renderRoomPicker()}
+                    {renderTablePicker()}
                     {renderDishesSection()}
                 </View>
             </ScrollView>
+
+            {renderRoomModal()}
+            {renderTableModal()}
         </SafeAreaView>
     );
 }
@@ -255,7 +399,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 16,
     },
-    loadingContainer: {
+    centerLoadingContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
@@ -267,7 +411,7 @@ const styles = StyleSheet.create({
         letterSpacing: -0.24,
     },
     section: {
-        gap: 16,
+        gap: 12,
     },
     sectionTitle: {
         fontSize: 20,
@@ -275,41 +419,92 @@ const styles = StyleSheet.create({
         color: "#fff",
         lineHeight: 28,
     },
-    input: {
-        height: 44,
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        color: "#fff",
-        borderWidth: 0.5,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    roomsContainer: {
+
+    // Picker Button
+    pickerButton: {
         flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-    },
-    roomButton: {
-        height: 44,
         paddingHorizontal: 16,
+        paddingVertical: 14,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
         borderRadius: 20,
-        backgroundColor: "rgba(43, 43, 44, 1)",
+        backgroundColor: "rgba(35, 35, 36, 1)",
+    },
+    pickerText: {
+        flex: 1,
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
+    },
+    pickerPlaceholder: {
+        color: "#797A80",
+    },
+    loadingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        flex: 1,
+    },
+
+    // Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         justifyContent: "center",
         alignItems: "center",
     },
-    roomButtonActive: {
-        backgroundColor: "#FFFFFF",
+    modalContent: {
+        backgroundColor: "#1C1C1E",
+        borderRadius: 20,
+        width: "85%",
+        maxHeight: "60%",
+        overflow: "hidden",
     },
-    roomButtonText: {
+    modalHeader: {
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalTitle: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    modalItem: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#2C2C2E",
+    },
+    modalItemSelected: {
+        backgroundColor: "rgba(60, 130, 253, 0.1)",
+    },
+    modalItemText: {
+        color: "#FFFFFF",
         fontSize: 16,
-        color: "#797A80",
-        fontWeight: "500",
+        lineHeight: 20,
+        flex: 1,
     },
-    roomButtonTextActive: {
-        color: "#2C2D2E",
+    modalItemTextSelected: {
+        color: "#FFFFFF",
         fontWeight: "600",
     },
+    emptyContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    emptyText: {
+        color: "#797A80",
+        fontSize: 16,
+    },
+
+    // Dishes Section
     dishesContainer: {
         gap: 16,
         padding: 16,
@@ -331,12 +526,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "rgba(255, 255, 255, 0.6)",
         textAlign: "center",
-    },
-    emptyText: {
-        fontSize: 16,
-        color: "rgba(255, 255, 255, 0.6)",
-        textAlign: "center",
-        padding: 16,
     },
     addButton: {
         width: "100%",
