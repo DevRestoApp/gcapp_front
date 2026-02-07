@@ -314,6 +314,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 organization_id: filters.organization_id || null,
                 from_date: filters.date,
                 expense_type: "WRITEOFF",
+                limit: 5000,
             };
 
             const response = await getExpensesData(preparedFilters);

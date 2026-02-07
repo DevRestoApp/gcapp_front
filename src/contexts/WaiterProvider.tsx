@@ -78,6 +78,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchRooms = useCallback(
         async (inputs: RoomInputsType): Promise<RoomsType[]> => {
             try {
+                console.log("fetchRooms", inputs);
                 const response = await getRooms(inputs);
                 setRooms(response);
                 return response;
