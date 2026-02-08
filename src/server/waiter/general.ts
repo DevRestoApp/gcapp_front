@@ -7,6 +7,7 @@ import {
     WaiterSalaryInputType,
     WaiterShiftStatusInputType,
     WaiterOrdersInputType,
+    CreateOrdersInputType,
 } from "@/src/server/types/waiter";
 
 export async function getTables(filters: TablesInputsType) {
@@ -56,6 +57,19 @@ export async function getOrders(filters: WaiterOrdersInputType) {
     const params = checkFilters(filters);
 
     const res = await api.get(`/orders`, { params });
+
+    return res.data;
+}
+
+export async function createOrder(input: CreateOrdersInputType) {
+    const params = checkFilters(input);
+    const res = await api.put("/orders", { params });
+
+    return res.data;
+}
+
+export async function payOrder(order_id: number) {
+    const res = await api.post(`/orders/${order_id}/pay`);
 
     return res.data;
 }

@@ -13,15 +13,20 @@ import {
     WaiterShiftStatusType,
     WaiterOrdersInputType,
     OrderType,
+    CreateOrdersInputType,
+    PayOrderType,
+    CreateOrdersType,
 } from "@/src/server/types/waiter";
 
 import {
+    createOrder,
     getOrders,
     getRooms,
     getTables,
     getWaiterQuests,
     getWaiterSalary,
     getWaiterShiftStatus,
+    payOrder,
 } from "@/src/server/waiter/general";
 
 import type { OrganizationIdType } from "@/src/server/types/waiter";
@@ -49,6 +54,10 @@ interface WaiterContextType {
         waiter_id: number,
         inputs: WaiterSalaryInputType,
     ) => Promise<WaiterSalaryType | null>;
+    createOrderWrapper: (
+        inputs: CreateOrdersInputType,
+    ) => Promise<CreateOrdersType | null>;
+    payOrderWrapper: (order_id: number) => Promise<PayOrderType | null>;
     fetchShiftStatus: (
         waiter_id: number,
         inputs: WaiterShiftStatusInputType,
@@ -155,6 +164,31 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         [],
     );
 
+    const createOrderWrapper = useCallback(
+        async (inputs: CreateOrdersInputType): Promise<CreateOrdersType> => {
+            try {
+                const response = await createOrder(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error create order:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+    const payOrderWrapper = useCallback(
+        async (order_id: number): Promise<PayOrderType> => {
+            try {
+                const response = await payOrder(order_id);
+                return response;
+            } catch (error) {
+                console.error("Error order pay:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     const fetchShiftStatus = useCallback(
         async (
             waiter_id: number,
@@ -221,6 +255,8 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 fetchOrders,
                 startShift,
                 endShift,
+                createOrderWrapper,
+                payOrderWrapper,
             }}
         >
             {children}
