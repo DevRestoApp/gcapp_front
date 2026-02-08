@@ -223,15 +223,13 @@ const fetchProfitLossData = async (
 };
 
 const fetchGeneralOrdersData = async (filters: ReportFilters): Promise<any> => {
-    // const response = await getGeneralOrders(filters);
-    // return response;
-    return [];
+    const response = await getGeneralOrders(filters);
+    return response;
 };
 
 const fetchEmployeesData = async (
     filters: ReportFilters,
 ): Promise<EmployeesData[]> => {
-    console.log("Fetching employees with filters:", filters);
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     return [

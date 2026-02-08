@@ -149,3 +149,33 @@ export interface OrderType {
     message: string;
     orders: any[];
 }
+
+export type CreateOrderItem = {
+    productId: number;
+    amount: number;
+    price: number;
+    sum: number;
+    comment: string;
+};
+
+export interface CreateOrdersInputType {
+    organizationId?: number;
+    tableId?: number;
+    waiterId?: number;
+    guests?: number;
+    items: CreateOrderItem[];
+}
+
+export interface CreateOrdersType {
+    success: boolean;
+    message: string;
+    order_id: number;
+    iiko_id?: number;
+}
+
+export interface PayOrderType {
+    success: boolean;
+    message: string;
+    order_id: number;
+    status: string;
+}
