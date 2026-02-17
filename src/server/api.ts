@@ -3,11 +3,17 @@ import Constants from "expo-constants";
 import { storage } from "@/src/server/storage";
 import { logger } from "./logger"; // Import your logger
 
+declare const process: any;
+
 const { EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
+const baseURL = EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL;
+
+console.log("🔍 API baseURL:", baseURL); // temporary debug log
+
 const api = axios.create({
-    baseURL: EXPO_PUBLIC_API_URL,
-    timeout: 30000, // 30 second timeout
+    baseURL,
+    timeout: 30000,
 });
 
 // Request interceptor - add auth token
