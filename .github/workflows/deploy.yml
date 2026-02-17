@@ -22,4 +22,4 @@
                export EXPO_PUBLIC_API_URL=https://tsolution.kz/
                export EXPO_PUBLIC_TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
                export EXPO_PUBLIC_TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
-               npx expo export
+               npx expo export -c
