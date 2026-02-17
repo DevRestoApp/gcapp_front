@@ -1,0 +1,23 @@
+   name: Pull & Build on Server
+
+   on:
+     push:
+       branches: [main]
+     workflow_dispatch:
+
+   jobs:
+     build-and-pull:
+       runs-on: ubuntu-latest
+       steps:
+         - name: Deploy to server
+           uses: appleboy/ssh-action@v0.1.9
+           with:
+             host: ${{ secrets.DEPLOY_HOST }}
+             username: ${{ secrets.DEPLOY_USER }}
+             port: ${{ secrets.DEPLOY_PORT }}
+             key: ${{ secrets.DEPLOY_KEY }}
+             script: |
+               cd /srv/project/gcapp_front
+               git pull origin main
+               npm ci
+               npx expo export
