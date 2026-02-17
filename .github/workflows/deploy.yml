@@ -19,5 +19,8 @@
              script: |
                cd /srv/project/gcapp_front
                git pull origin main
+               set -a
+               source .env
+               set +a
                npm ci
                npx expo export
