@@ -5,6 +5,8 @@ import { logger } from "./logger"; // Import your logger
 
 const { EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
+console.log("🔍 API baseURL: ewkere", EXPO_PUBLIC_API_URL);
+
 const api = axios.create({
     baseURL: EXPO_PUBLIC_API_URL,
     timeout: 30000, // 30 second timeout
