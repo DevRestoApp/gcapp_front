@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { AdminIcon, WaiterIcon, CEOIcon } from "@/src/client/icons/icons";
 
 // ============================================================================
 // Types
@@ -32,7 +33,7 @@ interface Role {
     id: string;
     title: string;
     description?: string;
-    icon: string;
+    IconComponent: React.ComponentType;
 }
 
 interface Organization {
@@ -53,21 +54,9 @@ interface RolePickerProps {
 // ============================================================================
 
 const DEFAULT_ROLES: Role[] = [
-    {
-        id: "admin",
-        title: "Админ",
-        icon: "https://api.builder.io/api/v1/image/assets/TEMP/bd0d9d4d83dc41e04175af2ec4e77596361c0d68?width=88",
-    },
-    {
-        id: "owner",
-        title: "Владелец",
-        icon: "https://api.builder.io/api/v1/image/assets/TEMP/5755be83d68683e11fc669e4355160df16297489?width=88",
-    },
-    {
-        id: "waiter",
-        title: "Официант",
-        icon: "https://api.builder.io/api/v1/image/assets/TEMP/bd0d9d4d83dc41e04175af2ec4e77596361c0d68?width=88",
-    },
+    { id: "admin", title: "Админ", IconComponent: AdminIcon },
+    { id: "owner", title: "Владелец", IconComponent: CEOIcon },
+    { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
 ];
 
 const NAVIGATION_ROUTES = {
@@ -223,6 +212,7 @@ export default function RolePicker({
 
     const renderRoleCard = (role: Role) => {
         const isSelected = selectedRole === role.id;
+        const { IconComponent } = role;
 
         return (
             <TouchableOpacity
@@ -232,13 +222,7 @@ export default function RolePicker({
                 disabled={isLoading}
                 activeOpacity={0.7}
             >
-                {role.icon && (
-                    <Image
-                        source={{ uri: role.icon }}
-                        style={styles.roleIcon}
-                        resizeMode="cover"
-                    />
-                )}
+                <IconComponent />
                 <View style={styles.roleContent}>
                     <Text style={styles.roleTitle}>{role.title}</Text>
                 </View>
