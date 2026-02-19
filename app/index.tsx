@@ -8,22 +8,24 @@ import React, {
 import {
     View,
     Text,
-    Image,
     TouchableOpacity,
     ScrollView,
     StyleSheet,
     StatusBar,
     Modal,
     FlatList,
+    Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import Svg, { Ellipse, Path } from "react-native-svg";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { AdminIcon, WaiterIcon, CEOIcon } from "@/src/client/icons/icons";
+import { BlurView } from "expo-blur";
 
 // ============================================================================
 // Types
@@ -79,20 +81,21 @@ export default function RolePicker({
     const { fetchOrganizations, selectedLocation, setSelectedLocation } =
         useAuth();
 
+    // Controls which screen is shown: "enter" or "rolePicker"
+    const [screen, setScreen] = useState<"enter" | "rolePicker">("enter");
+
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
 
-    // Track if we've already fetched organizations for waiter role
     const hasFetchedOrgs = useRef(false);
 
     // ========================================================================
     // Effects
     // ========================================================================
 
-    // Fetch organizations when waiter role is selected
     useEffect(() => {
         const loadOrganizations = async () => {
             if (selectedRole === "waiter" && !hasFetchedOrgs.current) {
@@ -104,12 +107,11 @@ export default function RolePicker({
                 } catch (error) {
                     console.error("Error fetching organizations:", error);
                     setOrganizations([]);
-                    hasFetchedOrgs.current = false; // Reset on error so user can retry
+                    hasFetchedOrgs.current = false;
                 } finally {
                     setIsFetchingOrgs(false);
                 }
             } else if (selectedRole !== "waiter") {
-                // Clear organizations and reset fetch flag when role changes
                 setOrganizations([]);
                 hasFetchedOrgs.current = false;
             }
@@ -155,7 +157,6 @@ export default function RolePicker({
     const handleRoleSelect = useCallback(
         (roleId: string) => {
             setSelectedRole(roleId);
-            // Reset location when changing role
             if (roleId !== "waiter") {
                 setSelectedLocation("");
             }
@@ -176,29 +177,98 @@ export default function RolePicker({
         setIsLoading(true);
 
         try {
-            // Simulate API call
             await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
 
-            // Navigate based on role
             const route =
                 NAVIGATION_ROUTES[
                     selectedRole as keyof typeof NAVIGATION_ROUTES
                 ] || "/";
 
-            // You can pass location as a route param if needed
-            // router.replace(`${route}?locationId=${selectedLocation}`);
             router.replace(route);
         } catch (error) {
             console.error("Error during role selection:", error);
-            // Handle error (show Alert/Toast)
-            // Alert.alert('Ошибка', 'Не удалось войти. Попробуйте снова.');
         } finally {
             setIsLoading(false);
         }
     }, [selectedRole, selectedLocation, needsLocationSelection, router]);
 
     // ========================================================================
-    // Render Functions
+    // Enter Screen
+    // ========================================================================
+
+    if (screen === "enter") {
+        return (
+            <View style={enterStyles.container}>
+                <StatusBar barStyle="light-content" backgroundColor="#19191A" />
+
+                {/* Gradient background blobs */}
+                <View style={enterStyles.blobContainer} pointerEvents="none">
+                    <Svg width={735} height={959} viewBox="0 0 735 959">
+                        <Ellipse
+                            cx="176"
+                            cy="652"
+                            rx="176"
+                            ry="226"
+                            fill="#05334A"
+                        />
+                        <Ellipse
+                            cx="238"
+                            cy="259"
+                            rx="176"
+                            ry="226"
+                            fill="#2A244A"
+                        />
+                        <Ellipse
+                            cx="505"
+                            cy="269"
+                            rx="176"
+                            ry="269"
+                            fill="#740925"
+                        />
+                        <Ellipse
+                            cx="505"
+                            cy="733.5"
+                            rx="230"
+                            ry="225.5"
+                            fill="#030E4E"
+                        />
+                    </Svg>
+                    <BlurView
+                        style={StyleSheet.absoluteFill}
+                        intensity={90}
+                        tint="dark"
+                    />
+                </View>
+
+                {/* Logo */}
+                <View style={enterStyles.logoContainer}>
+                    <Svg width={44} height={44} viewBox="0 0 44 44" fill="none">
+                        <Path
+                            d="M44 14.668V29.332H29.3347V44H14.6653C14.6653 35.8982 8.09846 29.332 0 29.332V14.668H14.6653V0H29.3347C29.3347 8.10175 35.9015 14.668 44 14.668Z"
+                            fill="white"
+                        />
+                    </Svg>
+                </View>
+
+                {/* Bottom content */}
+                <View style={enterStyles.bottomContent}>
+                    <Text style={enterStyles.title}>
+                        Эффективность на каждом уровне.
+                    </Text>
+                    <TouchableOpacity
+                        style={enterStyles.button}
+                        onPress={() => setScreen("rolePicker")}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={enterStyles.buttonText}>Войти</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
+    // ========================================================================
+    // RolePicker Screen
     // ========================================================================
 
     const renderHeader = () => (
@@ -356,14 +426,6 @@ export default function RolePicker({
         </TouchableOpacity>
     );
 
-    const renderBottomSection = () => (
-        <View style={styles.bottomSection}>{renderLoginButton()}</View>
-    );
-
-    // ========================================================================
-    // Main Render
-    // ========================================================================
-
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
@@ -382,7 +444,7 @@ export default function RolePicker({
                     {renderLocationPicker()}
                 </ScrollView>
 
-                {renderBottomSection()}
+                <View style={styles.bottomSection}>{renderLoginButton()}</View>
             </View>
 
             {renderLocationModal()}
@@ -391,7 +453,67 @@ export default function RolePicker({
 }
 
 // ============================================================================
-// Styles
+// Enter Screen Styles
+// ============================================================================
+
+const enterStyles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#19191A",
+        alignItems: "center",
+        justifyContent: "space-between",
+        overflow: "hidden",
+    },
+    blobContainer: {
+        position: "absolute",
+        top: -57,
+        left: -173,
+        width: 735,
+        height: 959,
+    },
+    logoContainer: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "flex-start",
+        paddingTop: 112,
+        zIndex: 10,
+    },
+    bottomContent: {
+        width: "100%",
+        alignItems: "center",
+        gap: 16,
+        paddingHorizontal: 16,
+        paddingBottom: 40,
+        zIndex: 10,
+    },
+    title: {
+        color: "#FFFFFF",
+        textAlign: "center",
+        fontSize: 28,
+        fontWeight: "800",
+        lineHeight: 36,
+        maxWidth: 358,
+        width: "100%",
+    },
+    button: {
+        width: "100%",
+        maxWidth: 358,
+        height: 44,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 20,
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
+    },
+    buttonText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        fontWeight: "600",
+        lineHeight: 24,
+    },
+});
+
+// ============================================================================
+// RolePicker Styles
 // ============================================================================
 
 const styles = StyleSheet.create({
@@ -408,8 +530,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingTop: 16,
     },
-
-    // Header
     header: {
         paddingHorizontal: 16,
         paddingBottom: 16,
@@ -427,14 +547,10 @@ const styles = StyleSheet.create({
         fontWeight: "400",
         lineHeight: 20,
     },
-
-    // Roles Container
     rolesContainer: {
         paddingHorizontal: 16,
         gap: 12,
     },
-
-    // Role Card
     roleCard: {
         flexDirection: "row",
         alignItems: "center",
@@ -447,11 +563,6 @@ const styles = StyleSheet.create({
     roleCardSelected: {
         backgroundColor: "rgba(45, 45, 46, 1)",
     },
-    roleIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-    },
     roleContent: {
         flex: 1,
         gap: 2,
@@ -462,8 +573,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
     },
-
-    // Location Picker
     locationPickerContainer: {
         paddingHorizontal: 16,
         paddingTop: 24,
@@ -500,8 +609,6 @@ const styles = StyleSheet.create({
         gap: 8,
         flex: 1,
     },
-
-    // Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -557,8 +664,6 @@ const styles = StyleSheet.create({
         color: "#797A80",
         fontSize: 16,
     },
-
-    // Bottom Section
     bottomSection: {
         paddingHorizontal: 16,
         paddingBottom: 16,
