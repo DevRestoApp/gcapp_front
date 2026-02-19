@@ -65,7 +65,7 @@ export default function ManagerLayout() {
                         }}
                     />
 
-                    <Tabs.Screen
+                    {/*<Tabs.Screen
                         name="storage"
                         options={{
                             title: "Склад",
@@ -77,7 +77,7 @@ export default function ManagerLayout() {
                                 />
                             ),
                         }}
-                    />
+                    />*/}
 
                     <Tabs.Screen
                         name="profile"
@@ -132,6 +132,12 @@ export default function ManagerLayout() {
                     />
                     <Tabs.Screen
                         name="expenses/income"
+                        options={{
+                            href: null,
+                        }}
+                    />
+                    <Tabs.Screen
+                        name="storage"
                         options={{
                             href: null,
                         }}
