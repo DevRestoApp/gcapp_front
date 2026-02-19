@@ -37,8 +37,6 @@ interface ProfileScreenProps {
     userId?: string;
 }
 
-type MenuItemType = "references" | "faq" | "about";
-
 // ============================================================================
 // Constants
 // ============================================================================
@@ -46,12 +44,6 @@ type MenuItemType = "references" | "faq" | "about";
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const TIME_UPDATE_INTERVAL = 1000; // 1 second
 const MOCK_DELAY = 800;
-
-const MENU_ITEMS = [
-    { id: "references" as MenuItemType, icon: "📚", label: "Справки" },
-    { id: "faq" as MenuItemType, icon: "💬", label: "Частые вопросы" },
-    { id: "about" as MenuItemType, icon: "ℹ️", label: "О приложении" },
-] as const;
 
 // ============================================================================
 // Main Component
@@ -159,23 +151,6 @@ export default function ProfileScreen({
     // Event Handlers
     // ========================================================================
 
-    const handleMenuItemPress = useCallback((item: MenuItemType) => {
-        switch (item) {
-            case "references":
-                console.log("Navigate to references");
-                // router.push("/references");
-                break;
-            case "faq":
-                console.log("Navigate to FAQ");
-                // router.push("/faq");
-                break;
-            case "about":
-                console.log("Navigate to about");
-                // router.push("/about");
-                break;
-        }
-    }, []);
-
     const handleLogout = useCallback(() => {
         logoutModalRef.current?.open();
     }, []);
@@ -227,27 +202,6 @@ export default function ProfileScreen({
         );
     };
 
-    const renderMenuItem = (item: (typeof MENU_ITEMS)[number]) => (
-        <TouchableOpacity
-            key={item.id}
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress(item.id)}
-            activeOpacity={0.7}
-        >
-            <View style={styles.menuItemLeft}>
-                <View style={styles.menuIcon}>
-                    <Text style={styles.menuIconText}>{item.icon}</Text>
-                </View>
-                <Text style={styles.menuItemText}>{item.label}</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-        </TouchableOpacity>
-    );
-
-    const renderMenuItems = () => (
-        <View style={styles.menuSection}>{MENU_ITEMS.map(renderMenuItem)}</View>
-    );
-
     const renderLogoutButton = () => (
         <View style={styles.logoutSection}>
             <TouchableOpacity
@@ -293,7 +247,6 @@ export default function ProfileScreen({
                 >
                     {renderHeader()}
                     {renderProfileInfo()}
-                    {renderMenuItems()}
                 </ScrollView>
 
                 {renderLogoutButton()}

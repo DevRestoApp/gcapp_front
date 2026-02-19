@@ -37,6 +37,16 @@ import {
     endShift as endShiftAPI,
 } from "@/src/server/waiter/mutation";
 
+export type SelectedTableContext = {
+    id: string;
+    number: string;
+} | null;
+
+export type SelectedRoomContext = {
+    id: string;
+    name: string;
+} | null;
+
 interface WaiterContextType {
     rooms: RoomsType[];
     tables: TablesType[];
@@ -71,6 +81,10 @@ interface WaiterContextType {
         organization_id?: OrganizationIdType,
     ) => Promise<void>;
     fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
+    selectedTable: SelectedTableContext;
+    setSelectedTable: (table: SelectedTableContext) => void;
+    selectedRoom: SelectedRoomContext;
+    setSelectedRoom: (room: SelectedRoomContext) => void;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -83,6 +97,11 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [orders, setOrders] = useState<WaiterOrdersInputType | null>(null);
     const [shiftStatus, setShiftStatus] =
         useState<WaiterShiftStatusType | null>(null);
+
+    // NEW ORDER SELECTED tables
+    const [selectedTable, setSelectedTable] =
+        useState<SelectedTableContext>(null);
+    const [selectedRoom, setSelectedRoom] = useState<SelectedRoomContext>(null);
 
     const fetchRooms = useCallback(
         async (inputs: RoomInputsType): Promise<RoomsType[]> => {
@@ -257,6 +276,10 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 endShift,
                 createOrderWrapper,
                 payOrderWrapper,
+                selectedTable,
+                setSelectedTable,
+                selectedRoom,
+                setSelectedRoom,
             }}
         >
             {children}

@@ -16,19 +16,161 @@ import { Ionicons } from "@expo/vector-icons";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
-
+import { useAuth } from "@/src/contexts/AuthContext";
 import { RoomsType, TablesType } from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
-import { useAuth } from "@/src/contexts/AuthContext";
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+type PickerButtonProps = {
+    label: string;
+    isLoading?: boolean;
+    loadingText?: string;
+    disabled?: boolean;
+    onPress: () => void;
+};
+
+function PickerButton({
+    label,
+    isLoading,
+    loadingText,
+    disabled,
+    onPress,
+}: PickerButtonProps) {
+    const isPlaceholder = label.includes("...") || label.includes("Выбрать");
+
+    return (
+        <TouchableOpacity
+            style={styles.pickerButton}
+            onPress={onPress}
+            disabled={disabled || isLoading}
+            activeOpacity={0.7}
+        >
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                    <Loading />
+                    <Text style={styles.pickerText}>{loadingText}</Text>
+                </View>
+            ) : (
+                <>
+                    <Text
+                        style={[
+                            styles.pickerText,
+                            isPlaceholder && styles.pickerPlaceholder,
+                        ]}
+                        numberOfLines={1}
+                    >
+                        {label}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+                </>
+            )}
+        </TouchableOpacity>
+    );
+}
+
+type SelectionModalProps<T> = {
+    visible: boolean;
+    title: string;
+    data: T[];
+    selectedId: string;
+    emptyText: string;
+    keyExtractor: (item: T) => string;
+    labelExtractor: (item: T) => string;
+    onSelect: (id: string) => void;
+    onClose: () => void;
+};
+
+function SelectionModal<T>({
+    visible,
+    title,
+    data,
+    selectedId,
+    emptyText,
+    keyExtractor,
+    labelExtractor,
+    onSelect,
+    onClose,
+}: SelectionModalProps<T>) {
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <TouchableOpacity
+                style={styles.modalOverlay}
+                activeOpacity={1}
+                onPress={onClose}
+            >
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>{title}</Text>
+                    </View>
+                    <FlatList
+                        data={data}
+                        keyExtractor={keyExtractor}
+                        renderItem={({ item }) => {
+                            const id = keyExtractor(item);
+                            const isSelected = id === selectedId;
+                            return (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.modalItem,
+                                        isSelected && styles.modalItemSelected,
+                                    ]}
+                                    onPress={() => onSelect(id)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.modalItemText,
+                                            isSelected &&
+                                                styles.modalItemTextSelected,
+                                        ]}
+                                    >
+                                        {labelExtractor(item)}
+                                    </Text>
+                                    {isSelected && (
+                                        <Ionicons
+                                            name="checkmark"
+                                            size={20}
+                                            color="#FFFFFF"
+                                        />
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        }}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    {emptyText}
+                                </Text>
+                            </View>
+                        }
+                    />
+                </View>
+            </TouchableOpacity>
+        </Modal>
+    );
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function NewOrder() {
     const router = useRouter();
-    const { fetchTables, fetchRooms } = useWaiter();
+    const {
+        fetchTables,
+        fetchRooms,
+        setSelectedTable,
+        setSelectedRoom,
+        selectedTable,
+        selectedRoom,
+    } = useWaiter();
     const { selectedLocation } = useAuth();
 
-    // State
-    const [selectedTable, setSelectedTable] = useState<string>("");
-    const [selectedRoom, setSelectedRoom] = useState<string>("");
+    const [selectedRoomId, setSelectedRoomId] = useState("");
+    const [selectedTableId, setSelectedTableId] = useState("");
     const [rooms, setRooms] = useState<RoomsType[]>([]);
     const [tables, setTables] = useState<TablesType[]>([]);
     const [roomsLoading, setRoomsLoading] = useState(true);
@@ -38,319 +180,86 @@ export default function NewOrder() {
 
     // Fetch rooms on mount
     useEffect(() => {
-        const loadRooms = async () => {
+        (async () => {
             try {
-                console.log("selectedLocation", selectedLocation);
                 setRoomsLoading(true);
                 const response = await fetchRooms({
                     organization_id: selectedLocation,
                 });
                 setRooms(response);
-
-                // Auto-select first room if available
-                if (response && response.length > 0) {
-                    setSelectedRoom(response[0].id.toString());
+                if (response?.length > 0) {
+                    setSelectedRoomId(response[0].id.toString());
                 }
-            } catch (error) {
-                console.error("Error fetching rooms:", error);
+            } catch {
                 Alert.alert("Ошибка", "Не удалось загрузить помещения");
             } finally {
                 setRoomsLoading(false);
             }
-        };
-
-        loadRooms();
+        })();
     }, [selectedLocation]);
 
     // Fetch tables when room changes
     useEffect(() => {
-        if (!selectedRoom) return;
-
-        const loadTables = async () => {
+        if (!selectedRoomId) return;
+        (async () => {
             try {
                 setTablesLoading(true);
                 const response = await fetchTables({
-                    room_id: parseInt(selectedRoom),
+                    room_id: parseInt(selectedRoomId),
                 });
                 setTables(response);
-                // Reset selected table when room changes
-                setSelectedTable("");
-            } catch (error) {
-                console.error("Error fetching tables:", error);
+                setSelectedTableId("");
+            } catch {
                 Alert.alert("Ошибка", "Не удалось загрузить столы");
             } finally {
                 setTablesLoading(false);
             }
-        };
+        })();
+    }, [selectedRoomId]);
 
-        loadTables();
-    }, [selectedRoom]);
+    // Derived labels
+    const roomLabel = selectedRoomId
+        ? (rooms.find((r) => r.id.toString() === selectedRoomId)?.name ??
+          "Выбрать помещение...")
+        : "Выбрать помещение...";
 
-    // Helper functions
-    const getRoomLabel = (value: string) => {
-        if (!value) return "Выбрать помещение...";
-        const room = rooms.find((r) => r.id.toString() === value);
-        return room ? room.name : "Выбрать помещение...";
-    };
-
-    const getTableLabel = (value: string) => {
-        if (!value) return "Выбрать стол...";
-        const table = tables.find((t) => t.id.toString() === value);
-        return table ? `Стол ${table.number}` : "Выбрать стол...";
-    };
+    const tableLabel = selectedTableId
+        ? (() => {
+              const t = tables.find((t) => t.id.toString() === selectedTableId);
+              return t ? `Стол ${t.number}` : "Выбрать стол...";
+          })()
+        : "Выбрать стол...";
 
     // Handlers
-    const handleRoomSelect = (roomId: string) => {
-        setSelectedRoom(roomId);
+    const handleRoomSelect = (id: string) => {
+        setSelectedRoomId(id);
         setShowRoomModal(false);
     };
 
-    const handleTableSelect = (tableId: string) => {
-        setSelectedTable(tableId);
+    const handleTableSelect = (id: string) => {
+        setSelectedTableId(id);
         setShowTableModal(false);
     };
 
     const handleAddDish = () => {
-        if (!selectedTable.trim()) {
+        if (!selectedTableId) {
             Alert.alert("Ошибка", "Пожалуйста, выберите стол");
             return;
         }
 
-        // TODO: Save selected table and room to context or pass as params
+        const room = rooms.find((r) => r.id.toString() === selectedRoomId);
+        const table = tables.find((t) => t.id.toString() === selectedTableId);
+
+        if (room) setSelectedRoom({ id: room.id.toString(), name: room.name });
+        if (table)
+            setSelectedTable({
+                id: table.id.toString(),
+                number: table.number,
+            });
+
         router.push("/waiter/menu");
     };
 
-    // Render functions
-    const renderRoomPicker = () => {
-        return (
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Выберите помещение</Text>
-                <TouchableOpacity
-                    style={styles.pickerButton}
-                    onPress={() => setShowRoomModal(true)}
-                    disabled={roomsLoading}
-                >
-                    {roomsLoading ? (
-                        <View style={styles.loadingContainer}>
-                            <Loading />
-                            <Text style={styles.pickerText}>
-                                Загрузка помещений...
-                            </Text>
-                        </View>
-                    ) : (
-                        <>
-                            <Text
-                                style={[
-                                    styles.pickerText,
-                                    !selectedRoom && styles.pickerPlaceholder,
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {getRoomLabel(selectedRoom)}
-                            </Text>
-                            <Ionicons
-                                name="chevron-down"
-                                size={20}
-                                color="#FFFFFF"
-                            />
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    const renderTablePicker = () => {
-        return (
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Стол</Text>
-                <TouchableOpacity
-                    style={styles.pickerButton}
-                    onPress={() => setShowTableModal(true)}
-                    disabled={tablesLoading || !selectedRoom}
-                >
-                    {tablesLoading ? (
-                        <View style={styles.loadingContainer}>
-                            <Loading />
-                            <Text style={styles.pickerText}>
-                                Загрузка столов...
-                            </Text>
-                        </View>
-                    ) : (
-                        <>
-                            <Text
-                                style={[
-                                    styles.pickerText,
-                                    !selectedTable && styles.pickerPlaceholder,
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {getTableLabel(selectedTable)}
-                            </Text>
-                            <Ionicons
-                                name="chevron-down"
-                                size={20}
-                                color="#FFFFFF"
-                            />
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
-    const renderRoomModal = () => (
-        <Modal
-            visible={showRoomModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowRoomModal(false)}
-        >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowRoomModal(false)}
-            >
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>
-                            Выберите помещение
-                        </Text>
-                    </View>
-                    <FlatList
-                        data={rooms}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.modalItem,
-                                    item.id.toString() === selectedRoom &&
-                                        styles.modalItemSelected,
-                                ]}
-                                onPress={() =>
-                                    handleRoomSelect(item.id.toString())
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.modalItemText,
-                                        item.id.toString() === selectedRoom &&
-                                            styles.modalItemTextSelected,
-                                    ]}
-                                >
-                                    {item.name}
-                                </Text>
-                                {item.id.toString() === selectedRoom && (
-                                    <Ionicons
-                                        name="checkmark"
-                                        size={20}
-                                        color="#FFFFFF"
-                                    />
-                                )}
-                            </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>
-                                    Нет доступных помещений
-                                </Text>
-                            </View>
-                        }
-                    />
-                </View>
-            </TouchableOpacity>
-        </Modal>
-    );
-
-    const renderTableModal = () => (
-        <Modal
-            visible={showTableModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowTableModal(false)}
-        >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowTableModal(false)}
-            >
-                <View style={styles.modalContent}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Выберите стол</Text>
-                    </View>
-                    <FlatList
-                        data={tables}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={[
-                                    styles.modalItem,
-                                    item.id.toString() === selectedTable &&
-                                        styles.modalItemSelected,
-                                ]}
-                                onPress={() =>
-                                    handleTableSelect(item.id.toString())
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        styles.modalItemText,
-                                        item.id.toString() === selectedTable &&
-                                            styles.modalItemTextSelected,
-                                    ]}
-                                >
-                                    Стол {item.number}
-                                </Text>
-                                {item.id.toString() === selectedTable && (
-                                    <Ionicons
-                                        name="checkmark"
-                                        size={20}
-                                        color="#FFFFFF"
-                                    />
-                                )}
-                            </TouchableOpacity>
-                        )}
-                        ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Text style={styles.emptyText}>
-                                    Нет доступных столов
-                                </Text>
-                            </View>
-                        }
-                    />
-                </View>
-            </TouchableOpacity>
-        </Modal>
-    );
-
-    const renderDishesSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Блюда (0)</Text>
-            <View style={styles.dishesContainer}>
-                {/* Empty State */}
-                <View style={styles.emptyStateContainer}>
-                    <Image
-                        source={{
-                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/8cbeba4afdd0ca5e403967f3817b6ce47b0fb0ba?width=200",
-                        }}
-                        style={styles.emptyStateImage}
-                    />
-                    <Text style={styles.emptyStateText}>Нет списка блюд</Text>
-                </View>
-
-                {/* Add Dish Button */}
-                <TouchableOpacity
-                    style={[ButtonStyles.buttonWhite, styles.addButton]}
-                    onPress={handleAddDish}
-                    activeOpacity={0.7}
-                >
-                    <Text style={ButtonStyles.buttonText}>Добавить блюдо</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-    // Show loading only on initial load
     if (roomsLoading && rooms.length === 0) {
         return (
             <SafeAreaView
@@ -372,33 +281,96 @@ export default function NewOrder() {
             >
                 <View style={styles.content}>
                     <Text style={styles.pageTitle}>Новый заказ</Text>
-                    {renderRoomPicker()}
-                    {renderTablePicker()}
-                    {renderDishesSection()}
+
+                    {/* Room picker */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>
+                            Выберите помещение
+                        </Text>
+                        <PickerButton
+                            label={roomLabel}
+                            isLoading={roomsLoading}
+                            loadingText="Загрузка помещений..."
+                            onPress={() => setShowRoomModal(true)}
+                        />
+                    </View>
+
+                    {/* Table picker */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Стол</Text>
+                        <PickerButton
+                            label={tableLabel}
+                            isLoading={tablesLoading}
+                            loadingText="Загрузка столов..."
+                            disabled={!selectedRoomId}
+                            onPress={() => setShowTableModal(true)}
+                        />
+                    </View>
+
+                    {/* Dishes section */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Блюда (0)</Text>
+                        <View style={styles.dishesContainer}>
+                            <View style={styles.emptyStateContainer}>
+                                <Image
+                                    source={{
+                                        uri: "https://api.builder.io/api/v1/image/assets/TEMP/8cbeba4afdd0ca5e403967f3817b6ce47b0fb0ba?width=200",
+                                    }}
+                                    style={styles.emptyStateImage}
+                                />
+                                <Text style={styles.emptyStateText}>
+                                    Нет списка блюд
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                style={[
+                                    ButtonStyles.buttonWhite,
+                                    styles.addButton,
+                                ]}
+                                onPress={handleAddDish}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={ButtonStyles.buttonText}>
+                                    Добавить блюдо
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
             </ScrollView>
 
-            {renderRoomModal()}
-            {renderTableModal()}
+            <SelectionModal
+                visible={showRoomModal}
+                title="Выберите помещение"
+                data={rooms}
+                selectedId={selectedRoomId}
+                emptyText="Нет доступных помещений"
+                keyExtractor={(r) => r.id.toString()}
+                labelExtractor={(r) => r.name}
+                onSelect={handleRoomSelect}
+                onClose={() => setShowRoomModal(false)}
+            />
+
+            <SelectionModal
+                visible={showTableModal}
+                title="Выберите стол"
+                data={tables}
+                selectedId={selectedTableId}
+                emptyText="Нет доступных столов"
+                keyExtractor={(t) => t.id.toString()}
+                labelExtractor={(t) => `Стол ${t.number}`}
+                onSelect={handleTableSelect}
+                onClose={() => setShowTableModal(false)}
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingBottom: 32,
-    },
-    content: {
-        gap: 28,
-        paddingHorizontal: 16,
-        paddingTop: 16,
-    },
+    container: { flex: 1 },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingBottom: 32 },
+    content: { gap: 28, paddingHorizontal: 16, paddingTop: 16 },
     centerLoadingContainer: {
         flex: 1,
         justifyContent: "center",
@@ -410,17 +382,13 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
     },
-    section: {
-        gap: 12,
-    },
+    section: { gap: 12 },
     sectionTitle: {
         fontSize: 20,
         fontWeight: "700",
         color: "#fff",
         lineHeight: 28,
     },
-
-    // Picker Button
     pickerButton: {
         flexDirection: "row",
         paddingHorizontal: 16,
@@ -431,23 +399,14 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: "rgba(35, 35, 36, 1)",
     },
-    pickerText: {
-        flex: 1,
-        color: "#FFFFFF",
-        fontSize: 16,
-        lineHeight: 20,
-    },
-    pickerPlaceholder: {
-        color: "#797A80",
-    },
+    pickerText: { flex: 1, color: "#FFFFFF", fontSize: 16, lineHeight: 20 },
+    pickerPlaceholder: { color: "#797A80" },
     loadingContainer: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
         flex: 1,
     },
-
-    // Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -482,39 +441,18 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#2C2C2E",
     },
-    modalItemSelected: {
-        backgroundColor: "rgba(60, 130, 253, 0.1)",
-    },
-    modalItemText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        lineHeight: 20,
-        flex: 1,
-    },
-    modalItemTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: "600",
-    },
-    emptyContainer: {
-        padding: 40,
-        alignItems: "center",
-    },
-    emptyText: {
-        color: "#797A80",
-        fontSize: 16,
-    },
-
-    // Dishes Section
+    modalItemSelected: { backgroundColor: "rgba(60, 130, 253, 0.1)" },
+    modalItemText: { color: "#FFFFFF", fontSize: 16, lineHeight: 20, flex: 1 },
+    modalItemTextSelected: { color: "#FFFFFF", fontWeight: "600" },
+    emptyContainer: { padding: 40, alignItems: "center" },
+    emptyText: { color: "#797A80", fontSize: 16 },
     dishesContainer: {
         gap: 16,
         padding: 16,
         borderRadius: 20,
         backgroundColor: "rgba(35, 35, 36, 1)",
     },
-    emptyStateContainer: {
-        alignItems: "center",
-        paddingVertical: 24,
-    },
+    emptyStateContainer: { alignItems: "center", paddingVertical: 24 },
     emptyStateImage: {
         width: 100,
         height: 100,
@@ -527,7 +465,5 @@ const styles = StyleSheet.create({
         color: "rgba(255, 255, 255, 0.6)",
         textAlign: "center",
     },
-    addButton: {
-        width: "100%",
-    },
+    addButton: { width: "100%" },
 });
