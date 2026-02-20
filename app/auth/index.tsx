@@ -131,7 +131,7 @@ export default function Login() {
 
     const handleForgotPassword = useCallback(() => {
         // Navigate to forgot password screen
-        console.log("Navigate to forgot password");
+        Alert.alert("Обратитесь к своему админу для изменения пароля");
         // router.push("/forgot-password");
     }, []);
 
