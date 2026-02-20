@@ -148,7 +148,7 @@ export default function IndexScreen() {
                     <View style={styles.infoContent}>
                         <Text style={styles.infoLabel}>Общая сумма</Text>
                         <Text style={styles.infoValue}>
-                            {analytics?.metrics[0].value}
+                            {analytics?.metrics[0]?.value ?? 0}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>

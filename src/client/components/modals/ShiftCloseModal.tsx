@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 
 interface ShiftCloseModalProps {
-    startTime: string; // Format: "HH:MM"
+    startTime: string; // Format: "HH:MM" in UTC
     totalOrdersSold: number;
     totalRevenue: number;
     onCloseShift?: (data: {
@@ -33,17 +33,42 @@ const ShiftCloseModal = React.forwardRef<
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isClosing, setIsClosing] = useState(false);
 
-        // Get current time
-        const getCurrentTime = () => {
+        // Convert UTC "HH:MM" string to local "HH:MM" string
+        const utcTimeToLocal = (utcTimeString: string): string => {
+            const [utcHours, utcMinutes] = utcTimeString.split(":").map(Number);
+            const now = new Date();
+            // Build a Date object with the UTC time today
+            const utcDate = new Date(
+                Date.UTC(
+                    now.getUTCFullYear(),
+                    now.getUTCMonth(),
+                    now.getUTCDate(),
+                    utcHours,
+                    utcMinutes,
+                ),
+            );
+            const localHours = utcDate.getHours().toString().padStart(2, "0");
+            const localMinutes = utcDate
+                .getMinutes()
+                .toString()
+                .padStart(2, "0");
+            return `${localHours}:${localMinutes}`;
+        };
+
+        // Get current local time
+        const getCurrentTime = (): string => {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, "0");
             const minutes = now.getMinutes().toString().padStart(2, "0");
             return `${hours}:${minutes}`;
         };
 
-        // Calculate shift duration
-        const calculateDuration = () => {
-            const [startHours, startMinutes] = startTime.split(":").map(Number);
+        // Calculate shift duration using local start time
+        const calculateDuration = (): string => {
+            const localStartTime = utcTimeToLocal(startTime);
+            const [startHours, startMinutes] = localStartTime
+                .split(":")
+                .map(Number);
             const now = new Date();
             const currentHours = now.getHours();
             const currentMinutes = now.getMinutes();
@@ -53,7 +78,7 @@ const ShiftCloseModal = React.forwardRef<
                 (currentMinutes - startMinutes);
 
             if (durationMinutes < 0) {
-                durationMinutes += 24 * 60; // Add 24 hours if negative
+                durationMinutes += 24 * 60;
             }
 
             const hours = Math.floor(durationMinutes / 60);
@@ -62,25 +87,21 @@ const ShiftCloseModal = React.forwardRef<
             return `${hours} ч ${minutes} мин`;
         };
 
-        // Imperative handle for parent control
         React.useImperativeHandle(ref, () => ({
             open: () => modalRef.current?.open(),
             close: () => modalRef.current?.close(),
             isVisible: () => modalRef.current?.isVisible() || false,
         }));
 
-        // Handle modal close
         const handleClose = useCallback(() => {
             onCancel?.();
             modalRef.current?.close();
         }, [onCancel]);
 
-        // Handle modal open
         const handleOpen = useCallback(() => {
             setIsClosing(false);
         }, []);
 
-        // Handle shift close
         const handleCloseShift = useCallback(async () => {
             const endTime = getCurrentTime();
             const duration = calculateDuration();
@@ -115,7 +136,6 @@ const ShiftCloseModal = React.forwardRef<
             handleClose,
         ]);
 
-        // Render close button
         const renderCloseButton = () => (
             <TouchableOpacity
                 style={styles.closeButton}
@@ -127,7 +147,6 @@ const ShiftCloseModal = React.forwardRef<
             </TouchableOpacity>
         );
 
-        // Render header
         const renderHeader = () => (
             <View style={styles.header}>
                 <View style={styles.headerContent}>
@@ -137,13 +156,14 @@ const ShiftCloseModal = React.forwardRef<
             </View>
         );
 
-        // Render shift info
         const renderShiftInfo = () => (
             <View style={styles.infoSection}>
                 <View style={styles.infoCard}>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Время начала:</Text>
-                        <Text style={styles.infoValue}>{startTime}</Text>
+                        <Text style={styles.infoValue}>
+                            {utcTimeToLocal(startTime)}
+                        </Text>
                     </View>
 
                     <View style={styles.infoDivider} />
@@ -181,7 +201,6 @@ const ShiftCloseModal = React.forwardRef<
             </View>
         );
 
-        // Render actions
         const renderActions = () => (
             <View style={styles.actions}>
                 <TouchableOpacity

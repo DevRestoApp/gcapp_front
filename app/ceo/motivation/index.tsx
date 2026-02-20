@@ -112,8 +112,9 @@ export default function QuestManagementScreen() {
         async (data: {
             title: string;
             amount: number;
-            reward: string;
+            reward: number;
             unit: string;
+            durationDate: string;
         }) => {
             if (!createQuestAction) {
                 Alert.alert("Ошибка", "Функция создания квеста недоступна");
@@ -124,14 +125,14 @@ export default function QuestManagementScreen() {
                 // Add quest to context
                 createQuestAction({
                     title: data.title,
-                    description: data.reward,
-                    reward: data.amount,
+                    reward: data.reward,
                     target: data.amount,
-                    unit: data.unit, // Default unit
+                    unit: data.unit,
                     totalEmployees: safeEmployees.length,
                     completedEmployees: 0,
                     employeeNames: [],
                     date: selectedDate,
+                    durationDate: data.durationDate,
                 });
 
                 console.log("Quest created successfully:", data);
