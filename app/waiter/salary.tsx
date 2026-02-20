@@ -235,9 +235,8 @@ export default function SalaryScreen() {
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🎯</Text>
-            <Text style={styles.emptyText}>Нет активных квестов</Text>
-            <Text style={styles.emptySubtext}>
-                Квесты появятся в начале рабочего дня
+            <Text style={styles.emptyText}>
+                Отсутствует информация по зарплате
             </Text>
         </View>
     );

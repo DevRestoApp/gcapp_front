@@ -5,14 +5,7 @@ import React, {
     useImperativeHandle,
     forwardRef,
 } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    TextInput,
-    StyleSheet,
-    Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 
@@ -22,25 +15,22 @@ interface ShiftTimeModalProps {
     type: ModalType;
     onShiftStart?: () => Promise<void> | void;
     onShiftEdit?: (time: string) => Promise<void> | void;
-    initialTime?: string;
 }
 
 const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
-    ({ type, onShiftStart, onShiftEdit, initialTime }, ref) => {
+    ({ type, onShiftStart, onShiftEdit }, ref) => {
         const modalRef = useRef<ModalWrapperRef>(null);
-        const [time, setTime] = useState(initialTime || getCurrentTime());
+        const [currentTime, setCurrentTime] = useState(getCurrentTime());
         const [isProcessing, setIsProcessing] = useState(false);
 
         const isStartMode = type === "start";
 
-        // Expose modal methods to parent component
         useImperativeHandle(ref, () => ({
             open: () => modalRef.current?.open(),
             close: () => modalRef.current?.close(),
             isVisible: () => modalRef.current?.isVisible() || false,
         }));
 
-        // Helper function to get current time in HH:MM format
         function getCurrentTime(): string {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, "0");
@@ -48,50 +38,15 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
             return `${hours}:${minutes}`;
         }
 
-        // Validate time format
-        const isValidTime = useCallback((timeString: string): boolean => {
-            const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-            return timeRegex.test(timeString);
-        }, []);
-
-        // Handle time input change with validation
-        const handleTimeChange = useCallback((text: string) => {
-            // Allow only digits and colon
-            const cleanText = text.replace(/[^0-9:]/g, "");
-
-            // Auto-format time as user types
-            if (cleanText.length === 2 && !cleanText.includes(":")) {
-                setTime(cleanText + ":");
-            } else if (cleanText.length <= 5) {
-                setTime(cleanText);
-            }
-        }, []);
-
-        // Handle modal open
         const handleModalOpen = useCallback(() => {
-            if (isStartMode) {
-                setTime(getCurrentTime());
-            } else if (initialTime) {
-                setTime(initialTime);
-            }
-        }, [isStartMode, initialTime]);
+            setCurrentTime(getCurrentTime());
+        }, []);
 
-        // Handle modal close
         const handleModalClose = useCallback(() => {
             setIsProcessing(false);
         }, []);
 
-        // Handle shift start
         const handleStartShift = useCallback(async () => {
-            if (!isValidTime(time)) {
-                Alert.alert(
-                    "Неверный формат времени",
-                    "Пожалуйста, введите время в формате ЧЧ:ММ (например, 09:30)",
-                    [{ text: "OK" }],
-                );
-                return;
-            }
-
             if (!onShiftStart) {
                 console.error("onShiftStart callback is not provided");
                 return;
@@ -100,15 +55,13 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
             setIsProcessing(true);
 
             try {
-                // Call the parent's shift start function
                 await onShiftStart();
-
-                // Close modal after successful start
                 modalRef.current?.close();
-
-                Alert.alert("Смена начата", `Время начала смены: ${time}`, [
-                    { text: "OK" },
-                ]);
+                Alert.alert(
+                    "Смена начата",
+                    `Время начала смены: ${currentTime}`,
+                    [{ text: "OK" }],
+                );
             } catch (error) {
                 console.error("Failed to start shift:", error);
                 Alert.alert(
@@ -119,19 +72,9 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
             } finally {
                 setIsProcessing(false);
             }
-        }, [time, isValidTime, onShiftStart]);
+        }, [currentTime, onShiftStart]);
 
-        // Handle shift edit
         const handleEditShift = useCallback(async () => {
-            if (!isValidTime(time)) {
-                Alert.alert(
-                    "Неверный формат времени",
-                    "Пожалуйста, введите время в формате ЧЧ:ММ (например, 09:30)",
-                    [{ text: "OK" }],
-                );
-                return;
-            }
-
             if (!onShiftEdit) {
                 console.error("onShiftEdit callback is not provided");
                 return;
@@ -140,10 +83,9 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
             setIsProcessing(true);
 
             try {
-                await onShiftEdit(time);
+                await onShiftEdit(currentTime);
                 modalRef.current?.close();
-
-                Alert.alert("Время изменено", `Новое время: ${time}`, [
+                Alert.alert("Время изменено", `Новое время: ${currentTime}`, [
                     { text: "OK" },
                 ]);
             } catch (error) {
@@ -156,7 +98,7 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
             } finally {
                 setIsProcessing(false);
             }
-        }, [time, isValidTime, onShiftEdit]);
+        }, [currentTime, onShiftEdit]);
 
         const modalTitle = isStartMode ? "Начало смены" : "Изменить время";
         const modalSubtitle = isStartMode
@@ -173,7 +115,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
 
         return (
             <>
-                {/* Trigger button - only show for start mode */}
                 {isStartMode && (
                     <View style={styles.container}>
                         <TouchableOpacity
@@ -188,7 +129,6 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                     </View>
                 )}
 
-                {/* Modal */}
                 <ModalWrapper
                     ref={modalRef}
                     onOpen={handleModalOpen}
@@ -203,35 +143,12 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                             <Text style={styles.subtitle}>{modalSubtitle}</Text>
                         </View>
 
-                        {/* Time input section */}
-                        <View style={styles.inputSection}>
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.inputLabel}>
-                                    Время начала
-                                </Text>
-                                <TextInput
-                                    value={time}
-                                    onChangeText={handleTimeChange}
-                                    placeholder="09:30"
-                                    placeholderTextColor="#797A80"
-                                    style={[
-                                        styles.timeInput,
-                                        !isValidTime(time) &&
-                                            time.length > 0 &&
-                                            styles.timeInputError,
-                                    ]}
-                                    keyboardType="numeric"
-                                    maxLength={5}
-                                    returnKeyType="done"
-                                    onSubmitEditing={primaryAction}
-                                    editable={!isProcessing}
-                                />
-                                {!isValidTime(time) && time.length > 0 && (
-                                    <Text style={styles.errorText}>
-                                        Неверный формат времени (ЧЧ:ММ)
-                                    </Text>
-                                )}
-                            </View>
+                        {/* Current time display */}
+                        <View style={styles.timeSection}>
+                            <Text style={styles.timeLabel}>Время начала</Text>
+                            <Text style={styles.timeDisplay}>
+                                {currentTime}
+                            </Text>
                         </View>
 
                         {/* Actions */}
@@ -255,17 +172,17 @@ const ShiftTimeModal = forwardRef<ModalWrapperRef, ShiftTimeModalProps>(
                                     isStartMode
                                         ? styles.primaryButtonStart
                                         : styles.primaryButtonEdit,
-                                    (!isValidTime(time) || isProcessing) &&
+                                    isProcessing &&
                                         styles.primaryButtonDisabled,
                                 ]}
                                 onPress={primaryAction}
-                                disabled={!isValidTime(time) || isProcessing}
+                                disabled={isProcessing}
                                 activeOpacity={0.8}
                             >
                                 <Text
                                     style={[
                                         styles.primaryButtonText,
-                                        (!isValidTime(time) || isProcessing) &&
+                                        isProcessing &&
                                             styles.primaryButtonTextDisabled,
                                     ]}
                                 >
@@ -316,38 +233,24 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
 
-    // Input section styles
-    inputSection: {
-        marginBottom: 24,
-    },
-    inputContainer: {
+    // Time display styles
+    timeSection: {
         backgroundColor: "rgba(43,43,44,1)",
         borderRadius: 16,
         padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: "transparent",
+        marginBottom: 24,
+        alignItems: "center",
     },
-    inputLabel: {
+    timeLabel: {
         fontSize: 12,
         color: "rgba(121,122,128,1)",
         marginBottom: 8,
         fontWeight: "500",
     },
-    timeInput: {
+    timeDisplay: {
         color: "white",
-        fontSize: 18,
-        fontWeight: "600",
-        paddingVertical: 4,
-        textAlign: "center",
-    },
-    timeInputError: {
-        color: "#FF6B6B",
-    },
-    errorText: {
-        color: "#FF6B6B",
-        fontSize: 12,
-        marginTop: 4,
+        fontSize: 32,
+        fontWeight: "700",
         textAlign: "center",
     },
 
