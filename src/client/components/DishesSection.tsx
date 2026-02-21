@@ -7,18 +7,10 @@ import {
     StyleSheet,
 } from "react-native";
 import DishItem from "./waiter/DishItem";
-
-interface Dish {
-    id: string;
-    name: string;
-    description: string;
-    price: string;
-    image: string;
-    category: string;
-}
+import { DishItemCreateOrderType } from "@/src/server/types/waiter";
 
 interface DishesSectionProps {
-    dishes: Dish[];
+    dishes: DishItemCreateOrderType[];
     onDishPress: (dishId: string) => void;
     onAddMoreDishes: () => void;
 }
