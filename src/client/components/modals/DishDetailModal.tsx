@@ -1,6 +1,7 @@
 import React, {
     useRef,
     useState,
+    useMemo,
     forwardRef,
     useImperativeHandle,
     useEffect,
@@ -16,23 +17,17 @@ import {
 } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 import Loading from "@/src/client/components/Loading";
+import { CommentInput } from "@/src/client/components/form/Comment";
 
+import { Dish } from "@/src/client/types/waiter";
 const { width: screenWidth } = Dimensions.get("window");
-
-interface Dish {
-    id: string;
-    name: string;
-    description: string;
-    price: string;
-    image: string;
-    category?: string;
-}
 
 interface DishDetailModalProps {
     dish: Dish;
     initialQuantity?: number;
-    onQuantityChange?: (quantity: number) => void;
-    onAddToOrder?: (quantity: number) => void;
+    initialComment?: string;
+    /** quantity + comment — caller writes to WaiterProvider */
+    onAddToOrder?: (quantity: number, comment?: string) => void;
     onClose?: () => void;
 }
 
@@ -41,94 +36,84 @@ export type DishDetailModalRef = {
     close: () => void;
 };
 
+// ============================================================================
+// Helpers
+// ============================================================================
+
+const parsePriceNumber = (price: string): number => {
+    const match = price.match(/(\d[\d\s]*)/);
+    if (!match) return 0;
+    return parseInt(match[1].replace(/\s/g, ""), 10);
+};
+
+const formatPriceStr = (price: string): string =>
+    `${parsePriceNumber(price).toLocaleString()} тг`;
+
+// ============================================================================
+// Component
+// ============================================================================
+
 const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
     (
-        { dish, initialQuantity = 0, onQuantityChange, onAddToOrder, onClose },
+        {
+            dish,
+            initialQuantity = 0,
+            initialComment = "",
+            onAddToOrder,
+            onClose,
+        },
         ref,
     ) => {
-        // Refs
         const modalRef = useRef<ModalWrapperRef>(null);
 
-        // State
         const [quantity, setQuantity] = useState(initialQuantity);
+        const [comment, setComment] = useState(initialComment);
         const [imageLoading, setImageLoading] = useState(true);
         const [imageError, setImageError] = useState(false);
 
-        // Sync quantity with prop changes
+        // Sync when dish changes or modal re-opens with different dish
         useEffect(() => {
             setQuantity(initialQuantity);
-        }, [initialQuantity, dish.id]); // Reset when dish changes
+            setComment(initialComment);
+        }, [initialQuantity, initialComment, dish.id]);
 
-        // Reset states when dish changes
         useEffect(() => {
             setImageLoading(true);
             setImageError(false);
         }, [dish.id]);
 
-        // Imperative handle for parent control
         useImperativeHandle(ref, () => ({
             open: () => modalRef.current?.open(),
             close: () => modalRef.current?.close(),
         }));
 
-        // Event handlers with useCallback
         const handleClose = useCallback(() => {
             onClose?.();
             modalRef.current?.close();
         }, [onClose]);
 
         const handleDecrease = useCallback(() => {
-            if (quantity > 0) {
-                const newQuantity = quantity - 1;
-                setQuantity(newQuantity);
-                onQuantityChange?.(newQuantity);
-            }
-        }, [quantity, onQuantityChange]);
+            if (quantity <= 0) return;
+            setQuantity((q) => q - 1);
+        }, [quantity]);
 
         const handleIncrease = useCallback(() => {
-            const newQuantity = quantity + 1;
-            setQuantity(newQuantity);
-            onQuantityChange?.(newQuantity);
-        }, [quantity, onQuantityChange]);
+            setQuantity((q) => q + 1);
+        }, []);
 
         const handleAddToOrder = useCallback(() => {
-            if (quantity > 0) {
-                onAddToOrder?.(quantity);
-                handleClose();
-            }
-        }, [quantity, onAddToOrder, handleClose]);
+            if (quantity <= 0) return;
+            onAddToOrder?.(quantity, comment);
+        }, [quantity, comment, onAddToOrder]);
 
-        const handleImageLoad = useCallback(() => {
-            setImageLoading(false);
-        }, []);
+        const totalPrice = useMemo(() => {
+            if (quantity <= 0) return null;
+            const unit = parsePriceNumber(dish.price);
+            return `${(unit * quantity).toLocaleString()} тг`;
+        }, [dish.price, quantity]);
 
-        const handleImageError = useCallback(() => {
-            setImageLoading(false);
-            setImageError(true);
-        }, []);
+        // ── Render helpers ────────────────────────────────────────────────────
 
-        // Helper functions
-        const formatPrice = (price: string) => {
-            // Extract number from price string and format it
-            const match = price.match(/(\d[\d\s]*)/);
-            if (match) {
-                const number = match[1].replace(/\s/g, "");
-                return `${parseInt(number).toLocaleString()} тг`;
-            }
-            return price;
-        };
-
-        const getTotalPrice = () => {
-            const match = dish.price.match(/(\d[\d\s]*)/);
-            if (match && quantity > 0) {
-                const unitPrice = parseInt(match[1].replace(/\s/g, ""));
-                const total = unitPrice * quantity;
-                return `${total.toLocaleString()} тг`;
-            }
-            return null;
-        };
-
-        // Render methods
         const renderImageSection = () => (
             <View style={styles.imageContainer}>
                 {imageError ? (
@@ -142,8 +127,11 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         <Image
                             source={{ uri: dish.image }}
                             style={styles.image}
-                            onLoad={handleImageLoad}
-                            onError={handleImageError}
+                            onLoad={() => setImageLoading(false)}
+                            onError={() => {
+                                setImageLoading(false);
+                                setImageError(true);
+                            }}
                             resizeMode="cover"
                         />
                         {imageLoading && (
@@ -153,7 +141,6 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         )}
                     </>
                 )}
-
                 <TouchableOpacity
                     style={styles.closeButton}
                     onPress={handleClose}
@@ -170,22 +157,20 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                 <Text style={styles.title} numberOfLines={2}>
                     {dish.name}
                 </Text>
-
                 <Text style={styles.description} numberOfLines={3}>
                     {dish.description}
                 </Text>
-
                 <View style={styles.divider} />
-
                 <View style={styles.priceSection}>
                     <Text style={styles.priceLabel}>Цена за порцию:</Text>
-                    <Text style={styles.price}>{formatPrice(dish.price)}</Text>
+                    <Text style={styles.price}>
+                        {formatPriceStr(dish.price)}
+                    </Text>
                 </View>
-
-                {quantity > 0 && (
+                {totalPrice && (
                     <View style={styles.totalSection}>
                         <Text style={styles.totalLabel}>Общая стоимость:</Text>
-                        <Text style={styles.totalPrice}>{getTotalPrice()}</Text>
+                        <Text style={styles.totalPrice}>{totalPrice}</Text>
                     </View>
                 )}
             </View>
@@ -223,11 +208,9 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                                     −
                                 </Text>
                             </TouchableOpacity>
-
                             <View style={styles.qtyValueContainer}>
                                 <Text style={styles.qtyValue}>{quantity}</Text>
                             </View>
-
                             <TouchableOpacity
                                 onPress={handleIncrease}
                                 style={styles.qtyButton}
@@ -244,7 +227,15 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         </View>
                     </View>
 
-                    {/* Add to order button */}
+                    {/* Comment */}
+                    <CommentInput
+                        value={comment}
+                        onChange={setComment}
+                        placeholder="Комментарий к блюду..."
+                        maxLength={200}
+                    />
+
+                    {/* Add to order */}
                     <TouchableOpacity
                         style={[
                             styles.addButton,
@@ -284,6 +275,10 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
 DishDetailModal.displayName = "DishDetailModal";
 export default DishDetailModal;
 
+// ============================================================================
+// Styles
+// ============================================================================
+
 const styles = StyleSheet.create({
     modalContainer: {
         width: "100%",
@@ -297,17 +292,12 @@ const styles = StyleSheet.create({
         shadowRadius: 20,
         elevation: 10,
     },
-
-    // Image section
     imageContainer: {
         height: 220,
         position: "relative",
         backgroundColor: "rgba(43, 43, 44, 1)",
     },
-    image: {
-        width: "100%",
-        height: "100%",
-    },
+    image: { width: "100%", height: "100%" },
     imagePlaceholder: {
         width: "100%",
         height: "100%",
@@ -315,10 +305,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "rgba(43, 43, 44, 1)",
     },
-    imagePlaceholderText: {
-        color: "rgba(255, 255, 255, 0.5)",
-        fontSize: 14,
-    },
+    imagePlaceholderText: { color: "rgba(255, 255, 255, 0.5)", fontSize: 14 },
     imageLoader: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: "center",
@@ -336,16 +323,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    closeText: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "600",
-    },
-
-    // Content section
-    content: {
-        padding: 20,
-    },
+    closeText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+    content: { padding: 20 },
     title: {
         color: "#fff",
         fontSize: 22,
@@ -364,23 +343,14 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(43, 43, 44, 1)",
         marginVertical: 16,
     },
-
-    // Price section
     priceSection: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 8,
     },
-    priceLabel: {
-        color: "rgba(121, 122, 128, 1)",
-        fontSize: 14,
-    },
-    price: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "bold",
-    },
+    priceLabel: { color: "rgba(121, 122, 128, 1)", fontSize: 14 },
+    price: { color: "#fff", fontSize: 18, fontWeight: "bold" },
     totalSection: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -390,27 +360,11 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: "rgba(43, 43, 44, 1)",
     },
-    totalLabel: {
-        color: "rgba(121, 122, 128, 1)",
-        fontSize: 14,
-    },
-    totalPrice: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "bold",
-    },
-
-    // Actions section
-    actionsContainer: {
-        padding: 20,
-        paddingTop: 0,
-    },
-    actions: {
-        gap: 16,
-    },
-    quantitySection: {
-        alignItems: "center",
-    },
+    totalLabel: { color: "rgba(121, 122, 128, 1)", fontSize: 14 },
+    totalPrice: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+    actionsContainer: { padding: 20, paddingTop: 0 },
+    actions: { gap: 16 },
+    quantitySection: { alignItems: "center" },
     quantityLabel: {
         color: "rgba(121, 122, 128, 1)",
         fontSize: 14,
@@ -431,19 +385,10 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         borderRadius: 16,
-        backgroundColor: "transparent",
     },
-    qtyButtonDisabled: {
-        opacity: 0.3,
-    },
-    qtyText: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "600",
-    },
-    qtyTextDisabled: {
-        color: "rgba(255, 255, 255, 0.3)",
-    },
+    qtyButtonDisabled: { opacity: 0.3 },
+    qtyText: { color: "#fff", fontSize: 20, fontWeight: "600" },
+    qtyTextDisabled: { color: "rgba(255, 255, 255, 0.3)" },
     qtyValueContainer: {
         flex: 1,
         alignItems: "center",
@@ -457,8 +402,6 @@ const styles = StyleSheet.create({
         minWidth: 30,
         textAlign: "center",
     },
-
-    // Add button
     addButton: {
         height: 52,
         borderRadius: 26,
@@ -476,12 +419,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0,
         elevation: 0,
     },
-    addButtonText: {
-        color: "#000",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    addButtonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.4)",
-    },
+    addButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
+    addButtonTextDisabled: { color: "rgba(255, 255, 255, 0.4)" },
 });

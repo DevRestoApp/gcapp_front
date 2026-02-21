@@ -17,8 +17,13 @@ import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
-import { RoomsType, TablesType } from "@/src/server/types/waiter";
+import {
+    CreateOrderItem,
+    RoomsType,
+    TablesType,
+} from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
+import DishesSection from "@/src/client/components/DishesSection";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -167,7 +172,8 @@ export default function NewOrder() {
         selectedTable,
         selectedRoom,
     } = useWaiter();
-    const { selectedLocation } = useAuth();
+    const { selectedLocation, user } = useAuth();
+    const { selectedDishes, createOrderWrapper } = useWaiter();
 
     const [selectedRoomId, setSelectedRoomId] = useState("");
     const [selectedTableId, setSelectedTableId] = useState("");
@@ -260,6 +266,31 @@ export default function NewOrder() {
         router.push("/waiter/menu");
     };
 
+    const handleCreateOrder = async () => {
+        try {
+            // TODO доавить что то для смены guest из константы на другое
+            console.log("selectedLocation", selectedLocation);
+            console.log("selectedTable", selectedTable);
+            await createOrderWrapper({
+                organizationId: selectedLocation,
+                tableId: Number(selectedTable?.id),
+                waiterId: user?.id,
+                guests: 2,
+                items: selectedDishes.map((el) => {
+                    return {
+                        productId: el.productId,
+                        amount: el.amount,
+                        price: el.price,
+                        sum: el.sum,
+                        comment: el.comment,
+                    };
+                }),
+            });
+        } catch (e) {
+            console.log(`Error creating order: ${e.message} \n ${e.stack}`);
+        }
+    };
+
     if (roomsLoading && rooms.length === 0) {
         return (
             <SafeAreaView
@@ -271,6 +302,22 @@ export default function NewOrder() {
             </SafeAreaView>
         );
     }
+    const renderCreateOrderButton = () => {
+        const dishesValid = selectedDishes.length > 0;
+        const tableValid = !!selectedTableId;
+        const roomValid = !!selectedRoomId;
+
+        if (!dishesValid || !tableValid || !roomValid) return null;
+        return (
+            <TouchableOpacity
+                style={[ButtonStyles.buttonWhite, styles.addButton]}
+                onPress={handleCreateOrder}
+                activeOpacity={0.7}
+            >
+                <Text style={ButtonStyles.buttonText}>Создать заказ</Text>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
@@ -308,34 +355,48 @@ export default function NewOrder() {
                     </View>
 
                     {/* Dishes section */}
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Блюда (0)</Text>
-                        <View style={styles.dishesContainer}>
-                            <View style={styles.emptyStateContainer}>
-                                <Image
-                                    source={{
-                                        uri: "https://api.builder.io/api/v1/image/assets/TEMP/8cbeba4afdd0ca5e403967f3817b6ce47b0fb0ba?width=200",
-                                    }}
-                                    style={styles.emptyStateImage}
-                                />
-                                <Text style={styles.emptyStateText}>
-                                    Нет списка блюд
-                                </Text>
-                            </View>
-                            <TouchableOpacity
-                                style={[
-                                    ButtonStyles.buttonWhite,
-                                    styles.addButton,
-                                ]}
-                                onPress={handleAddDish}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={ButtonStyles.buttonText}>
-                                    Добавить блюдо
-                                </Text>
-                            </TouchableOpacity>
+                    {selectedDishes.length > 0 ? (
+                        <View style={styles.section}>
+                            <DishesSection
+                                dishes={selectedDishes}
+                                onDishPress={() => null}
+                                onAddMoreDishes={() =>
+                                    router.push("/waiter/menu")
+                                }
+                            ></DishesSection>
                         </View>
-                    </View>
+                    ) : (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Блюда (0)</Text>
+                            <View style={styles.dishesContainer}>
+                                <View style={styles.emptyStateContainer}>
+                                    <Image
+                                        source={{
+                                            uri: "https://api.builder.io/api/v1/image/assets/TEMP/8cbeba4afdd0ca5e403967f3817b6ce47b0fb0ba?width=200",
+                                        }}
+                                        style={styles.emptyStateImage}
+                                    />
+                                    <Text style={styles.emptyStateText}>
+                                        Нет списка блюд
+                                    </Text>
+                                </View>
+                                <TouchableOpacity
+                                    style={[
+                                        ButtonStyles.buttonWhite,
+                                        styles.addButton,
+                                    ]}
+                                    onPress={handleAddDish}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={ButtonStyles.buttonText}>
+                                        Добавить блюдо
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {renderCreateOrderButton()}
                 </View>
             </ScrollView>
 

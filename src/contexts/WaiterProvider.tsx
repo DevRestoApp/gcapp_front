@@ -16,6 +16,7 @@ import {
     CreateOrdersInputType,
     PayOrderType,
     CreateOrdersType,
+    Dish,
 } from "@/src/server/types/waiter";
 
 import {
@@ -85,6 +86,8 @@ interface WaiterContextType {
     setSelectedTable: (table: SelectedTableContext) => void;
     selectedRoom: SelectedRoomContext;
     setSelectedRoom: (room: SelectedRoomContext) => void;
+    selectedDishes: Dish[];
+    setSelectedDishes: (dishes: Dish[]) => void;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -97,6 +100,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [orders, setOrders] = useState<WaiterOrdersInputType | null>(null);
     const [shiftStatus, setShiftStatus] =
         useState<WaiterShiftStatusType | null>(null);
+    const [selectedDishes, setSelectedDishes] = useState<Dish[]>([]);
 
     // NEW ORDER SELECTED tables
     const [selectedTable, setSelectedTable] =
@@ -280,6 +284,8 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 setSelectedTable,
                 selectedRoom,
                 setSelectedRoom,
+                selectedDishes,
+                setSelectedDishes,
             }}
         >
             {children}
