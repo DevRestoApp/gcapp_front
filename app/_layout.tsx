@@ -6,20 +6,6 @@ import { useAuth } from "@/src/contexts/AuthContext";
 
 function AuthWrapper() {
     const { token } = useAuth();
-    const router = useRouter();
-    const segments = useSegments();
-
-    useEffect(() => {
-        if (token === undefined) return;
-
-        const inAuthGroup = segments[0] === "auth";
-
-        if (!token && !inAuthGroup) {
-            router.replace("/auth");
-        } else if (token && inAuthGroup) {
-            router.replace("/ceo");
-        }
-    }, [token, segments]);
 
     if (token === undefined) {
         return (

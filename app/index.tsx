@@ -78,11 +78,13 @@ export default function RolePicker({
     availableRoles = DEFAULT_ROLES,
 }: RolePickerProps = {}) {
     const router = useRouter();
-    const { fetchOrganizations, selectedLocation, setSelectedLocation } =
+    const { token, fetchOrganizations, selectedLocation, setSelectedLocation } =
         useAuth();
 
     // Controls which screen is shown: "enter" or "rolePicker"
-    const [screen, setScreen] = useState<"enter" | "rolePicker">("enter");
+    const [screen, setScreen] = useState<"enter" | "rolePicker">(
+        token ? "rolePicker" : "enter",
+    );
 
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -257,7 +259,7 @@ export default function RolePicker({
                     </Text>
                     <TouchableOpacity
                         style={enterStyles.button}
-                        onPress={() => setScreen("rolePicker")}
+                        onPress={() => router.push("/auth")}
                         activeOpacity={0.8}
                     >
                         <Text style={enterStyles.buttonText}>Войти</Text>
