@@ -10,7 +10,7 @@ export interface Dish {
     id: string;
     name: string;
     description: string;
-    price: string;
+    price: string | number;
     image: string;
     category: string;
 }

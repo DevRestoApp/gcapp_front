@@ -7,27 +7,89 @@ import {
     StyleSheet,
 } from "react-native";
 import DishItem from "./waiter/DishItem";
-
-interface Dish {
-    id: string;
-    name: string;
-    description: string;
-    price: string;
-    image: string;
-    category: string;
-}
+import { DishItemCreateOrderType } from "@/src/server/types/waiter";
 
 interface DishesSectionProps {
-    dishes: Dish[];
+    dishes: DishItemCreateOrderType[];
     onDishPress: (dishId: string) => void;
     onAddMoreDishes: () => void;
 }
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Safely formats price regardless of whether it arrives as number or string.
+ */
+const formatPrice = (price: number | string): string => {
+    if (typeof price === "number") {
+        return `${price.toLocaleString("ru-RU")} тг`;
+    }
+    // Already a formatted string — return as-is
+    const match = price.match(/(\d[\d\s]*)/);
+    if (match) {
+        return `${parseInt(match[1].replace(/\s/g, ""), 10).toLocaleString("ru-RU")} тг`;
+    }
+    return price;
+};
+
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function DishesSection({
     dishes,
     onDishPress,
     onAddMoreDishes,
 }: DishesSectionProps) {
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>🍽️</Text>
+            <Text style={styles.emptyText}>Нет доступных блюд</Text>
+            <TouchableOpacity
+                style={styles.emptyActionButton}
+                onPress={onAddMoreDishes}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.emptyActionButtonText}>Перейти к меню</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    const renderDishList = () => (
+        <>
+            <ScrollView
+                style={styles.dishesList}
+                contentContainerStyle={styles.dishesContent}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
+            >
+                {dishes.map((dish) => (
+                    <DishItem
+                        key={String(dish.id)}
+                        id={String(dish.id)}
+                        name={dish.name}
+                        description={dish.description || ""}
+                        price={formatPrice(dish.price)}
+                        image={dish.image || ""}
+                        variant="informative"
+                        onPress={onDishPress}
+                        maxLines={2}
+                    />
+                ))}
+            </ScrollView>
+
+            <TouchableOpacity
+                style={styles.addDishButton}
+                onPress={onAddMoreDishes}
+                activeOpacity={0.8}
+            >
+                <Text style={styles.addDishButtonText}>+ Добавить блюдо</Text>
+            </TouchableOpacity>
+        </>
+    );
+
     return (
         <View style={styles.section}>
             <View style={styles.dishesHeader}>
@@ -44,74 +106,31 @@ export default function DishesSection({
             </View>
 
             <View style={styles.dishesContainer}>
-                {dishes.length === 0 ? (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyStateIcon}>🍽️</Text>
-                        <Text style={styles.emptyText}>Нет доступных блюд</Text>
-                        <TouchableOpacity
-                            style={styles.emptyActionButton}
-                            onPress={onAddMoreDishes}
-                            activeOpacity={0.7}
-                        >
-                            <Text style={styles.emptyActionButtonText}>
-                                Перейти к меню
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                ) : (
-                    <>
-                        <ScrollView
-                            style={styles.dishesList}
-                            contentContainerStyle={styles.dishesContent}
-                            showsVerticalScrollIndicator={false}
-                            nestedScrollEnabled
-                        >
-                            {dishes.map((dish) => (
-                                <DishItem
-                                    key={dish.id}
-                                    id={dish.id}
-                                    name={dish.name}
-                                    description={dish.description}
-                                    price={dish.price}
-                                    image={dish.image}
-                                    variant="informative"
-                                    onPress={onDishPress}
-                                    maxLines={2}
-                                />
-                            ))}
-                        </ScrollView>
-
-                        <TouchableOpacity
-                            style={styles.addDishButton}
-                            onPress={onAddMoreDishes}
-                            activeOpacity={0.8}
-                        >
-                            <Text style={styles.addDishButtonText}>
-                                + Добавить блюдо
-                            </Text>
-                        </TouchableOpacity>
-                    </>
-                )}
+                {dishes.length === 0 ? renderEmptyState() : renderDishList()}
             </View>
         </View>
     );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     section: {
         gap: 16,
         width: "100%",
     },
+    dishesHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
     title: {
         fontSize: 20,
         fontWeight: "700",
         color: "white",
         lineHeight: 28,
-    },
-    dishesHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
     },
     addMoreButton: {
         paddingHorizontal: 12,

@@ -1,3 +1,5 @@
+import { Dish } from "@/src/client/types/waiter";
+
 export interface TablesInputsType {
     room_id?: number;
     status?: "availables" | "occupied" | "disabled" | "all";
@@ -178,4 +180,12 @@ export interface PayOrderType {
     message: string;
     order_id: number;
     status: string;
+}
+
+export interface DishItemCreateOrderType extends Dish {
+    productId: number;
+    amount: number;
+    price: number;
+    sum: number;
+    comment?: string;
 }

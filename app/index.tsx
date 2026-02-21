@@ -14,12 +14,13 @@ import {
     StatusBar,
     Modal,
     FlatList,
-    Platform,
+    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Ellipse, Path } from "react-native-svg";
+import * as Location from "expo-location";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
@@ -43,12 +44,18 @@ interface Organization {
     code: string;
     id: number;
     is_active: boolean;
+    // Add these to your org data from API when available
+    latitude?: number;
+    longitude?: number;
 }
 
 interface RolePickerProps {
     onRoleSelect?: (roleId: string) => void;
     availableRoles?: Role[];
-    locations?: Organization[];
+    /** Skip geo check — set true in dev/staging builds */
+    skipLocationCheck?: boolean;
+    /** Allowed radius in meters (default: 200m) */
+    allowedRadiusMeters?: number;
 }
 
 // ============================================================================
@@ -68,6 +75,31 @@ const NAVIGATION_ROUTES = {
 } as const;
 
 const MOCK_DELAY = 500;
+const DEFAULT_RADIUS_METERS = 200;
+
+// ============================================================================
+// Geo Helpers
+// ============================================================================
+
+/**
+ * Haversine formula — returns distance in meters between two coords.
+ */
+function getDistanceMeters(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+): number {
+    const R = 6371000; // Earth radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // ============================================================================
 // Main Component
@@ -76,19 +108,26 @@ const MOCK_DELAY = 500;
 export default function RolePicker({
     onRoleSelect,
     availableRoles = DEFAULT_ROLES,
+    skipLocationCheck = false, // ← set true in dev builds via app config
+    allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
-    const { fetchOrganizations, selectedLocation, setSelectedLocation } =
+    const { token, fetchOrganizations, selectedLocation, setSelectedLocation } =
         useAuth();
 
-    // Controls which screen is shown: "enter" or "rolePicker"
-    const [screen, setScreen] = useState<"enter" | "rolePicker">("enter");
+    const [screen, setScreen] = useState<"enter" | "rolePicker">(
+        token ? "rolePicker" : "enter",
+    );
 
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+
+    // Geo state
+    const [isCheckingLocation, setIsCheckingLocation] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
 
     const hasFetchedOrgs = useRef(false);
 
@@ -114,41 +153,114 @@ export default function RolePicker({
             } else if (selectedRole !== "waiter") {
                 setOrganizations([]);
                 hasFetchedOrgs.current = false;
+                setLocationError(null);
             }
         };
-
         loadOrganizations();
     }, [selectedRole]);
 
     // ========================================================================
-    // Computed Values
+    // Computed
     // ========================================================================
 
     const LOCATIONS = useMemo(() => {
-        if (organizations && organizations.length > 0) {
-            return organizations
-                .filter((org) => org.is_active)
-                .map((org) => ({
-                    label: org.name,
-                    value: org.id,
-                }));
-        }
-        return [];
+        if (!organizations?.length) return [];
+        return organizations
+            .filter((org) => org.is_active)
+            .map((org) => ({ label: org.name, value: org.id, org }));
     }, [organizations]);
 
     const needsLocationSelection = selectedRole === "waiter";
     const canProceed =
         selectedRole && (!needsLocationSelection || selectedLocation);
 
-    // ========================================================================
-    // Helper Functions
-    // ========================================================================
-
-    const getLocationLabel = (value: string) => {
+    const getLocationLabel = (value: string | number) => {
         if (!value) return "Выбрать локацию...";
         const item = LOCATIONS.find((l) => l.value === value);
         return item ? item.label : "Выбрать локацию...";
     };
+
+    // ========================================================================
+    // Geo Verification
+    // ========================================================================
+
+    /**
+     * Requests device location and checks if user is within allowed radius
+     * of the selected organization. Returns true if check passes.
+     */
+    const verifyUserLocation = useCallback(async (): Promise<boolean> => {
+        // Dev bypass
+        if (skipLocationCheck) {
+            console.log("[GeoCheck] Skipped (skipLocationCheck=true)");
+            return true;
+        }
+
+        const selectedOrg = LOCATIONS.find(
+            (l) => l.value === selectedLocation,
+        )?.org;
+
+        // If the org has no coords stored yet — allow entry and warn in console
+        if (!selectedOrg?.latitude || !selectedOrg?.longitude) {
+            console.warn(
+                "[GeoCheck] Organization has no coordinates — skipping check",
+            );
+            return true;
+        }
+
+        setIsCheckingLocation(true);
+        setLocationError(null);
+
+        try {
+            // Request permission
+            const { status } =
+                await Location.requestForegroundPermissionsAsync();
+            console.log("[GeoCheck] Location permission status:", status);
+            if (status !== "granted") {
+                setLocationError(
+                    "Нет доступа к геолокации. Разрешите доступ в настройках.",
+                );
+                return false;
+            }
+
+            // Get current position (high accuracy, 10s timeout)
+            const position = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+            });
+
+            const distance = getDistanceMeters(
+                position.coords.latitude,
+                position.coords.longitude,
+                selectedOrg.latitude,
+                selectedOrg.longitude,
+            );
+
+            console.log(
+                `[GeoCheck] Distance to org: ${Math.round(distance)}m (limit: ${allowedRadiusMeters}m)`,
+            );
+
+            if (distance > allowedRadiusMeters) {
+                const distanceText =
+                    distance >= 1000
+                        ? `${(distance / 1000).toFixed(1)} км`
+                        : `${Math.round(distance)} м`;
+
+                setLocationError(
+                    `Вы находитесь слишком далеко от заведения (${distanceText}). Войти можно только на месте работы.`,
+                );
+                return false;
+            }
+
+            return true;
+        } catch (err) {
+            console.error("[GeoCheck] Error:", err);
+            setLocationError(
+                "Не удалось определить местоположение. Попробуйте снова.",
+            );
+            return false;
+        } finally {
+            setIsCheckingLocation(false);
+        }
+    }, [skipLocationCheck, selectedLocation, LOCATIONS, allowedRadiusMeters]);
 
     // ========================================================================
     // Event Handlers
@@ -157,9 +269,8 @@ export default function RolePicker({
     const handleRoleSelect = useCallback(
         (roleId: string) => {
             setSelectedRole(roleId);
-            if (roleId !== "waiter") {
-                setSelectedLocation("");
-            }
+            setLocationError(null);
+            if (roleId !== "waiter") setSelectedLocation("");
             onRoleSelect?.(roleId);
         },
         [onRoleSelect],
@@ -167,6 +278,7 @@ export default function RolePicker({
 
     const handleLocationSelect = useCallback((locationId: number) => {
         setSelectedLocation(locationId);
+        setLocationError(null);
         setShowLocationModal(false);
     }, []);
 
@@ -174,23 +286,35 @@ export default function RolePicker({
         if (!selectedRole) return;
         if (needsLocationSelection && !selectedLocation) return;
 
-        setIsLoading(true);
+        // Run geo check for waiters
+        console.log("here1");
+        if (needsLocationSelection) {
+            console.log("here");
+            const locationOk = await verifyUserLocation();
+            console.log("locationOk", locationOk);
+            if (!locationOk) return; // Error already set in state — shown in UI
+        }
 
+        setIsLoading(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, MOCK_DELAY));
-
             const route =
                 NAVIGATION_ROUTES[
                     selectedRole as keyof typeof NAVIGATION_ROUTES
                 ] || "/";
-
             router.replace(route);
         } catch (error) {
             console.error("Error during role selection:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [selectedRole, selectedLocation, needsLocationSelection, router]);
+    }, [
+        selectedRole,
+        selectedLocation,
+        needsLocationSelection,
+        verifyUserLocation,
+        router,
+    ]);
 
     // ========================================================================
     // Enter Screen
@@ -201,7 +325,6 @@ export default function RolePicker({
             <View style={enterStyles.container}>
                 <StatusBar barStyle="light-content" backgroundColor="#19191A" />
 
-                {/* Gradient background blobs */}
                 <View style={enterStyles.blobContainer} pointerEvents="none">
                     <Svg width={735} height={959} viewBox="0 0 735 959">
                         <Ellipse
@@ -240,7 +363,6 @@ export default function RolePicker({
                     />
                 </View>
 
-                {/* Logo */}
                 <View style={enterStyles.logoContainer}>
                     <Svg width={44} height={44} viewBox="0 0 44 44" fill="none">
                         <Path
@@ -250,14 +372,13 @@ export default function RolePicker({
                     </Svg>
                 </View>
 
-                {/* Bottom content */}
                 <View style={enterStyles.bottomContent}>
                     <Text style={enterStyles.title}>
                         Эффективность на каждом уровне.
                     </Text>
                     <TouchableOpacity
                         style={enterStyles.button}
-                        onPress={() => setScreen("rolePicker")}
+                        onPress={() => router.push("/auth")}
                         activeOpacity={0.8}
                     >
                         <Text style={enterStyles.buttonText}>Войти</Text>
@@ -277,13 +398,20 @@ export default function RolePicker({
             <Text style={styles.headerSubtitle}>
                 Чтобы продолжить выберите роль
             </Text>
+            {/* Dev mode indicator */}
+            {skipLocationCheck && (
+                <View style={styles.devBadge}>
+                    <Text style={styles.devBadgeText}>
+                        🛠 Геопроверка отключена (DEV)
+                    </Text>
+                </View>
+            )}
         </View>
     );
 
     const renderRoleCard = (role: Role) => {
         const isSelected = selectedRole === role.id;
         const { IconComponent } = role;
-
         return (
             <TouchableOpacity
                 key={role.id}
@@ -308,7 +436,6 @@ export default function RolePicker({
 
     const renderLocationPicker = () => {
         if (!needsLocationSelection) return null;
-
         return (
             <View style={styles.locationPickerContainer}>
                 <Text style={styles.locationPickerLabel}>Выберите локацию</Text>
@@ -344,6 +471,20 @@ export default function RolePicker({
                         </>
                     )}
                 </TouchableOpacity>
+
+                {/* Geo error message */}
+                {locationError && (
+                    <View style={styles.locationErrorContainer}>
+                        <Ionicons
+                            name="location-outline"
+                            size={16}
+                            color="#FF6B6B"
+                        />
+                        <Text style={styles.locationErrorText}>
+                            {locationError}
+                        </Text>
+                    </View>
+                )}
             </View>
         );
     };
@@ -366,7 +507,7 @@ export default function RolePicker({
                     </View>
                     <FlatList
                         data={LOCATIONS}
-                        keyExtractor={(item) => item.value}
+                        keyExtractor={(item) => String(item.value)}
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
@@ -407,24 +548,31 @@ export default function RolePicker({
         </Modal>
     );
 
-    const renderLoginButton = () => (
-        <TouchableOpacity
-            style={[
-                styles.loginButton,
-                (!canProceed || isLoading || isFetchingOrgs) &&
-                    styles.loginButtonDisabled,
-            ]}
-            onPress={handleLogin}
-            disabled={!canProceed || isLoading || isFetchingOrgs}
-            activeOpacity={0.8}
-        >
-            {isLoading ? (
-                <Loading />
-            ) : (
-                <Text style={styles.loginButtonText}>Войти</Text>
-            )}
-        </TouchableOpacity>
-    );
+    const renderLoginButton = () => {
+        const busy = isLoading || isCheckingLocation;
+        console.log("isCheckingLocation", isCheckingLocation);
+        const buttonLabel = isCheckingLocation
+            ? "Проверка локации..."
+            : "Войти";
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.loginButton,
+                    (!canProceed || busy || isFetchingOrgs) &&
+                        styles.loginButtonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={!canProceed || busy || isFetchingOrgs}
+                activeOpacity={0.8}
+            >
+                {busy ? (
+                    <Loading />
+                ) : (
+                    <Text style={styles.loginButtonText}>{buttonLabel}</Text>
+                )}
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
@@ -432,7 +580,6 @@ export default function RolePicker({
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
             />
-
             <View style={styles.mainContainer}>
                 <ScrollView
                     style={styles.scrollView}
@@ -443,10 +590,8 @@ export default function RolePicker({
                     {renderRoleCards()}
                     {renderLocationPicker()}
                 </ScrollView>
-
                 <View style={styles.bottomSection}>{renderLoginButton()}</View>
             </View>
-
             {renderLocationModal()}
         </SafeAreaView>
     );
@@ -517,19 +662,10 @@ const enterStyles = StyleSheet.create({
 // ============================================================================
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    mainContainer: {
-        flex: 1,
-        justifyContent: "space-between",
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingTop: 16,
-    },
+    container: { flex: 1 },
+    mainContainer: { flex: 1, justifyContent: "space-between" },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingTop: 16 },
     header: {
         paddingHorizontal: 16,
         paddingBottom: 16,
@@ -547,10 +683,22 @@ const styles = StyleSheet.create({
         fontWeight: "400",
         lineHeight: 20,
     },
-    rolesContainer: {
-        paddingHorizontal: 16,
-        gap: 12,
+    devBadge: {
+        marginTop: 8,
+        alignSelf: "flex-start",
+        backgroundColor: "rgba(255, 200, 0, 0.15)",
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 1,
+        borderColor: "rgba(255, 200, 0, 0.3)",
     },
+    devBadgeText: {
+        color: "#FFC800",
+        fontSize: 12,
+        fontWeight: "500",
+    },
+    rolesContainer: { paddingHorizontal: 16, gap: 12 },
     roleCard: {
         flexDirection: "row",
         alignItems: "center",
@@ -560,13 +708,8 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: "rgba(35, 35, 36, 1)",
     },
-    roleCardSelected: {
-        backgroundColor: "rgba(45, 45, 46, 1)",
-    },
-    roleContent: {
-        flex: 1,
-        gap: 2,
-    },
+    roleCardSelected: { backgroundColor: "rgba(45, 45, 46, 1)" },
+    roleContent: { flex: 1, gap: 2 },
     roleTitle: {
         color: "#fff",
         fontSize: 20,
@@ -600,14 +743,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 20,
     },
-    locationPickerPlaceholder: {
-        color: "#797A80",
-    },
+    locationPickerPlaceholder: { color: "#797A80" },
     loadingContainer: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
         flex: 1,
+    },
+    locationErrorContainer: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 8,
+        backgroundColor: "rgba(255, 107, 107, 0.1)",
+        borderRadius: 12,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255, 107, 107, 0.2)",
+    },
+    locationErrorText: {
+        flex: 1,
+        color: "#FF6B6B",
+        fontSize: 14,
+        lineHeight: 20,
     },
     modalOverlay: {
         flex: 1,
@@ -643,27 +800,16 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#2C2C2E",
     },
-    modalItemSelected: {
-        backgroundColor: "rgba(60, 130, 253, 0.1)",
-    },
+    modalItemSelected: { backgroundColor: "rgba(60, 130, 253, 0.1)" },
     modalItemText: {
         color: "#FFFFFF",
         fontSize: 16,
         lineHeight: 20,
         flex: 1,
     },
-    modalItemTextSelected: {
-        color: "#FFFFFF",
-        fontWeight: "600",
-    },
-    emptyContainer: {
-        padding: 40,
-        alignItems: "center",
-    },
-    emptyText: {
-        color: "#797A80",
-        fontSize: 16,
-    },
+    modalItemTextSelected: { color: "#FFFFFF", fontWeight: "600" },
+    emptyContainer: { padding: 40, alignItems: "center" },
+    emptyText: { color: "#797A80", fontSize: 16 },
     bottomSection: {
         paddingHorizontal: 16,
         paddingBottom: 16,
@@ -679,9 +825,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    loginButtonDisabled: {
-        opacity: 0.5,
-    },
+    loginButtonDisabled: { opacity: 0.5 },
     loginButtonText: {
         color: "#2C2D2E",
         fontSize: 16,

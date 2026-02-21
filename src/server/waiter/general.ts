@@ -63,7 +63,9 @@ export async function getOrders(filters: WaiterOrdersInputType) {
 
 export async function createOrder(input: CreateOrdersInputType) {
     const params = checkFilters(input);
-    const res = await api.put("/orders", { params });
+    console.log({ params });
+
+    const res = await api.post("/orders", params);
 
     return res.data;
 }

@@ -15,6 +15,7 @@ import {
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import DishItem from "@/src/client/components/waiter/DishItem";
 import DishDetailModal, {
@@ -23,8 +24,9 @@ import DishDetailModal, {
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { getMenu } from "@/src/server/general/menu";
-
 import Loading from "@/src/client/components/Loading";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
+import { DishItemCreateOrderType as DishItemType } from "@/src/client/types/waiter";
 
 // ============================================================================
 // Types
@@ -49,7 +51,7 @@ type QuantitiesMap = Record<number, number>;
 // Constants
 // ============================================================================
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL = 5 * 60 * 1000;
 const DEFAULT_RESTAURANT_ID = "restaurant-123";
 
 const MESSAGES = {
@@ -76,29 +78,16 @@ const MESSAGES = {
 // Utility Functions
 // ============================================================================
 
-const extractUniqueCategories = (items: MenuItem[]): string[] => {
-    return Array.from(new Set(items.map((item) => item.category))).filter(
+const extractUniqueCategories = (items: MenuItem[]): string[] =>
+    Array.from(new Set(items.map((item) => item.category))).filter(
         Boolean,
     ) as string[];
-};
 
-const calculateCartTotal = (
-    quantities: QuantitiesMap,
-    dishes: MenuItem[],
-): number => {
-    return Object.entries(quantities).reduce((sum, [id, qty]) => {
-        const dish = dishes.find((d) => d.id === Number(id));
-        return sum + (dish ? dish.price * qty : 0);
-    }, 0);
-};
+const formatPrice = (price: number): string =>
+    `${price.toLocaleString("ru-RU")} тг`;
 
-const formatPrice = (price: number): string => {
-    return `${price.toLocaleString("ru-RU")} тг`;
-};
-
-const getDishCountText = (count: number): string => {
-    return count === 1 ? MESSAGES.DISH : MESSAGES.DISHES;
-};
+const getDishCountText = (count: number): string =>
+    count === 1 ? MESSAGES.DISH : MESSAGES.DISHES;
 
 // ============================================================================
 // Custom Hooks
@@ -115,30 +104,18 @@ const useMenuData = (restaurantId: string) => {
         try {
             setLoading(true);
             setError(null);
-
             const response = await getMenu({});
-
             if (!response?.items || !Array.isArray(response.items)) {
                 throw new Error("Invalid menu data received");
             }
-
             const uniqueCategories = extractUniqueCategories(response.items);
-
             setDishes(response.items);
             setCategories(uniqueCategories);
-
-            // Set first category as default if not already set
             if (!selectedCategory && uniqueCategories.length > 0) {
                 setSelectedCategory(uniqueCategories[0]);
             }
-
-            console.log(
-                `Loaded ${response.items.length} dishes in ${uniqueCategories.length} categories`,
-            );
         } catch (err: any) {
-            const errorMessage = err.message || MESSAGES.ERROR_LOAD_MENU;
-            setError(errorMessage);
-            console.error("Error fetching menu:", err);
+            setError(err.message || MESSAGES.ERROR_LOAD_MENU);
             Alert.alert(MESSAGES.ERROR_TITLE, MESSAGES.ERROR_LOAD_MENU);
         } finally {
             setLoading(false);
@@ -147,7 +124,6 @@ const useMenuData = (restaurantId: string) => {
 
     useEffect(() => {
         fetchMenuData();
-
         const interval = setInterval(fetchMenuData, REFRESH_INTERVAL);
         return () => clearInterval(interval);
     }, [fetchMenuData]);
@@ -166,71 +142,26 @@ const useMenuData = (restaurantId: string) => {
 const useMenuFilters = (dishes: MenuItem[], selectedCategory: string) => {
     const [searchQuery, setSearchQuery] = useState("");
 
-    const filteredDishes = useMemo(() => {
-        return dishes.filter((dish) => {
-            // Search filter
-            if (searchQuery.trim()) {
-                const query = searchQuery.toLowerCase().trim();
-                const matchesName = dish.name.toLowerCase().includes(query);
-                const matchesDesc = dish.description
-                    ?.toLowerCase()
-                    .includes(query);
-                if (!matchesName && !matchesDesc) return false;
-            }
-
-            // Category filter
-            if (selectedCategory && dish.category !== selectedCategory) {
-                return false;
-            }
-
-            return true;
-        });
-    }, [dishes, searchQuery, selectedCategory]);
-
-    const clearSearch = useCallback(() => {
-        setSearchQuery("");
-    }, []);
-
-    return {
-        searchQuery,
-        setSearchQuery,
-        clearSearch,
-        filteredDishes,
-    };
-};
-
-const useCart = (dishes: MenuItem[]) => {
-    const [quantities, setQuantities] = useState<QuantitiesMap>({});
-
-    const handleQuantityChange = useCallback(
-        (dishId: number, quantity: number) => {
-            setQuantities((prev) => {
-                const newQuantities = { ...prev };
-                if (quantity <= 0) {
-                    delete newQuantities[dishId];
-                } else {
-                    newQuantities[dishId] = quantity;
+    const filteredDishes = useMemo(
+        () =>
+            dishes.filter((dish) => {
+                if (searchQuery.trim()) {
+                    const query = searchQuery.toLowerCase().trim();
+                    if (
+                        !dish.name.toLowerCase().includes(query) &&
+                        !dish.description?.toLowerCase().includes(query)
+                    )
+                        return false;
                 }
-                return newQuantities;
-            });
-        },
-        [],
+                if (selectedCategory && dish.category !== selectedCategory)
+                    return false;
+                return true;
+            }),
+        [dishes, searchQuery, selectedCategory],
     );
 
-    const totalItems = useMemo(() => {
-        return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-    }, [quantities]);
-
-    const totalPrice = useMemo(() => {
-        return calculateCartTotal(quantities, dishes);
-    }, [quantities, dishes]);
-
-    return {
-        quantities,
-        totalItems,
-        totalPrice,
-        handleQuantityChange,
-    };
+    const clearSearch = useCallback(() => setSearchQuery(""), []);
+    return { searchQuery, setSearchQuery, clearSearch, filteredDishes };
 };
 
 // ============================================================================
@@ -240,9 +171,7 @@ const useCart = (dishes: MenuItem[]) => {
 export default function MenuScreen({
     restaurantId = DEFAULT_RESTAURANT_ID,
 }: MenuScreenProps = {}) {
-    // ========================================================================
-    // Hooks
-    // ========================================================================
+    const router = useRouter();
 
     const {
         dishes,
@@ -257,26 +186,35 @@ export default function MenuScreen({
     const { searchQuery, setSearchQuery, clearSearch, filteredDishes } =
         useMenuFilters(dishes, selectedCategory);
 
-    const { quantities, totalItems, totalPrice, handleQuantityChange } =
-        useCart(dishes);
+    const { selectedDishes, setSelectedDishes } = useWaiter();
 
     const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
     const modalRef = useRef<DishDetailModalRef>(null);
 
-    // ========================================================================
-    // Computed Values
-    // ========================================================================
+    // ── Computed ─────────────────────────────────────────────────────────────
 
     const getCategoryDishCount = useCallback(
-        (category: string) => {
-            return dishes.filter((dish) => dish.category === category).length;
-        },
+        (category: string) =>
+            dishes.filter((d) => d.category === category).length,
         [dishes],
     );
 
-    // ========================================================================
-    // Event Handlers
-    // ========================================================================
+    // Cart totals derived from context (source of truth)
+    const { totalItems, totalPrice } = useMemo(() => {
+        const items = selectedDishes.reduce((sum, d) => sum + d.amount, 0);
+        const price = selectedDishes.reduce((sum, d) => sum + d.sum, 0);
+        return { totalItems: items, totalPrice: price };
+    }, [selectedDishes]);
+
+    // Per-dish quantities for badge display on cards
+    const quantityMap = useMemo(() => {
+        return selectedDishes.reduce<QuantitiesMap>((acc, d) => {
+            acc[d.productId] = d.amount;
+            return acc;
+        }, {});
+    }, [selectedDishes]);
+
+    // ── Handlers ─────────────────────────────────────────────────────────────
 
     const handleCategoryChange = useCallback(
         (category: string) => {
@@ -286,6 +224,7 @@ export default function MenuScreen({
         [setSelectedCategory, clearSearch],
     );
 
+    // Opens the modal — the only way to add/edit a dish
     const handleDishPress = useCallback((dish: MenuItem) => {
         setSelectedDish(dish);
         setTimeout(() => modalRef.current?.open(), 0);
@@ -295,11 +234,34 @@ export default function MenuScreen({
         setSelectedDish(null);
     }, []);
 
+    /**
+     * Called from DishDetailModal on confirm.
+     * Upserts the dish (with optional comment) into WaiterProvider.selectedDishes.
+     */
     const handleAddToOrder = useCallback(
-        (quantity: number) => {
+        (quantity: number, comment?: string) => {
             if (!selectedDish || quantity <= 0) return;
 
-            handleQuantityChange(selectedDish.id, quantity);
+            const newItem: DishItemType = {
+                ...selectedDish,
+                productId: selectedDish.id,
+                amount: quantity,
+                price: selectedDish.price,
+                sum: selectedDish.price * quantity,
+                comment: comment?.trim() || undefined,
+            };
+
+            setSelectedDishes((prev) => {
+                const idx = prev.findIndex(
+                    (d) => d.productId === selectedDish.id,
+                );
+                if (idx !== -1) {
+                    const updated = [...prev];
+                    updated[idx] = newItem;
+                    return updated;
+                }
+                return [...prev, newItem];
+            });
 
             Alert.alert(
                 MESSAGES.ADDED_TO_ORDER,
@@ -311,19 +273,14 @@ export default function MenuScreen({
             modalRef.current?.close();
             setSelectedDish(null);
         },
-        [selectedDish, handleQuantityChange],
+        [selectedDish, setSelectedDishes],
     );
 
     const handleViewCart = useCallback(() => {
-        Alert.alert(
-            MESSAGES.CART,
-            `${MESSAGES.ITEMS}: ${totalItems}\n${MESSAGES.TOTAL}: ${formatPrice(totalPrice)}`,
-        );
+        router.push("/waiter/newOrder");
     }, [totalItems, totalPrice]);
 
-    // ========================================================================
-    // Render Functions
-    // ========================================================================
+    // ── Render helpers ────────────────────────────────────────────────────────
 
     const renderLoadingState = () => (
         <View style={loadingStyles.loadingContainer}>
@@ -365,8 +322,6 @@ export default function MenuScreen({
 
     const renderCategoryButton = (category: string, index: number) => {
         const isSelected = selectedCategory === category;
-        const dishCount = getCategoryDishCount(category);
-
         return (
             <TouchableOpacity
                 key={`category-${index}-${category}`}
@@ -385,7 +340,7 @@ export default function MenuScreen({
                 >
                     {category}
                 </Text>
-                {dishCount > 0 && (
+                {getCategoryDishCount(category) > 0 && (
                     <View
                         style={[
                             styles.categoryBadge,
@@ -398,7 +353,7 @@ export default function MenuScreen({
                                 isSelected && styles.categoryBadgeTextActive,
                             ]}
                         >
-                            {dishCount}
+                            {getCategoryDishCount(category)}
                         </Text>
                     </View>
                 )}
@@ -408,7 +363,6 @@ export default function MenuScreen({
 
     const renderCategoriesSection = () => {
         if (categories.length === 0) return null;
-
         return (
             <View style={styles.categoriesSection}>
                 <ScrollView
@@ -422,31 +376,35 @@ export default function MenuScreen({
         );
     };
 
-    const renderDishItem = (dish: MenuItem) => (
-        <DishItem
-            key={`dish-${dish.id}`}
-            id={String(dish.id)}
-            name={dish.name}
-            description={dish.description || ""}
-            price={formatPrice(dish.price)}
-            image=""
-            variant="interactive"
-            initialQuantity={quantities[dish.id] || 0}
-            onQuantityChange={(id, qty) => handleQuantityChange(dish.id, qty)}
-            onPress={() => handleDishPress(dish)}
-        />
-    );
+    const renderDishItem = (dish: MenuItem) => {
+        const qty = quantityMap[dish.id] || 0;
+        return (
+            <DishItem
+                key={`dish-${dish.id}`}
+                id={String(dish.id)}
+                name={dish.name}
+                description={dish.description || ""}
+                price={formatPrice(dish.price)}
+                image=""
+                variant="informative"
+                initialQuantity={qty}
+                showQuantity={true}
+                // No-op: quantity can only be changed through the modal
+                onQuantityChange={() => {}}
+                onPress={() => handleDishPress(dish)}
+            />
+        );
+    };
 
     const renderEmptyState = () => {
-        const emptyMessage = searchQuery
+        const msg = searchQuery
             ? MESSAGES.NO_RESULTS
             : selectedCategory
               ? `В категории "${selectedCategory}" ${MESSAGES.EMPTY_CATEGORY}`
               : MESSAGES.EMPTY_MENU;
-
         return (
             <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>{emptyMessage}</Text>
+                <Text style={styles.emptyStateText}>{msg}</Text>
                 {searchQuery && (
                     <TouchableOpacity
                         onPress={clearSearch}
@@ -466,13 +424,11 @@ export default function MenuScreen({
             filteredDishes.length > 0
                 ? `${MESSAGES.FOUND} ${filteredDishes.length} ${getDishCountText(filteredDishes.length)}`
                 : MESSAGES.NOT_FOUND;
-
         return (
             <View style={styles.dishesSection}>
                 {searchQuery.trim() !== "" && (
                     <Text style={styles.searchResultsText}>{resultsText}</Text>
                 )}
-
                 {filteredDishes.length > 0 ? (
                     <View style={styles.dishesList}>
                         {filteredDishes.map(renderDishItem)}
@@ -486,7 +442,7 @@ export default function MenuScreen({
 
     const renderCartButton = () => {
         if (totalItems === 0) return null;
-
+        console.log(selectedDishes);
         return (
             <TouchableOpacity
                 style={styles.cartButton}
@@ -502,7 +458,6 @@ export default function MenuScreen({
 
     const renderModal = () => {
         if (!selectedDish) return null;
-
         return (
             <DishDetailModal
                 ref={modalRef}
@@ -515,18 +470,17 @@ export default function MenuScreen({
                     category: selectedDish.category,
                 }}
                 onClose={handleModalClose}
-                initialQuantity={quantities[selectedDish.id] || 0}
-                onQuantityChange={(qty) =>
-                    handleQuantityChange(selectedDish.id, qty)
+                initialQuantity={quantityMap[selectedDish.id] || 0}
+                initialComment={
+                    selectedDishes.find((d) => d.productId === selectedDish.id)
+                        ?.comment ?? ""
                 }
                 onAddToOrder={handleAddToOrder}
             />
         );
     };
 
-    // ========================================================================
-    // Main Render
-    // ========================================================================
+    // ── Main render ───────────────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -558,7 +512,6 @@ export default function MenuScreen({
                 {renderCategoriesSection()}
                 {renderDishesSection()}
             </ScrollView>
-
             {renderCartButton()}
             {renderModal()}
         </SafeAreaView>
@@ -570,17 +523,13 @@ export default function MenuScreen({
 // ============================================================================
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+    container: { flex: 1 },
     scrollContent: {
         paddingHorizontal: 16,
         paddingTop: 20,
         paddingBottom: 100,
         flexGrow: 1,
     },
-
-    // Error State
     errorContainer: {
         flex: 1,
         justifyContent: "center",
@@ -599,17 +548,8 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 20,
     },
-    retryButtonText: {
-        color: "#000",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-
-    // Search Section
-    searchWrapper: {
-        position: "relative",
-        marginBottom: 20,
-    },
+    retryButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
+    searchWrapper: { position: "relative", marginBottom: 20 },
     searchInput: {
         height: 48,
         borderRadius: 24,
@@ -632,19 +572,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: "rgba(255, 255, 255, 0.1)",
     },
-    clearButtonText: {
-        color: "#797A80",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-
-    // Categories Section
-    categoriesSection: {
-        marginBottom: 24,
-    },
-    categoriesScrollContent: {
-        paddingRight: 16,
-    },
+    clearButtonText: { color: "#797A80", fontSize: 16, fontWeight: "bold" },
+    categoriesSection: { marginBottom: 24 },
+    categoriesScrollContent: { paddingRight: 16 },
     categoryButton: {
         flexDirection: "row",
         alignItems: "center",
@@ -656,19 +586,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "transparent",
     },
-    categoryButtonActive: {
-        backgroundColor: "#fff",
-        borderColor: "#fff",
-    },
-    categoryText: {
-        color: "#797A80",
-        fontSize: 14,
-        fontWeight: "500",
-    },
-    categoryTextActive: {
-        color: "#000",
-        fontWeight: "600",
-    },
+    categoryButtonActive: { backgroundColor: "#fff", borderColor: "#fff" },
+    categoryText: { color: "#797A80", fontSize: 14, fontWeight: "500" },
+    categoryTextActive: { color: "#000", fontWeight: "600" },
     categoryBadge: {
         backgroundColor: "rgba(121, 122, 128, 0.2)",
         borderRadius: 10,
@@ -679,35 +599,17 @@ const styles = StyleSheet.create({
         marginLeft: 6,
         paddingHorizontal: 6,
     },
-    categoryBadgeActive: {
-        backgroundColor: "rgba(0, 0, 0, 0.1)",
-    },
-    categoryBadgeText: {
-        color: "#797A80",
-        fontSize: 12,
-        fontWeight: "600",
-    },
-    categoryBadgeTextActive: {
-        color: "#000",
-    },
-
-    // Search Results
+    categoryBadgeActive: { backgroundColor: "rgba(0, 0, 0, 0.1)" },
+    categoryBadgeText: { color: "#797A80", fontSize: 12, fontWeight: "600" },
+    categoryBadgeTextActive: { color: "#000" },
     searchResultsText: {
         color: "#797A80",
         fontSize: 14,
         marginBottom: 16,
         textAlign: "center",
     },
-
-    // Dishes Section
-    dishesSection: {
-        flex: 1,
-    },
-    dishesList: {
-        gap: 12,
-    },
-
-    // Empty State
+    dishesSection: { flex: 1 },
+    dishesList: { gap: 12 },
     emptyState: {
         flex: 1,
         justifyContent: "center",
@@ -729,13 +631,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.1)",
     },
-    clearSearchButtonText: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "500",
-    },
-
-    // Cart Button
+    clearSearchButtonText: { color: "#fff", fontSize: 14, fontWeight: "500" },
     cartButton: {
         position: "absolute",
         bottom: 20,
@@ -752,9 +648,5 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 8,
     },
-    cartButtonText: {
-        color: "#000",
-        fontSize: 16,
-        fontWeight: "600",
-    },
+    cartButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
 });
