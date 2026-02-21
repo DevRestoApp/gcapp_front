@@ -47,7 +47,13 @@ const config: ExpoConfig = {
     android: {
         package: "com.gcapp.mobile",
         versionCode: 3,
-        permissions: ["INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE"],
+        permissions: [
+            "INTERNET",
+            "ACCESS_NETWORK_STATE",
+            "ACCESS_WIFI_STATE",
+            "ACCESS_FINE_LOCATION", // ← точная геолокация
+            "ACCESS_COARSE_LOCATION", // приблизительная
+        ],
         adaptiveIcon: {
             foregroundImage: "./assets/adaptive-icon.png",
             backgroundColor: "#ffffff",
@@ -56,9 +62,20 @@ const config: ExpoConfig = {
     ios: {
         bundleIdentifier: "com.gcapp.mobile",
         supportsTablet: true,
+        infoPlist: {
+            NSLocationWhenInUseUsageDescription:
+                "Приложению нужна геолокация для проверки того, что вы находитесь на рабочем месте.",
+        },
     },
     plugins: [
         "expo-secure-store",
+        [
+            "expo-location",
+            {
+                locationWhenInUsePermission:
+                    "Приложению нужна геолокация для проверки того, что вы находитесь на рабочем месте.",
+            },
+        ],
         [
             "expo-build-properties",
             {
