@@ -435,7 +435,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
         const renderDurationPicker = () => (
             <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Длительность</Text>
+                <Text style={styles.inputLabel}>Дата активности</Text>
                 <TouchableOpacity
                     style={styles.pickerButton}
                     onPress={() => setShowCalendar(!showCalendar)}
