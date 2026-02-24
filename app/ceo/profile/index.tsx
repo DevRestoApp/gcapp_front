@@ -20,6 +20,8 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useAuth } from "@/src/contexts/AuthContext";
 
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -37,6 +39,8 @@ interface ProfileScreenProps {
     userId?: string;
 }
 
+type MenuItemType = "changePassword";
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -44,6 +48,14 @@ interface ProfileScreenProps {
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const TIME_UPDATE_INTERVAL = 1000; // 1 second
 const MOCK_DELAY = 800;
+
+const MENU_ITEMS = [
+    {
+        id: "changePassword" as MenuItemType,
+        icon: <MaterialIcons name="password" size={24} color="white" />,
+        label: "Сменить пароль",
+    },
+] as const;
 
 // ============================================================================
 // Main Component
@@ -147,6 +159,18 @@ export default function ProfileScreen({
         return () => clearInterval(interval);
     }, [profileData, calculateElapsedTime]);
 
+    // ========================================================================
+    // Event Handlers
+    // ========================================================================
+
+    const handleMenuItemPress = useCallback((item: MenuItemType) => {
+        switch (item) {
+            case "changePassword":
+                router.push("/ceo/profile/changePassword");
+                break;
+        }
+    }, []);
+
     const handleLogout = useCallback(() => {
         logoutModalRef.current?.open();
     }, []);
@@ -198,6 +222,25 @@ export default function ProfileScreen({
         );
     };
 
+    const renderMenuItem = (item: (typeof MENU_ITEMS)[number]) => (
+        <TouchableOpacity
+            key={item.id}
+            style={styles.menuItem}
+            onPress={() => handleMenuItemPress(item.id)}
+            activeOpacity={0.7}
+        >
+            <View style={styles.menuItemLeft}>
+                <View style={styles.menuIcon}>{item.icon}</View>
+                <Text style={styles.menuItemText}>{item.label}</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
+    );
+
+    const renderMenuItems = () => (
+        <View style={styles.menuSection}>{MENU_ITEMS.map(renderMenuItem)}</View>
+    );
+
     const renderLogoutButton = () => (
         <View style={styles.logoutSection}>
             <TouchableOpacity
@@ -243,6 +286,7 @@ export default function ProfileScreen({
                 >
                     {renderHeader()}
                     {renderProfileInfo()}
+                    {renderMenuItems()}
                 </ScrollView>
 
                 {renderLogoutButton()}
