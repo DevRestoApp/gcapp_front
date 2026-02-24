@@ -131,6 +131,7 @@ interface CeoContextType {
     setDate: (date: string) => void;
     createFineAction: (inputs: FineInputsType) => Promise<void>;
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
+    fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
 }
 
 // ============================================================================
@@ -341,6 +342,30 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         [createQuest],
     );
 
+    const fetchEmployeesDataWrapper = useCallback(
+        async (inputs: QueryInputs): Promise<void> => {
+            try {
+                const response = await getEmployeesData({
+                    ...inputs,
+                    deleted: false,
+                });
+                if (Array.isArray(response)) {
+                    setEmployees(response);
+                } else {
+                    console.error(
+                        "Invalid employees data structure:",
+                        response,
+                    );
+                    setEmployees([]);
+                }
+            } catch (error) {
+                console.error("Error fetching employees:", error);
+                setEmployees([]);
+            }
+        },
+        [],
+    );
+
     // Context Value
     const value: CeoContextType = {
         employees,
@@ -357,6 +382,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         refetch,
         clearError,
         setDate,
+        fetchEmployeesDataWrapper,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;
