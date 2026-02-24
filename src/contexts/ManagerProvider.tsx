@@ -102,6 +102,7 @@ interface ManagerContextType {
     setSelectedExpenseTab: (tab: string) => void;
     createFineAction: (inputs: FineInputsType) => Promise<void>;
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
+    fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
     fetchExpensesData: (
         filters: ExpensesDataInputType,
     ) => Promise<ExpensesDataType>;
@@ -304,6 +305,25 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     // Data Fetching - NOW DEPENDS ON INPUTS
     // ========================================================================
 
+    const fetchEmployeesDataWrapper = async (
+        inputs: QueryInputs,
+    ): Promise<Employee[] | null> => {
+        try {
+            //const response = await getEmployeesData({ deleted: false, ...inputs });
+            const response = await getEmployeesData({
+                ...inputs,
+                deleted: false,
+            });
+
+            // Validate response structure - getEmployeesData returns the array directly
+            if (!Array.isArray(response)) {
+                console.error("Invalid employees data structure:", response);
+            }
+            setEmployees(response);
+        } catch (error) {
+            setEmployees([]);
+        }
+    };
     const fetchExpensesData = async (filters: {
         organization_id?: string;
         date?: string;
@@ -550,6 +570,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         addExpenseAction,
         updateExpenseAction,
         deleteExpenseAction,
+        fetchEmployeesDataWrapper,
     };
 
     return (
