@@ -8,9 +8,7 @@ import React, {
 } from "react";
 
 import { getTodayFormatted } from "@/src/utils/utils";
-
 import { getEmployeesData } from "@/src/server/general/employees";
-
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
 import {
     getQuests,
@@ -27,8 +25,9 @@ import { getAnalyticsData } from "@/src/server/ceo/analytics";
 // ============================================================================
 
 interface QueryInputs {
-    date?: string; // Format: "DD.MM.YYYY"
+    date?: string;
 }
+
 type Fine = {
     id: number;
     employeeId: number;
@@ -46,16 +45,15 @@ interface FinesSummary {
 }
 
 interface Employee {
-    id: number; // Changed from string to number
+    id: number;
     name: string;
     role: string;
     avatarUrl: string;
     totalAmount: string;
     shiftTime: string;
     isActive: boolean;
-    deleted?: boolean; // Add this since it's in your API response
+    deleted?: boolean;
     data?: { label: string; value: string }[];
-    // Add other employee properties
 }
 
 interface Shift {
@@ -98,50 +96,63 @@ interface Quest {
     date: string;
     employeeProgress: EmployeeProgress[];
 }
-type generalType = {
+
+type AnalyticsItem = {
     id: number;
-    label: any;
-    type?: any;
-    value: any;
+    label: string;
+    value: string;
+    type?: string | null;
+    change?: string | null;
+};
+
+type AnalyticsReport = {
+    id: number;
+    title: string;
+    value: string;
+    date: string;
+    type: string;
+};
+
+type AnalyticsEmployee = {
+    id: number;
+    label: string;
+    value: string;
+    type?: string | null;
 };
 
 interface AnalyticsInterface {
-    metrics: generalType[];
+    metrics: AnalyticsItem[];
+    reports: AnalyticsReport[];
+    orders: AnalyticsItem[];
+    financial: AnalyticsItem[];
+    inventory: AnalyticsItem[];
+    employees: AnalyticsEmployee[];
 }
 
 interface CeoContextType {
-    // Data
     employees: Employee[] | null;
     shifts: Shift | null;
     quests: Quest | null;
     analytics: AnalyticsInterface | null;
-
-    // TODO прописать входящие
     locations: any[];
-    finesSummary: FinesSummary;
-
-    // State
+    finesSummary: FinesSummary | null;
     loading: boolean;
     error: string | null;
     queryInputs: QueryInputs;
 
-    // Actions
     refetch: () => Promise<void>;
     clearError: () => void;
     setDate: (date: string) => void;
     createFineAction: (inputs: FineInputsType) => Promise<void>;
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
+    fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
 }
 
 // ============================================================================
-// Context Creation
+// Context
 // ============================================================================
 
 const CeoContext = createContext<CeoContextType | undefined>(undefined);
-
-// ============================================================================
-// Hook
-// ============================================================================
 
 export const useCeo = () => {
     const context = useContext(CeoContext);
@@ -152,20 +163,26 @@ export const useCeo = () => {
 };
 
 // ============================================================================
-// Helper Functions
+// Internal fetch helpers
 // ============================================================================
 
+const analyticsEmpty: AnalyticsInterface = {
+    metrics: [],
+    reports: [],
+    orders: [],
+    financial: [],
+    inventory: [],
+    employees: [],
+};
+
 const fetchAnalyticsData = async (
-    filters: QueryInputs,
+    inputs: QueryInputs,
 ): Promise<AnalyticsInterface> => {
     try {
-        const response = await getAnalyticsData(filters);
-        return response;
+        return await getAnalyticsData(inputs);
     } catch (e) {
-        console.log(e);
-        return {
-            metrics: [],
-        };
+        console.error(e);
+        return analyticsEmpty;
     }
 };
 
@@ -173,9 +190,9 @@ const fetchFinesSummary = async (
     inputs: QueryInputs,
 ): Promise<FinesSummary | null> => {
     try {
-        const response = await getFines(inputs);
-        return response;
+        return await getFines(inputs);
     } catch (e) {
+        console.error(e);
         return null;
     }
 };
@@ -184,69 +201,58 @@ const fetchEmployeesData = async (
     inputs: QueryInputs,
 ): Promise<Employee[] | null> => {
     try {
-        //const response = await getEmployeesData({ deleted: false, ...inputs });
         const response = await getEmployeesData({ ...inputs, deleted: false });
-
-        // Validate response structure - getEmployeesData returns the array directly
         if (!Array.isArray(response)) {
             console.error("Invalid employees data structure:", response);
             return null;
         }
-
         return response;
     } catch (error) {
         console.error("Error fetching employees:", error);
-        throw error; // Re-throw to handle in fetchAll
+        throw error;
     }
 };
+
 const fetchShiftsData = async (inputs: QueryInputs): Promise<Shift | null> => {
     try {
-        const response = await getShifts(inputs);
-        console.log("asd", response);
-
-        return response;
+        return await getShifts(inputs);
     } catch (error) {
         console.error("Error fetching shifts:", error);
-        throw error; // Re-throw to handle in fetchAll
+        throw error;
     }
 };
+
 const fetchQuestsData = async (inputs: QueryInputs): Promise<Quest | null> => {
     try {
-        const response = await getQuests(inputs);
-
-        return response;
+        return await getQuests(inputs);
     } catch (error) {
         console.error("Error fetching quests:", error);
-        throw error; // Re-throw to handle in fetchAll
+        throw error;
     }
 };
 
-const fetchOrganizations = async (): Promise<any> => {
+const fetchOrganizations = async (): Promise<any[]> => {
     try {
         const response = await getOrganizationsData();
-        return response.organizations;
+        return response.organizations ?? [];
     } catch (e) {
-        console.log(e);
-        return null;
+        console.error(e);
+        return [];
     }
 };
 
-// Add more fetch functions here as needed
-// const fetchOtherData = async (inputs: QueryInputs): Promise<OtherData | null> => { ... }
-
 // ============================================================================
-// Provider Component
+// Provider
 // ============================================================================
 
 export const CeoProvider = ({ children }: { children: ReactNode }) => {
-    // State Management
-    const [employees, setEmployees] = useState<Employee[] | null>(null); // ✅ Changed from [] to null
+    const [employees, setEmployees] = useState<Employee[] | null>(null);
     const [shifts, setShifts] = useState<Shift | null>(null);
     const [quests, setQuests] = useState<Quest | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [locations, setLocations] = useState<any[]>([]);
-    const [finesSummary, setFinesSummary] = useState<FinesSummary>(null);
+    const [finesSummary, setFinesSummary] = useState<FinesSummary | null>(null);
     const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
 
     const [inputs, setInputs] = useState<QueryInputs>({
@@ -254,10 +260,10 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // ========================================================================
-    // Data Fetching - NOW DEPENDS ON INPUTS
+    // Main fetch
     // ========================================================================
 
-    const fetchAll = useCallback(async () => {
+    const fetchAll = useCallback(async (): Promise<void> => {
         try {
             setLoading(true);
             setError(null);
@@ -267,7 +273,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 shiftsData,
                 questsData,
                 organizations,
-                finesSummary,
+                fines,
                 analyticsData,
             ] = await Promise.all([
                 fetchEmployeesData(inputs),
@@ -277,27 +283,23 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 fetchFinesSummary(inputs),
                 fetchAnalyticsData(inputs),
             ]);
-            setLocations(organizations);
 
-            setFinesSummary(finesSummary);
             setEmployees(employeesData);
             setShifts(shiftsData);
             setQuests(questsData);
+            setLocations(organizations);
+            setFinesSummary(fines);
             setAnalytics(analyticsData);
         } catch (err: any) {
-            console.error("❌ Error fetching CEO data:", err);
+            console.error("Error fetching CEO data:", err);
             setError(
-                err?.message ||
+                err?.message ??
                     "Не удалось загрузить данные. Попробуйте снова.",
             );
         } finally {
             setLoading(false);
         }
     }, [inputs]);
-
-    // ========================================================================
-    // Effects
-    // ========================================================================
 
     useEffect(() => {
         fetchAll();
@@ -311,7 +313,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         setInputs((prev) => ({ ...prev, date }));
     }, []);
 
-    const refetch = useCallback(async () => {
+    const refetch = useCallback(async (): Promise<void> => {
         await fetchAll();
     }, [fetchAll]);
 
@@ -320,28 +322,55 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const createFineAction = useCallback(
-        async (inputs: FineInputsType) => {
+        async (inputs: FineInputsType): Promise<void> => {
             try {
                 await createFine(inputs);
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         },
-        [createFine],
+        [],
     );
 
     const createQuestAction = useCallback(
-        async (inputs: QuestInputsType) => {
+        async (inputs: QuestInputsType): Promise<void> => {
             try {
                 await createQuest(inputs);
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         },
-        [createQuest],
+        [],
     );
 
-    // Context Value
+    const fetchEmployeesDataWrapper = useCallback(
+        async (inputs: QueryInputs): Promise<void> => {
+            try {
+                const response = await getEmployeesData({
+                    ...inputs,
+                    deleted: false,
+                });
+                if (Array.isArray(response)) {
+                    setEmployees(response);
+                } else {
+                    console.error(
+                        "Invalid employees data structure:",
+                        response,
+                    );
+                    setEmployees([]);
+                }
+            } catch (error) {
+                console.error("Error fetching employees:", error);
+                setEmployees([]);
+            }
+        },
+        [],
+    );
+
+    // ========================================================================
+    // Context value
+    // ========================================================================
+
     const value: CeoContextType = {
         employees,
         locations,
@@ -357,6 +386,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         refetch,
         clearError,
         setDate,
+        fetchEmployeesDataWrapper,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

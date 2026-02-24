@@ -20,7 +20,6 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useAuth } from "@/src/contexts/AuthContext";
 
-// TODO убрать моку =0
 export default function SalaryScreen() {
     const { user, selectedLocation } = useAuth();
     const { salary, quests, fetchSalary, fetchQuest } = useWaiter();

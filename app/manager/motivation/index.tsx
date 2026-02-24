@@ -265,7 +265,7 @@ export default function QuestManagementScreen() {
                 onAddQuest={handleAddQuest}
                 onCancel={() => {}}
                 employees={employees}
-                organizations={locations}
+                locations={locations}
             />
         </SafeAreaView>
     );

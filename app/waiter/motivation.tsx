@@ -160,16 +160,19 @@ export default function MotivationScreen() {
             {loading ? (
                 renderLoadingState()
             ) : (
-                <FlatList
-                    data={quests}
-                    renderItem={renderQuestItem}
-                    keyExtractor={keyExtractor}
-                    ListHeaderComponent={renderSectionTitle}
-                    ListEmptyComponent={renderEmptyState}
-                    ItemSeparatorComponent={ItemSeparator}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
+                <View>
+                    <Text style={styles.dateTitle}>{selectedDate}</Text>
+                    <FlatList
+                        data={quests}
+                        renderItem={renderQuestItem}
+                        keyExtractor={keyExtractor}
+                        ListHeaderComponent={renderSectionTitle}
+                        ListEmptyComponent={renderEmptyState}
+                        ItemSeparatorComponent={ItemSeparator}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                </View>
             )}
         </SafeAreaView>
     );
@@ -234,5 +237,13 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: "center",
         lineHeight: 20,
+    },
+    dateTitle: {
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "bold",
+        lineHeight: 28,
+        paddingLeft: 16,
+        paddingBottom: 28,
     },
 });

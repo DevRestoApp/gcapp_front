@@ -64,7 +64,7 @@ export default function CeoLayout() {
                 />
 
                 <Tabs.Screen
-                    name="profile"
+                    name="profile/index"
                     options={{
                         title: "Профиль",
                         tabBarIcon: ({ color, size }) => (
@@ -102,6 +102,12 @@ export default function CeoLayout() {
                     options={{
                         href: null,
                         title: "Сотрудники",
+                    }}
+                />
+                <Tabs.Screen
+                    name="profile/changePassword"
+                    options={{
+                        href: null,
                     }}
                 />
             </Tabs>
