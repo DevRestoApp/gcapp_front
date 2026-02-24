@@ -269,8 +269,6 @@ export default function NewOrder() {
     const handleCreateOrder = async () => {
         try {
             // TODO доавить что то для смены guest из константы на другое
-            console.log("selectedLocation", selectedLocation);
-            console.log("selectedTable", selectedTable);
             await createOrderWrapper({
                 organizationId: selectedLocation,
                 tableId: Number(selectedTable?.id),
@@ -288,6 +286,9 @@ export default function NewOrder() {
             });
         } catch (e) {
             console.log(`Error creating order: ${e.message} \n ${e.stack}`);
+            router.push("/waiter");
+        } finally {
+            router.push("/waiter");
         }
     };
 
