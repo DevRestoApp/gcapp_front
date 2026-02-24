@@ -5,13 +5,13 @@ import {
     FlatList,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     Alert,
     TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
+import { Entypo } from "@expo/vector-icons";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
@@ -25,14 +25,16 @@ import AddQuestModal, {
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useCeo } from "@/src/contexts/CeoProvider";
+
 import Loading from "@/src/client/components/Loading";
+
+import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
     const { quests, employees, shifts, loading, createQuestAction, locations } =
         useCeo();
 
-    // Add null checks and default values
     const safeQuests = quests.quests || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
@@ -43,7 +45,6 @@ export default function QuestManagementScreen() {
 
     const addQuestModalRef = useRef<AddQuestModalRef>(null);
 
-    // Initialize calendar days
     useEffect(() => {
         const today = new Date();
         const weekDays: Day[] = [];
@@ -55,13 +56,12 @@ export default function QuestManagementScreen() {
             weekDays.push({
                 date: date.getDate().toString(),
                 day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6, // Last day (today) is active by default
+                active: i === 6,
             });
         }
 
         setDays(weekDays);
 
-        // Set today's date as selected
         const todayStr = today.toLocaleDateString("ru-RU", {
             day: "2-digit",
             month: "2-digit",
@@ -70,7 +70,6 @@ export default function QuestManagementScreen() {
         setSelectedDate(todayStr);
     }, []);
 
-    // Handle day selection
     const handleDayPress = useCallback(
         async (index: number) => {
             const newDays = days.map((day, i) => ({
@@ -79,7 +78,6 @@ export default function QuestManagementScreen() {
             }));
             setDays(newDays);
 
-            // Calculate the date for selected day
             const today = new Date();
             const selectedDay = new Date(today);
             selectedDay.setDate(today.getDate() - (6 - index));
@@ -90,13 +88,12 @@ export default function QuestManagementScreen() {
                 year: "numeric",
             });
 
+            setInputDate(dateStr);
             setSelectedDate(dateStr);
 
-            // Fetch quests for the selected date
             setQuestsLoading(true);
             try {
                 // change to getQuests api point
-                // await fetchQuestsForDate(dateStr);
             } catch (error) {
                 console.error("Error fetching quests:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить квесты");
@@ -107,14 +104,13 @@ export default function QuestManagementScreen() {
         [days],
     );
 
-    // Handle quest creation
     const handleAddQuest = useCallback(
         async (data: {
             title: string;
             amount: number;
             reward: number;
             unit: string;
-            durationDate: string;
+            durationDate: any;
         }) => {
             if (!createQuestAction) {
                 Alert.alert("Ошибка", "Функция создания квеста недоступна");
@@ -122,7 +118,6 @@ export default function QuestManagementScreen() {
             }
 
             try {
-                // Add quest to context
                 createQuestAction({
                     title: data.title,
                     reward: data.reward,
@@ -135,7 +130,7 @@ export default function QuestManagementScreen() {
                     durationDate: data.durationDate,
                 });
 
-                console.log("Quest created successfully:", data);
+                await refetch();
             } catch (error) {
                 console.error("Failed to create quest:", error);
                 Alert.alert("Ошибка", "Не удалось создать квест");
@@ -144,7 +139,6 @@ export default function QuestManagementScreen() {
         [selectedDate, safeEmployees.length, createQuestAction],
     );
 
-    // Render header with back button and add quest button
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
@@ -164,17 +158,11 @@ export default function QuestManagementScreen() {
                 Квесты ({safeShifts.questsCount || 0})
             </Text>
 
-            <TouchableOpacity
-                onPress={() => addQuestModalRef.current?.open()}
-                style={styles.addButton}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
+            {/* Empty view to keep title centered */}
+            <View style={styles.backButton} />
         </View>
     );
 
-    // Render section title
     const renderSectionTitle = () => (
         <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Квесты на {selectedDate}</Text>
@@ -185,7 +173,6 @@ export default function QuestManagementScreen() {
         </View>
     );
 
-    // Render empty state
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🎯</Text>
@@ -196,10 +183,12 @@ export default function QuestManagementScreen() {
         </View>
     );
 
-    // Render loading state
-    const renderLoadingState = () => <Loading text={"Загрузка квестов"} />;
+    const renderLoadingState = () => (
+        <View>
+            <Loading text={"Загрузка квестов"} />
+        </View>
+    );
 
-    // Render quest item
     const renderQuestItem = ({ item }: { item: QuestEmployees }) => (
         <QuestCard
             quest={item}
@@ -207,14 +196,20 @@ export default function QuestManagementScreen() {
         />
     );
 
-    // Key extractor for FlatList
-    const keyExtractor = (item: QuestEmployees) => item.id;
+    const renderAddButton = () => (
+        <TouchableOpacity
+            onPress={() => addQuestModalRef.current?.open()}
+            style={ButtonStyles.addButtonManager}
+            activeOpacity={0.7}
+        >
+            <Entypo name="plus" size={24} color="black" />
+        </TouchableOpacity>
+    );
 
-    // Item separator
+    const keyExtractor = (item: QuestEmployees) => item.id;
     const ItemSeparator = () => <View style={styles.itemSeparator} />;
 
-    // Show loading if context is still loading
-    if (loading && safeQuests.length === 0) {
+    if (loading) {
         return (
             <SafeAreaView
                 style={{ ...styles.container, ...backgroundsStyles.generalBg }}
@@ -257,7 +252,8 @@ export default function QuestManagementScreen() {
                 />
             )}
 
-            {/* Add Quest Modal */}
+            {renderAddButton()}
+
             <AddQuestModal
                 ref={addQuestModalRef}
                 onAddQuest={handleAddQuest}
@@ -298,20 +294,6 @@ const styles = StyleSheet.create({
         flex: 1,
         textAlign: "center",
         marginHorizontal: 16,
-    },
-    addButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: "#ffffff",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    addButtonText: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "600",
-        lineHeight: 24,
     },
 
     // List
