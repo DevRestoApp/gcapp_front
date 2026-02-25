@@ -93,16 +93,7 @@ export default function DishesSection({
     return (
         <View style={styles.section}>
             <View style={styles.dishesHeader}>
-                <Text style={styles.title}>
-                    Рекомендуемые блюда ({dishes.length})
-                </Text>
-                <TouchableOpacity
-                    onPress={onAddMoreDishes}
-                    style={styles.addMoreButton}
-                    activeOpacity={0.7}
-                >
-                    <Text style={styles.addMoreButtonText}>Все блюда</Text>
-                </TouchableOpacity>
+                <Text style={styles.title}>Блюда ({dishes.length})</Text>
             </View>
 
             <View style={styles.dishesContainer}>

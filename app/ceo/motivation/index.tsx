@@ -32,8 +32,15 @@ import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
-    const { quests, employees, shifts, loading, createQuestAction, locations } =
-        useCeo();
+    const {
+        quests,
+        employees,
+        shifts,
+        loading,
+        createQuestAction,
+        locations,
+        refetch,
+    } = useCeo();
 
     const safeQuests = quests.quests || [];
     const safeEmployees = employees || [];

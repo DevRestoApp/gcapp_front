@@ -88,6 +88,10 @@ interface WaiterContextType {
     setSelectedRoom: (room: SelectedRoomContext) => void;
     selectedDishes: Dish[];
     setSelectedDishes: (dishes: Dish[]) => void;
+    setSelectedOrderId: (id: number) => void;
+    setSelectedOrder: (order: any) => void;
+    selectedOrder: any;
+    selectedOrderId: number | null;
 }
 
 const WaiterContext = createContext<WaiterContextType | undefined>(undefined);
@@ -102,6 +106,10 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         useState<WaiterShiftStatusType | null>(null);
     const [selectedDishes, setSelectedDishes] = useState<Dish[]>([]);
 
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+
+    console.log("selectedOrder aaaa", selectedOrder);
     // NEW ORDER SELECTED tables
     const [selectedTable, setSelectedTable] =
         useState<SelectedTableContext>(null);
@@ -284,6 +292,10 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 setSelectedRoom,
                 selectedDishes,
                 setSelectedDishes,
+                selectedOrder,
+                selectedOrderId,
+                setSelectedOrder,
+                setSelectedOrderId,
             }}
         >
             {children}

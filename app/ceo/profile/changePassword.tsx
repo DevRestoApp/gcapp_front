@@ -54,7 +54,7 @@ export default function ChangePasswordScreen() {
         const filtered =
             currentUserRole === "ceo"
                 ? employees
-                : employees.filter((e) => e.role === "waiter");
+                : employees.filter((e) => e.role === "Официант");
         setFilteredEmployees(filtered as Employee[]);
     }, [employees, currentUserRole]);
 

@@ -6,7 +6,7 @@ interface OrderItemProps {
     tableNumber: string;
     description: string;
     amount: string;
-    onClick?: (orderId: string) => void;
+    onClick?: () => void; // Упрощаем - логика обработки снаружи
 }
 
 export default function OrderItem({
@@ -16,13 +16,9 @@ export default function OrderItem({
     amount,
     onClick,
 }: OrderItemProps) {
-    const handleClick = () => {
-        onClick?.(id);
-    };
-
     return (
         <TouchableOpacity
-            onPress={handleClick}
+            onPress={onClick}
             style={styles.container}
             activeOpacity={0.8}
         >
