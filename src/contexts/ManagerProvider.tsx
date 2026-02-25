@@ -16,7 +16,10 @@ import {
     getQuests,
     getShifts,
 } from "@/src/server/ceo/generals";
-import { getEmployeesData } from "@/src/server/general/employees";
+import {
+    changeEmployeePassword,
+    getEmployeesData,
+} from "@/src/server/general/employees";
 import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
 import type {
     AddExpensesInputType,
@@ -168,6 +171,10 @@ interface ManagerContextType {
         body: UpdateExpensesInputType,
     ) => Promise<void>;
     deleteExpenseAction: (expense_id: number) => Promise<void>;
+    changePasswordWrapper: (params: {
+        employee_id: number;
+        new_password: string;
+    }) => Promise<void>;
 }
 
 // ============================================================================
@@ -530,6 +537,21 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         },
         [],
     );
+    const changePasswordWrapper = useCallback(
+        async (params: {
+            employee_id: number;
+            new_password: string;
+        }): Promise<void> => {
+            try {
+                const response = await changeEmployeePassword(params);
+                return response;
+            } catch (e) {
+                console.error(e);
+                return;
+            }
+        },
+        [],
+    );
 
     // ========================================================================
     // Context value
@@ -568,6 +590,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         updateExpenseAction,
         deleteExpenseAction,
         fetchEmployeesDataWrapper,
+        changePasswordWrapper,
     };
 
     return (

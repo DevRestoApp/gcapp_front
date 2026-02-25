@@ -65,7 +65,7 @@ export default function ProfileScreen({
     userId = "user-123",
 }: ProfileScreenProps) {
     const router = useRouter();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const logoutModalRef = useRef<AccountActionsModalRef>(null);
 
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -90,8 +90,8 @@ export default function ProfileScreen({
 
             const mockData: ProfileData = {
                 id: userId,
-                name: "Амиржан Амир",
-                role: "Владелец",
+                name: user?.name ?? "",
+                role: "Админ",
                 avatar: "",
                 shiftStartTime: "09:00",
                 todaysEarnings: 53000,

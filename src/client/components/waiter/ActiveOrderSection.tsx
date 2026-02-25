@@ -67,7 +67,7 @@ export default function ActiveOrdersSection({
             if (order.items && order.items.length > 0) {
                 // If items have names, join them
                 const itemNames = order.items
-                    .map((item) => item.name || item.title)
+                    .map((item) => item.dish_name || item.name || item.title)
                     .filter(Boolean);
 
                 description =
@@ -79,7 +79,7 @@ export default function ActiveOrdersSection({
             }
 
             // Format amount
-            const amount = `${order.sum_order.toLocaleString("ru-RU")} тг`;
+            const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
 
             return {
                 id: order.id.toString(),
@@ -122,15 +122,6 @@ export default function ActiveOrdersSection({
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>Нет активных заказов</Text>
-            <TouchableOpacity
-                onPress={handleNewOrder}
-                style={styles.emptyStateButton}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.emptyStateButtonText}>
-                    Создать первый заказ
-                </Text>
-            </TouchableOpacity>
         </View>
     );
 

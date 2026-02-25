@@ -171,6 +171,7 @@ export default function NewOrder() {
         setSelectedRoom,
         selectedTable,
         selectedRoom,
+        fetchOrders,
     } = useWaiter();
     const { selectedLocation, user } = useAuth();
     const { selectedDishes, createOrderWrapper } = useWaiter();
@@ -283,6 +284,10 @@ export default function NewOrder() {
                         comment: el.comment,
                     };
                 }),
+            });
+            await fetchOrders({
+                user_id: user.id,
+                organization_id: selectedLocation,
             });
         } catch (e) {
             console.log(`Error creating order: ${e.message} \n ${e.stack}`);

@@ -64,7 +64,10 @@ export default function Index() {
             await Promise.all([
                 fetchShiftStatus(user.id, { date: formattedDate }),
                 fetchQuest(user.id, { date: formattedDate }),
-                fetchOrders({ user_id: user.id }),
+                fetchOrders({
+                    user_id: user.id,
+                    organization_id: selectedLocation,
+                }),
             ]);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -314,10 +317,6 @@ export default function Index() {
                     </Text>
 
                     <View style={styles.card}>
-                        <Text style={styles.cardSubtitle}>Цель на сегодня</Text>
-                        <Text style={styles.cardTitle}>
-                            Обслуживать 15 стол
-                        </Text>
                         <ShiftTimeModal
                             type="start"
                             onShiftStart={handleShiftStart}
@@ -390,7 +389,6 @@ const styles = StyleSheet.create({
     },
     card: {
         width: "100%",
-        backgroundColor: "#1E1E1E",
         borderRadius: 16,
         padding: 16,
         marginTop: 16,

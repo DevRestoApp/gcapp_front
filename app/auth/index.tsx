@@ -108,6 +108,7 @@ export default function Login() {
                     id: response.user_id,
                     email: formData.email,
                     role: response.role,
+                    name: response.name,
                 };
                 console.log("LOGIN REQUEST");
 
