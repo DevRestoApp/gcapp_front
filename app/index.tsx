@@ -108,7 +108,7 @@ function getDistanceMeters(
 export default function RolePicker({
     onRoleSelect,
     availableRoles = DEFAULT_ROLES,
-    skipLocationCheck = true, // ← set true in dev builds via app config
+    skipLocationCheck = false, // ← set true in dev builds via app config
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
