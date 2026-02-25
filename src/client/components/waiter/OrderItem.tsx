@@ -8,7 +8,6 @@ interface OrderItemProps {
     amount: string;
     onClick?: () => void; // Упрощаем - логика обработки снаружи
 }
-
 export default function OrderItem({
     id,
     tableNumber,
