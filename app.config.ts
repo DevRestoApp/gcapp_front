@@ -22,7 +22,7 @@ const config: ExpoConfig = {
     version: "1.0.1",
     runtimeVersion: "1.0.1",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/logo.png",
     userInterfaceStyle: "light",
     splash: {
         image: "./assets/splash.png",
@@ -45,6 +45,7 @@ const config: ExpoConfig = {
         },
     },
     android: {
+        icon: "./assets/logo.png",
         package: "com.gcapp.mobile",
         versionCode: 3,
         permissions: [
@@ -55,7 +56,7 @@ const config: ExpoConfig = {
             "ACCESS_COARSE_LOCATION", // приблизительная
         ],
         adaptiveIcon: {
-            foregroundImage: "./assets/adaptive-icon.png",
+            foregroundImage: "./assets/logo.png",
             backgroundColor: "#ffffff",
         },
     },

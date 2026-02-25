@@ -2,7 +2,7 @@ import api from "../api";
 import { checkFilters } from "@/src/utils/serverUtils";
 
 export async function getEmployeesData(filters: { deleted?: boolean | false }) {
-    const params = checkFilters({ ...filters, limit: 0 });
+    const params = checkFilters({ ...filters });
 
     const res = await api.get("/employees", { params });
 
@@ -12,4 +12,15 @@ export async function getEmployeesData(filters: { deleted?: boolean | false }) {
     );
 
     return filtered;
+}
+
+export async function changeEmployeePassword(params: {
+    employee_id: number;
+    new_password: string;
+}) {
+    const parameters = checkFilters(params);
+
+    const res = await api.put("/change-password", parameters);
+
+    return res.data;
 }

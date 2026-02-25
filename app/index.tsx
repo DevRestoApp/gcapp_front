@@ -108,7 +108,7 @@ function getDistanceMeters(
 export default function RolePicker({
     onRoleSelect,
     availableRoles = DEFAULT_ROLES,
-    skipLocationCheck = false, // ← set true in dev builds via app config
+    skipLocationCheck = true, // ← set true in dev builds via app config
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
@@ -124,6 +124,7 @@ export default function RolePicker({
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+    console.log("organizations", organizations);
 
     // Geo state
     const [isCheckingLocation, setIsCheckingLocation] = useState(false);

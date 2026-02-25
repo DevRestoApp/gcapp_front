@@ -174,10 +174,8 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchOrders = useCallback(
         async (inputs: WaiterOrdersInputType): Promise<WaiterSalaryType> => {
             try {
-                console.log("fetchOrders", inputs);
                 const response = await getOrders(inputs);
                 setOrders(response.orders);
-                console.log("end");
                 return response;
             } catch (error) {
                 console.error("Error fetching salary:", error);

@@ -83,11 +83,6 @@ export default function OrderSelectionScreen() {
     const handleOrderUpdate = useCallback((updatedOrder: Order) => {
         setCurrentOrder(updatedOrder);
         console.log("Order updated:", updatedOrder);
-
-        // API Integration Point:
-        // - Update state management (Redux, Context, etc.)
-        // - Save to local storage/cache
-        // - Sync with backend API
     }, []);
 
     const handleTableChange = useCallback((table: string) => {

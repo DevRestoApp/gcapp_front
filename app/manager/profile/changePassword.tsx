@@ -33,8 +33,13 @@ export default function ChangePasswordScreen() {
     const params = useLocalSearchParams();
     const currentUserRole = params.role;
 
-    const { loading, employees, fetchEmployeesDataWrapper, queryInputs } =
-        useManager();
+    const {
+        loading,
+        employees,
+        fetchEmployeesDataWrapper,
+        queryInputs,
+        changePasswordWrapper,
+    } = useManager();
 
     const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
@@ -78,8 +83,10 @@ export default function ChangePasswordScreen() {
         }
 
         try {
-            // TODO: вызов action для смены пароля
-            // await changeEmployeePasswordAction({ employee_id: selectedEmployee.id, new_password: newPassword });
+            await changePasswordWrapper({
+                employee_id: selectedEmployee.id,
+                new_password: newPassword,
+            });
             alert("Пароль успешно изменён");
             router.back();
         } catch (error) {
