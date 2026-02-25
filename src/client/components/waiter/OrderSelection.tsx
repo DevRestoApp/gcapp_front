@@ -1,11 +1,15 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Alert } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import TableInput from "@/src/client/components/TableInput";
 import LocationDisplay from "@/src/client/components/LocationDisplay";
 import RoomSelector from "@/src/client/components/RoomSelector";
 import DishesSection from "@/src/client/components/DishesSection";
 import OrderSummary from "@/src/client/components/OrderSummary";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface Dish {
     id: string;
@@ -20,6 +24,7 @@ interface OrderItem {
     dishId: string;
     quantity: number;
     price: number;
+    name?: string;
 }
 
 interface Order {
@@ -44,61 +49,14 @@ interface OrderSelectionProps {
     onCompleteOrder?: () => void;
 }
 
-// Sample dishes data
-const sampleDishes: Dish[] = [
-    {
-        id: "1",
-        name: "Бесбармак по-казахски",
-        description:
-            "Состав: отварное мясо (конина, баранина или говядина), домашняя лапша, бульон, лук.",
-        price: "Цена : 5 600 тг",
-        image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-        category: "Горячие блюда",
-    },
-    {
-        id: "2",
-        name: "Манты с мясом",
-        description:
-            "Состав: тесто, мясная начинка из баранины и говядины, лук, специи.",
-        price: "Цена : 3 200 тг",
-        image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-        category: "Горячие блюда",
-    },
-    {
-        id: "3",
-        name: "Плов узбекский",
-        description:
-            "Состав: рис, мясо, морковь, лук, растительное масло, специи.",
-        price: "Цена : 4 800 тг",
-        image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-        category: "Горячие блюда",
-    },
-    {
-        id: "4",
-        name: "Борщ красный",
-        description:
-            "Состав: свекла, капуста, морковь, лук, мясной бульон, сметана.",
-        price: "Цена : 2 400 тг",
-        image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-        category: "Супы",
-    },
-    {
-        id: "5",
-        name: "Омлет с беконом",
-        description:
-            "Состав: яйца, бекон, молоко, сыр, зелень, масло сливочное.",
-        price: "Цена : 1 800 тг",
-        image: "https://api.builder.io/api/v1/image/assets/TEMP/a029ad2c2b910105a5e7642e2ea862cfbe5dc138?width=120",
-        category: "Завтраки",
-    },
-];
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function OrderSelection({
     order,
-    dishes = sampleDishes,
+    dishes, // ✅ Пустой массив по умолчанию вместо моки
     onOrderUpdate,
-    onTableChange,
-    onRoomChange,
     onAddDish,
     onDishPress,
     onCancelOrder,
@@ -106,20 +64,12 @@ export default function OrderSelection({
 }: OrderSelectionProps) {
     const router = useRouter();
 
+    // ========================================================================
+    // State
+    // ========================================================================
+
     const [selectedTable, setSelectedTable] = useState(order.table || "");
-    const [selectedRoom, setSelectedRoom] = useState(order.room || "Общий зал");
-
-    const rooms = [
-        "Общий зал",
-        "Открытая VIP-беседка",
-        "Летняя терраса",
-        "VIP-залы",
-    ];
-
-    useEffect(() => {
-        setSelectedTable(order.table || "");
-        setSelectedRoom(order.room || "Общий зал");
-    }, [order]);
+    const [selectedRoom, setSelectedRoom] = useState(order.room || "");
 
     const updateOrder = useCallback(
         (updates: Partial<Order>) => {
@@ -127,24 +77,6 @@ export default function OrderSelection({
             onOrderUpdate?.(updatedOrder);
         },
         [order, onOrderUpdate],
-    );
-
-    const handleTableChange = useCallback(
-        (value: string) => {
-            setSelectedTable(value);
-            updateOrder({ table: value });
-            onTableChange?.(value);
-        },
-        [updateOrder, onTableChange],
-    );
-
-    const handleRoomSelect = useCallback(
-        (room: string) => {
-            setSelectedRoom(room);
-            updateOrder({ room });
-            onRoomChange?.(room);
-        },
-        [updateOrder, onRoomChange],
     );
 
     const handleDishPress = useCallback(
@@ -159,8 +91,11 @@ export default function OrderSelection({
 
     const handleAddMoreDishes = useCallback(() => {
         onAddDish?.();
-        router.push("/waiter/menu");
     }, [onAddDish, router]);
+
+    // ========================================================================
+    // Render
+    // ========================================================================
 
     return (
         <ScrollView
@@ -168,25 +103,19 @@ export default function OrderSelection({
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
         >
-            <TableInput
-                value={selectedTable}
-                onChangeText={handleTableChange}
-            />
-
+            {/* Отображение локации/ресторана */}
             <LocationDisplay location={order.location} />
 
-            <RoomSelector
-                rooms={rooms}
-                selectedRoom={selectedRoom}
-                onRoomSelect={handleRoomSelect}
-            />
+            {/* Секция с блюдами */}
+            {dishes.length > 0 && (
+                <DishesSection
+                    dishes={dishes}
+                    onDishPress={handleDishPress}
+                    onAddMoreDishes={handleAddMoreDishes}
+                />
+            )}
 
-            <DishesSection
-                dishes={dishes}
-                onDishPress={handleDishPress}
-                onAddMoreDishes={handleAddMoreDishes}
-            />
-
+            {/* Сводка по заказу */}
             <OrderSummary
                 items={order.items}
                 table={selectedTable}
@@ -196,6 +125,10 @@ export default function OrderSelection({
         </ScrollView>
     );
 }
+
+// ============================================================================
+// Styles
+// ============================================================================
 
 const styles = StyleSheet.create({
     container: {

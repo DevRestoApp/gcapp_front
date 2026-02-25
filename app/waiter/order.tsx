@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { useRouter } from "expo-router";
+import React, { useState, useCallback, useEffect } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
     View,
     StyleSheet,
@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 // ============================================================================
 // Types
@@ -21,6 +22,7 @@ interface OrderItem {
     dishId: string;
     quantity: number;
     price: number;
+    name?: string;
 }
 
 interface Order {
@@ -34,23 +36,18 @@ interface Order {
     completedAt?: Date;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-const INITIAL_ORDER: Order = {
-    id: "order-123",
-    table: "12",
-    location: 'Ресторан "Дастархан"',
-    room: "Общий зал",
-    items: [
-        { dishId: "1", quantity: 2, price: 5600 },
-        { dishId: "2", quantity: 1, price: 3200 },
-        { dishId: "4", quantity: 1, price: 2400 },
-    ],
-    status: "draft",
-    createdAt: new Date(),
-};
+// API Order type (from backend)
+interface ApiOrder {
+    id: number;
+    organization_name: string;
+    table: string | null;
+    room: string;
+    status: string;
+    sum_order: number;
+    final_sum: number | null;
+    bank_commission: number | null;
+    items: any[];
+}
 
 // ============================================================================
 // Main Component
@@ -58,23 +55,63 @@ const INITIAL_ORDER: Order = {
 
 export default function OrderSelectionScreen() {
     const router = useRouter();
-    const [currentOrder, setCurrentOrder] = useState<Order>(INITIAL_ORDER);
+    const params = useLocalSearchParams();
+    const { selectedOrder, selectedOrderId } = useWaiter();
+
+    // Используем данные из параметров как fallback
+    const apiOrder: ApiOrder | null =
+        selectedOrder ||
+        (params.orderData ? JSON.parse(params.orderData as string) : null);
+    const orderId = selectedOrderId || params.orderId;
+
+    console.log("Selected order:", apiOrder);
+    console.log("Selected orderId:", orderId);
+
+    // Состояние для текущего заказа в формате компонента
+    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+
+    // ========================================================================
+    // Effects
+    // ========================================================================
+
+    // Конвертируем API order в формат компонента
+    useEffect(() => {
+        if (apiOrder) {
+            const convertedOrder: Order = {
+                id: apiOrder.id.toString(),
+                table: apiOrder.table || "",
+                location: apiOrder.organization_name,
+                room: apiOrder.room,
+                items: apiOrder.items.map((item, index) => ({
+                    dishId: index.toString(),
+                    quantity: item.dish_amount_int || 1,
+                    price: item.dish_discount_sum_int || 0,
+                    name: item.dish_name || "Неизвестное блюдо",
+                })),
+                status: apiOrder.status === "CREATED" ? "draft" : "completed",
+                createdAt: new Date(),
+            };
+
+            setCurrentOrder(convertedOrder);
+        }
+    }, [orderId]); // ✅ Зависимость только от orderId (число/строка)
 
     // ========================================================================
     // Computed Values
     // ========================================================================
 
-    const totalAmount = currentOrder.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0,
-    );
+    const totalAmount = currentOrder
+        ? currentOrder.items.reduce(
+              (sum, item) => sum + item.price * item.quantity,
+              0,
+          )
+        : 0;
 
-    const totalItems = currentOrder.items.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-    );
+    const totalItems = currentOrder
+        ? currentOrder.items.reduce((sum, item) => sum + item.quantity, 0)
+        : 0;
 
-    const hasItems = currentOrder.items.length > 0;
+    const hasItems = currentOrder ? currentOrder.items.length > 0 : false;
 
     // ========================================================================
     // Event Handlers
@@ -87,10 +124,12 @@ export default function OrderSelectionScreen() {
 
     const handleTableChange = useCallback((table: string) => {
         console.log("Table changed to:", table);
+        // TODO: Update order table via API
     }, []);
 
     const handleRoomChange = useCallback((room: string) => {
         console.log("Room changed to:", room);
+        // TODO: Update order room via API
     }, []);
 
     const handleDishPress = useCallback((dish: any) => {
@@ -100,6 +139,7 @@ export default function OrderSelectionScreen() {
                 text: "Добавить в заказ",
                 onPress: () => {
                     console.log("Adding dish to order:", dish.id);
+                    // TODO: Add dish to order via API
                 },
             },
         ]);
@@ -121,13 +161,16 @@ export default function OrderSelectionScreen() {
                     style: "destructive",
                     onPress: () => {
                         console.log("Order cancelled");
+                        // TODO: Cancel order via API
 
-                        setCurrentOrder({
-                            ...currentOrder,
-                            table: "",
-                            items: [],
-                            status: "cancelled",
-                        });
+                        if (currentOrder) {
+                            setCurrentOrder({
+                                ...currentOrder,
+                                table: "",
+                                items: [],
+                                status: "cancelled",
+                            });
+                        }
 
                         router.push("/waiter/cancel");
                     },
@@ -142,6 +185,8 @@ export default function OrderSelectionScreen() {
             return;
         }
 
+        if (!currentOrder) return;
+
         const completedOrder: Order = {
             ...currentOrder,
             status: "completed",
@@ -153,6 +198,8 @@ export default function OrderSelectionScreen() {
             totalAmount,
             totalItems,
         });
+
+        // TODO: Complete order via API
 
         router.push("/waiter/payment");
     }, [currentOrder, hasItems, totalAmount, totalItems, router]);
@@ -198,6 +245,21 @@ export default function OrderSelectionScreen() {
         </View>
     );
 
+    // Показываем загрузку или ошибку если нет данных
+    if (!currentOrder) {
+        return (
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
+                <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>
+                        {apiOrder ? "Загрузка заказа..." : "Заказ не найден"}
+                    </Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     // ========================================================================
     // Main Render
     // ========================================================================
@@ -212,6 +274,7 @@ export default function OrderSelectionScreen() {
             <View style={styles.content}>
                 <OrderSelection
                     order={currentOrder}
+                    dishes={currentOrder.items}
                     onOrderUpdate={handleOrderUpdate}
                     onTableChange={handleTableChange}
                     onRoomChange={handleRoomChange}
@@ -221,7 +284,7 @@ export default function OrderSelectionScreen() {
                     onCompleteOrder={handleCompleteOrder}
                 />
 
-                {renderActionButtons()}
+                {/*{renderActionButtons()}*/}
             </View>
         </SafeAreaView>
     );
@@ -239,6 +302,18 @@ const styles = StyleSheet.create({
         flex: 1,
         width: "100%",
         alignSelf: "center",
+    },
+
+    // Empty state
+    emptyState: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    emptyStateText: {
+        color: "#fff",
+        fontSize: 16,
+        opacity: 0.6,
     },
 
     // Action Buttons

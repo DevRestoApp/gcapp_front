@@ -1,8 +1,9 @@
 import api from "../api";
 import { checkFilters } from "@/src/utils/serverUtils";
 
+// TODO убрать заглушку на date
 export async function getEmployeesData(filters: { deleted?: boolean | false }) {
-    const params = checkFilters({ ...filters });
+    const params = checkFilters({ ...filters, date: null });
 
     const res = await api.get("/employees", { params });
 

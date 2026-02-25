@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from "react";
 import {
     View,
     Text,
-    TouchableOpacity,
     StyleSheet,
     ScrollView,
     ActivityIndicator,
@@ -11,6 +10,7 @@ import { useRouter } from "expo-router";
 
 import OrderItem from "./OrderItem";
 import AddOrder from "./AddOrder";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
 
 // API Order type
 interface ApiOrder {
@@ -31,12 +31,13 @@ interface DisplayOrder {
     tableNumber: string;
     description: string;
     amount: string;
+    rawOrder: ApiOrder; // добавляем сырые данные для передачи
 }
 
 interface ActiveOrdersSectionProps {
     orders?: ApiOrder[] | null;
     onNewOrder?: () => void;
-    onOrderClick?: (orderId: string) => void;
+    onOrderClick?: (params: { itemId: string; item: ApiOrder }) => void;
     showScrollIndicator?: boolean;
     maxHeight?: number;
     isLoading?: boolean;
@@ -51,9 +52,10 @@ export default function ActiveOrdersSection({
     isLoading = false,
 }: ActiveOrdersSectionProps) {
     const router = useRouter();
+    const { selectedOrder, selectedOrderId } = useWaiter();
 
     // Transform API orders to display format
-    const displayOrders = useMemo(() => {
+    const displayOrders = useMemo((): DisplayOrder[] | null => {
         if (!orders) return null;
 
         return orders.map((order) => {
@@ -86,7 +88,8 @@ export default function ActiveOrdersSection({
                 tableNumber,
                 description,
                 amount,
-            } as DisplayOrder;
+                rawOrder: order, // сохраняем оригинальный заказ
+            };
         });
     }, [orders]);
 
@@ -95,9 +98,19 @@ export default function ActiveOrdersSection({
     }, [onNewOrder]);
 
     const handleOrderClick = useCallback(
-        (orderId: string) => {
-            onOrderClick?.(orderId);
-            router.push(`/waiter/order/${orderId}`);
+        (orderId: string, rawOrder: ApiOrder) => {
+            console.log("rawOrder", rawOrder);
+            onOrderClick?.({
+                itemId: orderId,
+                item: rawOrder,
+            });
+            router.push({
+                pathname: `/waiter/order`,
+                params: {
+                    orderId: orderId,
+                    orderData: JSON.stringify(rawOrder),
+                },
+            });
         },
         [onOrderClick, router],
     );
@@ -160,7 +173,9 @@ export default function ActiveOrdersSection({
                         tableNumber={order.tableNumber}
                         description={order.description}
                         amount={order.amount}
-                        onClick={handleOrderClick}
+                        onClick={() =>
+                            handleOrderClick(order.id, order.rawOrder)
+                        }
                     />
                 ))}
             </ScrollView>
@@ -226,18 +241,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         lineHeight: 22,
-    },
-    emptyStateButton: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 16,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    emptyStateButtonText: {
-        color: "rgba(255, 255, 255, 0.9)",
-        fontSize: 14,
-        fontWeight: "500",
     },
 });

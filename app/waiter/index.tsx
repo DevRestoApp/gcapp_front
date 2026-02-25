@@ -38,6 +38,8 @@ export default function Index() {
         shiftStatus,
         quests,
         orders,
+        setSelectedOrderId,
+        setSelectedOrder,
     } = useWaiter();
 
     const [days, setDays] = useState<Day[]>([]);
@@ -199,7 +201,16 @@ export default function Index() {
         if (!orders) {
             return null;
         }
-        return <ActiveOrdersSection orders={orders} isLoading={isLoading} />;
+        return (
+            <ActiveOrdersSection
+                orders={orders}
+                isLoading={isLoading}
+                onOrderClick={(itemId, item) => {
+                    setSelectedOrderId(itemId);
+                    setSelectedOrder(item);
+                }}
+            />
+        );
     };
 
     const isActive = shiftStatus?.isActive || false;
