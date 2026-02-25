@@ -421,11 +421,6 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
         } catch (err: any) {
             console.error("Error fetching reports:", err);
             setError("Не удалось загрузить отчеты");
-
-            // Check if it's an authentication error
-            await storage.removeItem("access_token");
-            await storage.removeItem("user");
-            router.push("/auth");
         } finally {
             setLoading(false);
         }
