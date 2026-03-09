@@ -63,7 +63,6 @@ export async function getOrders(filters: WaiterOrdersInputType) {
 
 export async function createOrder(input: CreateOrdersInputType) {
     const params = checkFilters(input);
-    console.log({ params });
 
     const res = await api.post("/orders", params);
 
@@ -73,5 +72,12 @@ export async function createOrder(input: CreateOrdersInputType) {
 export async function payOrder(order_id: number) {
     const res = await api.post(`/orders/${order_id}/pay`);
 
+    return res.data;
+}
+export async function cancelOrder(order_id: number, reason: string) {
+    const params = checkFilters({ reason });
+    const res = await api.post(`/orders/${order_id}/cancel`, params);
+
+    console.log("cancel", { res });
     return res.data;
 }

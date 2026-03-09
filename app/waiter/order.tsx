@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
     View,
@@ -36,7 +36,6 @@ interface Order {
     completedAt?: Date;
 }
 
-// API Order type (from backend)
 interface ApiOrder {
     id: number;
     organization_name: string;
@@ -50,87 +49,56 @@ interface ApiOrder {
 }
 
 // ============================================================================
-// Main Component
+// Helpers
+// ============================================================================
+
+const parseApiOrder = (raw: ApiOrder): Order => ({
+    id: raw.id.toString(),
+    table: raw.table || "",
+    location: raw.organization_name,
+    room: raw.room,
+    items: raw.items.map((item, index) => ({
+        dishId: index.toString(),
+        quantity: item.dish_amount_int || 1,
+        price: item.dish_discount_sum_int || 0,
+        name: item.dish_name || "Неизвестное блюдо",
+    })),
+    totalBill: raw.sum_order,
+    status: raw.status === "CREATED" ? "draft" : "completed",
+    createdAt: new Date(),
+});
+
+// ============================================================================
+// Component
 // ============================================================================
 
 export default function OrderSelectionScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { selectedOrder, selectedOrderId } = useWaiter();
+    const { selectedOrder } = useWaiter();
 
-    // Используем данные из параметров как fallback
-    const apiOrder: ApiOrder | null =
-        selectedOrder ||
-        (params.orderData ? JSON.parse(params.orderData as string) : null);
-    const orderId = selectedOrderId || params.orderId;
-
-    console.log("Selected order:", apiOrder);
-    console.log("Selected orderId:", orderId);
-
-    // Состояние для текущего заказа в формате компонента
-    const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-
-    // ========================================================================
-    // Effects
-    // ========================================================================
-
-    // Конвертируем API order в формат компонента
-    useEffect(() => {
-        if (apiOrder) {
-            const convertedOrder: Order = {
-                id: apiOrder.id.toString(),
-                table: apiOrder.table || "",
-                location: apiOrder.organization_name,
-                room: apiOrder.room,
-                items: apiOrder.items.map((item, index) => ({
-                    dishId: index.toString(),
-                    quantity: item.dish_amount_int || 1,
-                    price: item.dish_discount_sum_int || 0,
-                    name: item.dish_name || "Неизвестное блюдо",
-                })),
-                status: apiOrder.status === "CREATED" ? "draft" : "completed",
-                createdAt: new Date(),
-            };
-
-            setCurrentOrder(convertedOrder);
+    // Params are primary source of truth; context is fallback
+    const apiOrder: ApiOrder | null = useMemo(() => {
+        if (params.orderData) {
+            try {
+                return JSON.parse(params.orderData as string);
+            } catch {
+                console.warn("Failed to parse orderData param");
+            }
         }
-    }, [orderId]); // ✅ Зависимость только от orderId (число/строка)
+        return selectedOrder ?? null;
+    }, []); // Parse once on mount — no race condition
+
+    const currentOrder: Order | null = useMemo(
+        () => (apiOrder ? parseApiOrder(apiOrder) : null),
+        [apiOrder],
+    );
+
+    const hasItems = (currentOrder?.items.length ?? 0) > 0;
 
     // ========================================================================
-    // Computed Values
+    // Handlers
     // ========================================================================
-
-    const totalAmount = currentOrder
-        ? currentOrder.items.reduce(
-              (sum, item) => sum + item.price * item.quantity,
-              0,
-          )
-        : 0;
-
-    const totalItems = currentOrder
-        ? currentOrder.items.reduce((sum, item) => sum + item.quantity, 0)
-        : 0;
-
-    const hasItems = currentOrder ? currentOrder.items.length > 0 : false;
-
-    // ========================================================================
-    // Event Handlers
-    // ========================================================================
-
-    const handleOrderUpdate = useCallback((updatedOrder: Order) => {
-        setCurrentOrder(updatedOrder);
-        console.log("Order updated:", updatedOrder);
-    }, []);
-
-    const handleTableChange = useCallback((table: string) => {
-        console.log("Table changed to:", table);
-        // TODO: Update order table via API
-    }, []);
-
-    const handleRoomChange = useCallback((room: string) => {
-        console.log("Room changed to:", room);
-        // TODO: Update order room via API
-    }, []);
 
     const handleDishPress = useCallback((dish: any) => {
         Alert.alert(dish.name, `${dish.description}\n\n${dish.price}`, [
@@ -138,114 +106,39 @@ export default function OrderSelectionScreen() {
             {
                 text: "Добавить в заказ",
                 onPress: () => {
-                    console.log("Adding dish to order:", dish.id);
                     // TODO: Add dish to order via API
                 },
             },
         ]);
     }, []);
 
-    const handleAddDish = useCallback(() => {
-        console.log("Navigate to menu to add dishes");
-        // router.push('/waiter/menu');
-    }, []);
-
     const handleCancelOrder = useCallback(() => {
-        Alert.alert(
-            "Отменить заказ",
-            "Вы уверены, что хотите отменить заказ?",
-            [
-                { text: "Нет", style: "cancel" },
-                {
-                    text: "Да, отменить",
-                    style: "destructive",
-                    onPress: () => {
-                        console.log("Order cancelled");
-                        // TODO: Cancel order via API
-
-                        if (currentOrder) {
-                            setCurrentOrder({
-                                ...currentOrder,
-                                table: "",
-                                items: [],
-                                status: "cancelled",
-                            });
-                        }
-
-                        router.push("/waiter/cancel");
-                    },
-                },
-            ],
-        );
-    }, [currentOrder, router]);
+        router.push({
+            pathname: "/waiter/cancel",
+            params: {
+                orderId: String(params.orderId),
+            },
+        });
+    }, [router, params.orderId]);
 
     const handleCompleteOrder = useCallback(() => {
         if (!hasItems) {
             Alert.alert("Ошибка", "Добавьте блюда в заказ");
             return;
         }
-
-        if (!currentOrder) return;
-
-        const completedOrder: Order = {
-            ...currentOrder,
-            status: "completed",
-            completedAt: new Date(),
-        };
-
-        setCurrentOrder(completedOrder);
-        console.log("Order completed:", {
-            totalAmount,
-            totalItems,
+        router.push({
+            pathname: "/waiter/payment",
+            params: {
+                orderId: String(params.orderId),
+                totalBill: currentOrder.totalBill,
+            },
         });
-
-        // TODO: Complete order via API
-
-        router.push("/waiter/payment");
-    }, [currentOrder, hasItems, totalAmount, totalItems, router]);
+    }, [hasItems, params.orderId, router, currentOrder]);
 
     // ========================================================================
-    // Render Functions
+    // Empty / loading state
     // ========================================================================
 
-    const renderActionButtons = () => (
-        <View
-            style={[
-                styles.actionsSection,
-                backgroundsStyles.generalBgTransparent,
-            ]}
-        >
-            <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleCancelOrder}
-                disabled={!hasItems}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.cancelButtonText}>Отменить заказ</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                style={[
-                    styles.completeButton,
-                    !hasItems && styles.completeButtonDisabled,
-                ]}
-                onPress={handleCompleteOrder}
-                disabled={!hasItems}
-                activeOpacity={0.8}
-            >
-                <Text
-                    style={[
-                        styles.completeButtonText,
-                        !hasItems && styles.completeButtonTextDisabled,
-                    ]}
-                >
-                    Завершить
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    // Показываем загрузку или ошибку если нет данных
     if (!currentOrder) {
         return (
             <SafeAreaView
@@ -261,7 +154,7 @@ export default function OrderSelectionScreen() {
     }
 
     // ========================================================================
-    // Main Render
+    // Main render
     // ========================================================================
 
     return (
@@ -275,16 +168,52 @@ export default function OrderSelectionScreen() {
                 <OrderSelection
                     order={currentOrder}
                     dishes={currentOrder.items}
-                    onOrderUpdate={handleOrderUpdate}
-                    onTableChange={handleTableChange}
-                    onRoomChange={handleRoomChange}
+                    onOrderUpdate={() => {}} // TODO: optimistic update via API
+                    onTableChange={() => {}} // TODO: update table via API
+                    onRoomChange={() => {}} // TODO: update room via API
                     onDishPress={handleDishPress}
-                    onAddDish={handleAddDish}
+                    onAddDish={() => {}}
                     onCancelOrder={handleCancelOrder}
                     onCompleteOrder={handleCompleteOrder}
                 />
 
-                {/*{renderActionButtons()}*/}
+                {/* Action Buttons */}
+                <View
+                    style={[
+                        styles.actionsSection,
+                        backgroundsStyles.generalBgTransparent,
+                    ]}
+                >
+                    <TouchableOpacity
+                        style={styles.cancelButton}
+                        onPress={handleCancelOrder}
+                        disabled={!hasItems}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.cancelButtonText}>
+                            Отменить заказ
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.completeButton,
+                            !hasItems && styles.completeButtonDisabled,
+                        ]}
+                        onPress={handleCompleteOrder}
+                        disabled={!hasItems}
+                        activeOpacity={0.8}
+                    >
+                        <Text
+                            style={[
+                                styles.completeButtonText,
+                                !hasItems && styles.completeButtonTextDisabled,
+                            ]}
+                        >
+                            Завершить
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -295,28 +224,12 @@ export default function OrderSelectionScreen() {
 // ============================================================================
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    content: {
-        flex: 1,
-        width: "100%",
-        alignSelf: "center",
-    },
+    container: { flex: 1 },
+    content: { flex: 1, width: "100%", alignSelf: "center" },
 
-    // Empty state
-    emptyState: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    emptyStateText: {
-        color: "#fff",
-        fontSize: 16,
-        opacity: 0.6,
-    },
+    emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
+    emptyStateText: { color: "#fff", fontSize: 16, opacity: 0.6 },
 
-    // Action Buttons
     actionsSection: {
         flexDirection: "row",
         paddingHorizontal: 16,
@@ -358,12 +271,6 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOpacity: 0.1,
     },
-    completeButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    completeButtonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.4)",
-    },
+    completeButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+    completeButtonTextDisabled: { color: "rgba(255, 255, 255, 0.4)" },
 });
