@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     View,
     Text,
@@ -14,231 +14,69 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { useWaiter } from "@/src/contexts/WaiterProvider";
 
-interface PaymentScreenProps {
-    totalBill?: number;
-    onPaymentComplete?: (paymentMethod: string, tipAmount: number) => void;
-    onCancel?: () => void;
-}
+// ============================================================================
+// Constants
+// ============================================================================
 
-export default function PaymentScreen({
-    totalBill = 16800,
-    onPaymentComplete,
-    onCancel,
-}: PaymentScreenProps) {
+const PAYMENT_METHODS = [
+    "Банковские карты",
+    "Наличные",
+    "Kaspi QR",
+    "Kaspi Red",
+    "Halyk Bank",
+];
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export default function PaymentScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const { payOrderWrapper } = useWaiter();
+
+    const orderId = Number(params.orderId);
+    const totalBill = Number(params.totalBill) || 0;
 
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
         string | null
     >(null);
     const [tipAmount, setTipAmount] = useState("");
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const paymentMethods = [
-        "Банковские карты",
-        "Наличные",
-        "Kaspi QR",
-        "Kaspi Red",
-        "Halyk Bank",
-    ];
+    const finalAmount = totalBill + (parseFloat(tipAmount) || 0);
+    const isValid = selectedPaymentMethod !== null;
 
-    // Calculate final amount
-    const getFinalAmount = useCallback(() => {
-        const tip = parseFloat(tipAmount) || 0;
-        return totalBill + tip;
-    }, [totalBill, tipAmount]);
+    // ========================================================================
+    // Handlers
+    // ========================================================================
 
-    // Handle back navigation
-    const handleBack = useCallback(() => {
-        if (onCancel) {
-            onCancel();
-        } else {
-            router.back();
-        }
-    }, [onCancel, router]);
-
-    // Handle payment method selection
-    const handlePaymentMethodSelect = useCallback((method: string) => {
-        setSelectedPaymentMethod(method);
-    }, []);
-
-    // Handle tip input
     const handleTipChange = useCallback((text: string) => {
-        // Only allow numbers
-        const cleanedText = text.replace(/[^0-9]/g, "");
-        setTipAmount(cleanedText);
+        setTipAmount(text.replace(/[^0-9]/g, ""));
     }, []);
 
-    // Handle payment completion
-    const handleComplete = useCallback(() => {
-        if (!selectedPaymentMethod) {
-            Alert.alert(
-                "Выберите метод оплаты",
-                "Пожалуйста, выберите способ оплаты для завершения",
-                [{ text: "OK" }],
-            );
-            return;
+    const handleComplete = useCallback(async () => {
+        if (!isValid) return;
+
+        setIsProcessing(true);
+        try {
+            await payOrderWrapper(orderId);
+            router.push("/waiter");
+        } catch {
+            // TODO: show error toast/banner
+        } finally {
+            setIsProcessing(false);
         }
+    }, [isValid, orderId, payOrderWrapper, router]);
 
-        const tip = parseFloat(tipAmount) || 0;
-        const finalAmount = getFinalAmount();
-
-        Alert.alert(
-            "Подтвердите оплату",
-            `Метод оплаты: ${selectedPaymentMethod}\nСчет: ${totalBill.toLocaleString()} тг\nЧаевые: ${tip.toLocaleString()} тг\nИтого: ${finalAmount.toLocaleString()} тг`,
-            [
-                {
-                    text: "Отмена",
-                    style: "cancel",
-                },
-                {
-                    text: "Подтвердить",
-                    onPress: () => {
-                        onPaymentComplete?.(selectedPaymentMethod, tip);
-
-                        Alert.alert(
-                            "Оплата завершена",
-                            `Оплачено: ${finalAmount.toLocaleString()} тг\nСпасибо!`,
-                            [
-                                {
-                                    text: "OK",
-                                    onPress: () => router.back(),
-                                },
-                            ],
-                        );
-                    },
-                },
-            ],
-        );
-    }, [
-        selectedPaymentMethod,
-        tipAmount,
-        totalBill,
-        getFinalAmount,
-        onPaymentComplete,
-        router,
-    ]);
-
-    // Render header
-    const renderHeader = () => (
-        <View style={styles.header}>
-            <TouchableOpacity
-                onPress={handleBack}
-                style={styles.backButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.backIcon}>←</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.headerTitle}>Оплата</Text>
-
-            <View style={styles.headerSpacer} />
-        </View>
-    );
-
-    // Render payment methods section
-    const renderPaymentMethods = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Оплата</Text>
-
-            <View style={styles.paymentMethodsContainer}>
-                {paymentMethods.map((method) => {
-                    const isSelected = selectedPaymentMethod === method;
-
-                    return (
-                        <TouchableOpacity
-                            key={method}
-                            onPress={() => handlePaymentMethodSelect(method)}
-                            style={[
-                                styles.paymentMethodButton,
-                                isSelected && styles.paymentMethodButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.paymentMethodText,
-                                    isSelected &&
-                                        styles.paymentMethodTextActive,
-                                ]}
-                            >
-                                {method}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
-        </View>
-    );
-
-    // Render tips section
-    const renderTipsSection = () => (
-        <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Чаевые</Text>
-
-            <View style={styles.inputContainer}>
-                <TextInput
-                    value={tipAmount}
-                    onChangeText={handleTipChange}
-                    placeholder="Сумма"
-                    placeholderTextColor="#797A80"
-                    style={styles.input}
-                    keyboardType="numeric"
-                    returnKeyType="done"
-                    maxLength={10}
-                />
-                {tipAmount.length > 0 && (
-                    <Text style={styles.inputSuffix}>тг</Text>
-                )}
-            </View>
-
-            {tipAmount.length > 0 && (
-                <Text style={styles.tipHint}>
-                    Чаевые: {parseFloat(tipAmount).toLocaleString()} тг
-                </Text>
-            )}
-        </View>
-    );
-
-    // Render bottom section
-    const renderBottomSection = () => {
-        const finalAmount = getFinalAmount();
-        const isValid = selectedPaymentMethod !== null;
-
-        return (
-            <View style={styles.bottomSection}>
-                <View style={styles.bottomContent}>
-                    <Text style={styles.totalText}>
-                        Общий счет: {finalAmount.toLocaleString()} тг
-                    </Text>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.completeButton,
-                            !isValid && styles.completeButtonDisabled,
-                        ]}
-                        onPress={handleComplete}
-                        disabled={!isValid}
-                        activeOpacity={0.8}
-                    >
-                        <Text
-                            style={[
-                                styles.completeButtonText,
-                                !isValid && styles.completeButtonTextDisabled,
-                            ]}
-                        >
-                            Завершить
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        );
-    };
+    // ========================================================================
+    // Render
+    // ========================================================================
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -248,32 +86,128 @@ export default function PaymentScreen({
                 style={styles.keyboardView}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
             >
-                {renderHeader()}
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity
+                        onPress={() => router.push("/waiter")}
+                        style={styles.backButton}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.backIcon}>←</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Оплата</Text>
+                    <View style={styles.headerSpacer} />
+                </View>
 
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {renderPaymentMethods()}
-                    {renderTipsSection()}
+                    {/* Payment Methods */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Оплата</Text>
+                        <View style={styles.paymentMethodsContainer}>
+                            {PAYMENT_METHODS.map((method) => {
+                                const isSelected =
+                                    selectedPaymentMethod === method;
+                                return (
+                                    <TouchableOpacity
+                                        key={method}
+                                        onPress={() =>
+                                            setSelectedPaymentMethod(method)
+                                        }
+                                        style={[
+                                            styles.paymentMethodButton,
+                                            isSelected &&
+                                                styles.paymentMethodButtonActive,
+                                        ]}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.paymentMethodText,
+                                                isSelected &&
+                                                    styles.paymentMethodTextActive,
+                                            ]}
+                                        >
+                                            {method}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+
+                    {/* Tips */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Чаевые</Text>
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                value={tipAmount}
+                                onChangeText={handleTipChange}
+                                placeholder="Сумма"
+                                placeholderTextColor="#797A80"
+                                style={styles.input}
+                                keyboardType="numeric"
+                                returnKeyType="done"
+                                maxLength={10}
+                            />
+                            {tipAmount.length > 0 && (
+                                <Text style={styles.inputSuffix}>тг</Text>
+                            )}
+                        </View>
+                        {tipAmount.length > 0 && (
+                            <Text style={styles.tipHint}>
+                                Чаевые: {parseFloat(tipAmount).toLocaleString()}{" "}
+                                тг
+                            </Text>
+                        )}
+                    </View>
                 </ScrollView>
 
-                {renderBottomSection()}
+                {/* Bottom */}
+                <View style={styles.bottomSection}>
+                    <View style={styles.bottomContent}>
+                        <Text style={styles.totalText}>
+                            Общий счет: {finalAmount.toLocaleString()} тг
+                        </Text>
+                        <TouchableOpacity
+                            style={[
+                                styles.completeButton,
+                                (!isValid || isProcessing) &&
+                                    styles.completeButtonDisabled,
+                            ]}
+                            onPress={handleComplete}
+                            disabled={!isValid || isProcessing}
+                            activeOpacity={0.8}
+                        >
+                            <Text
+                                style={[
+                                    styles.completeButtonText,
+                                    (!isValid || isProcessing) &&
+                                        styles.completeButtonTextDisabled,
+                                ]}
+                            >
+                                {isProcessing ? "Обработка..." : "Завершить"}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-    },
+// ============================================================================
+// Styles
+// ============================================================================
 
-    // Header styles
+const styles = StyleSheet.create({
+    container: { flex: 1 },
+    keyboardView: { flex: 1 },
+
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -288,11 +222,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    backIcon: {
-        color: "#fff",
-        fontSize: 24,
-        fontWeight: "600",
-    },
+    backIcon: { color: "#fff", fontSize: 24, fontWeight: "600" },
     headerTitle: {
         color: "#fff",
         fontSize: 20,
@@ -300,15 +230,9 @@ const styles = StyleSheet.create({
         letterSpacing: -0.24,
         lineHeight: 28,
     },
-    headerSpacer: {
-        width: 28,
-        height: 28,
-    },
+    headerSpacer: { width: 28, height: 28 },
 
-    // Scroll view styles
-    scrollView: {
-        flex: 1,
-    },
+    scrollView: { flex: 1 },
     scrollContent: {
         paddingHorizontal: 16,
         paddingTop: 16,
@@ -316,10 +240,7 @@ const styles = StyleSheet.create({
         gap: 28,
     },
 
-    // Section styles
-    section: {
-        gap: 16,
-    },
+    section: { gap: 16 },
     sectionTitle: {
         color: "#fff",
         fontSize: 24,
@@ -327,12 +248,7 @@ const styles = StyleSheet.create({
         lineHeight: 28,
     },
 
-    // Payment methods styles
-    paymentMethodsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-    },
+    paymentMethodsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     paymentMethodButton: {
         height: 44,
         paddingHorizontal: 12,
@@ -341,9 +257,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
     },
-    paymentMethodButtonActive: {
-        backgroundColor: "#20C774",
-    },
+    paymentMethodButtonActive: { backgroundColor: "#20C774" },
     paymentMethodText: {
         color: "#797A80",
         fontSize: 16,
@@ -351,12 +265,8 @@ const styles = StyleSheet.create({
         letterSpacing: -0.24,
         textAlign: "center",
     },
-    paymentMethodTextActive: {
-        color: "#fff",
-        fontWeight: "500",
-    },
+    paymentMethodTextActive: { color: "#fff", fontWeight: "500" },
 
-    // Tips input styles
     inputContainer: {
         position: "relative",
         height: 44,
@@ -390,7 +300,6 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
 
-    // Bottom section styles
     bottomSection: {
         backgroundColor: "rgba(25, 25, 26, 0.85)",
         paddingHorizontal: 16,
@@ -436,7 +345,5 @@ const styles = StyleSheet.create({
         textAlign: "center",
         lineHeight: 24,
     },
-    completeButtonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.4)",
-    },
+    completeButtonTextDisabled: { color: "rgba(255, 255, 255, 0.4)" },
 });

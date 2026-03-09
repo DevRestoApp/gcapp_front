@@ -8,23 +8,51 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from "react-native";
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
-import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
-import ShiftCloseModal, {
-    ShiftCloseModalRef,
-} from "@/src/client/components/modals/ShiftCloseModal";
-import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { useRouter } from "expo-router";
 
+import Calendar from "@/src/client/components/Calendar";
 import EarningsCard from "@/src/client/components/waiter/EarningsCard";
 import TimerCard from "@/src/client/components/waiter/TimerCard";
 import MotivationCard from "@/src/client/components/waiter/MotivationCard";
 import ActiveOrdersSection from "@/src/client/components/waiter/ActiveOrderSection";
+import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
+import ShiftCloseModal, {
+    ShiftCloseModalRef,
+} from "@/src/client/components/modals/ShiftCloseModal";
 
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
-import { useRouter } from "expo-router";
+import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { Day } from "@/src/client/types/waiter";
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+const formatDateForAPI = (date: Date): string =>
+    date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+
+const buildWeekDays = (): Day[] => {
+    const today = new Date();
+    return Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (6 - i));
+        return {
+            date: date.getDate().toString(),
+            day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
+            active: i === 6,
+        };
+    });
+};
+
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function Index() {
     const router = useRouter();
@@ -42,30 +70,29 @@ export default function Index() {
         setSelectedOrder,
     } = useWaiter();
 
-    const [days, setDays] = useState<Day[]>([]);
+    const [days, setDays] = useState<Day[]>(() => buildWeekDays());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [isLoading, setIsLoading] = useState(false);
     const [isStartingShift, setIsStartingShift] = useState(false);
     const [isEndingShift, setIsEndingShift] = useState(false);
+
     const shiftCloseModalRef = useRef<ShiftCloseModalRef>(null);
+    const isActive = shiftStatus?.isActive ?? false;
 
-    // Initialize calendar once on mount
-    useEffect(() => {
-        initializeCalendar();
-    }, []);
+    // ========================================================================
+    // Data fetching
+    // ========================================================================
 
-    // Fetch data when dependencies change
     const fetchData = useCallback(async () => {
         if (!selectedDate || !user?.id) return;
 
         setIsLoading(true);
         try {
-            const formattedDate = formatDateForAPI(selectedDate);
-
-            // Execute all fetches in parallel for better performance
             await Promise.all([
-                fetchShiftStatus(user.id, { date: formattedDate }),
-                fetchQuest(user.id, { date: formattedDate }),
+                fetchShiftStatus(user.id, {
+                    date: formatDateForAPI(selectedDate),
+                }),
+                fetchQuest(user.id, { date: formatDateForAPI(selectedDate) }),
                 fetchOrders({
                     user_id: user.id,
                     organization_id: selectedLocation,
@@ -76,61 +103,38 @@ export default function Index() {
         } finally {
             setIsLoading(false);
         }
-    }, [selectedDate, user?.id, fetchShiftStatus, fetchQuest, fetchOrders]);
+    }, [
+        selectedDate,
+        user?.id,
+        fetchShiftStatus,
+        fetchQuest,
+        fetchOrders,
+        selectedLocation,
+    ]);
 
-    // Fetch data when selected date or user changes
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    const initializeCalendar = () => {
-        const today = new Date();
-        const weekDays: Day[] = [];
+    // ========================================================================
+    // Handlers
+    // ========================================================================
 
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            });
-        }
-
-        setDays(weekDays);
-        setSelectedDate(today);
-    };
-
-    const formatDateForAPI = (date: Date): string => {
-        return date.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        });
-    };
-
-    const handleDayPress = (index: number) => {
+    const handleDayPress = useCallback((index: number) => {
         setDays((prev) => prev.map((d, i) => ({ ...d, active: i === index })));
 
         const today = new Date();
-        const pressedDate = new Date(today);
-        pressedDate.setDate(today.getDate() - (6 - index));
+        const pressed = new Date(today);
+        pressed.setDate(today.getDate() - (6 - index));
+        setSelectedDate(pressed);
+    }, []);
 
-        setSelectedDate(pressedDate);
-    };
-
-    const handleShiftStart = async () => {
-        if (!user?.id) {
-            console.error("User ID not found");
-            throw new Error("User ID not found");
-        }
+    const handleShiftStart = useCallback(async () => {
+        if (!user?.id) throw new Error("User ID not found");
 
         setIsStartingShift(true);
         try {
-            await startShift(user.id, selectedLocation || null);
-
-            // Refresh data after starting shift
+            await startShift(user.id, selectedLocation ?? null);
             await fetchData();
         } catch (error) {
             console.error("Failed to start shift:", error);
@@ -138,89 +142,79 @@ export default function Index() {
         } finally {
             setIsStartingShift(false);
         }
-    };
+    }, [user?.id, selectedLocation, startShift, fetchData]);
 
-    const handleOpenCloseModal = () => {
+    const handleOpenCloseModal = useCallback(() => {
         shiftCloseModalRef.current?.open();
-    };
+    }, []);
 
-    const handleCloseShift = async (data: {
-        startTime: string;
-        endTime: string;
-        totalOrdersSold: number;
-        totalRevenue: number;
-        duration: string;
-    }) => {
-        if (!user?.id) {
-            console.error("User ID not found");
-            return;
-        }
+    const handleCloseShift = useCallback(
+        async (data: {
+            startTime: string;
+            endTime: string;
+            totalOrdersSold: number;
+            totalRevenue: number;
+            duration: string;
+        }) => {
+            if (!user?.id) return;
 
-        setIsEndingShift(true);
-        try {
-            await endShift(user.id, selectedLocation || null);
+            setIsEndingShift(true);
+            try {
+                await endShift(user.id, selectedLocation ?? null);
+                await fetchData();
+            } catch (error) {
+                console.error("Failed to end shift:", error);
+            } finally {
+                setIsEndingShift(false);
+            }
+        },
+        [user?.id, selectedLocation, endShift, fetchData],
+    );
 
-            console.log("Shift closed:", data);
+    const handleOrderClick = useCallback(
+        (itemId: number, item: any) => {
+            setSelectedOrderId(itemId);
+            setSelectedOrder(item);
+            router.push({
+                pathname: "/waiter/order",
+                params: {
+                    orderId: String(itemId),
+                    orderData: JSON.stringify(item),
+                },
+            });
+        },
+        [setSelectedOrderId, setSelectedOrder, router],
+    );
 
-            // Refresh data after ending shift
-            await fetchData();
-
-            // TODO: Navigate to report or summary screen
-        } catch (error) {
-            console.error("Failed to end shift:", error);
-        } finally {
-            setIsEndingShift(false);
-        }
-    };
-
-    const handleCancelClose = () => {
-        console.log("Shift close canceled");
-    };
+    // ========================================================================
+    // Render helpers
+    // ========================================================================
 
     const renderMotivationCard = () => {
-        if (quests && quests.length > 0) {
-            return (
-                <View style={styles.motivationContainer}>
-                    <TouchableOpacity
-                        onPress={() => router.push("/waiter/motivation")}
-                    >
-                        <MotivationCard
-                            goalText={quests[0].description || ""}
-                            targetAmount={String(quests[0].target)}
-                            currentProgress={String(quests[0].current)}
-                            progressPercentage={15}
-                        />
-                    </TouchableOpacity>
-                </View>
-            );
-        }
-        return null;
-    };
-
-    const renderOrderCard = () => {
-        if (!orders) {
-            return null;
-        }
+        if (!quests?.length) return null;
         return (
-            <ActiveOrdersSection
-                orders={orders}
-                isLoading={isLoading}
-                onOrderClick={(itemId, item) => {
-                    setSelectedOrderId(itemId);
-                    setSelectedOrder(item);
-                }}
-            />
+            <View style={styles.motivationContainer}>
+                <TouchableOpacity
+                    onPress={() => router.push("/waiter/motivation")}
+                >
+                    <MotivationCard
+                        goalText={quests[0].description || ""}
+                        targetAmount={String(quests[0].target)}
+                        currentProgress={String(quests[0].current)}
+                        progressPercentage={15}
+                    />
+                </TouchableOpacity>
+            </View>
         );
     };
 
-    const isActive = shiftStatus?.isActive || false;
+    // ========================================================================
+    // Loading state
+    // ========================================================================
 
-    // Loading state UI
     if (isLoading && !shiftStatus) {
         return (
-            <View
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-            >
+            <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Смена</Text>
                 </View>
@@ -233,8 +227,12 @@ export default function Index() {
         );
     }
 
+    // ========================================================================
+    // Main render
+    // ========================================================================
+
     return (
-        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
+        <View style={[styles.container, backgroundsStyles.generalBg]}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
@@ -246,14 +244,12 @@ export default function Index() {
                     style={styles.activeShiftContainer}
                     contentContainerStyle={styles.activeShiftContent}
                 >
-                    {/* Loading overlay for data refresh */}
                     {isLoading && (
                         <View style={styles.refreshIndicator}>
                             <ActivityIndicator size="small" color="#fff" />
                         </View>
                     )}
 
-                    {/* Top row - Timer and Earnings */}
                     <View style={styles.row}>
                         <View style={styles.half}>
                             <TimerCard
@@ -272,16 +268,18 @@ export default function Index() {
                         </View>
                     </View>
 
-                    {/* Divider */}
                     <View style={styles.divider} />
 
-                    {/* Motivation Card */}
                     {renderMotivationCard()}
 
-                    {/* Active Orders */}
-                    {renderOrderCard()}
+                    {orders && (
+                        <ActiveOrdersSection
+                            orders={orders}
+                            isLoading={isLoading}
+                            onOrderClick={handleOrderClick}
+                        />
+                    )}
 
-                    {/* End Shift Button */}
                     <View style={styles.endShiftButtonContainer}>
                         <Pressable
                             style={[
@@ -305,14 +303,13 @@ export default function Index() {
                         </Pressable>
                     </View>
 
-                    {/* Close Shift Modal */}
                     <ShiftCloseModal
                         ref={shiftCloseModalRef}
                         startTime={shiftStatus?.startTime || "09:00"}
                         totalOrdersSold={shiftStatus?.totalOrders || 0}
                         totalRevenue={shiftStatus?.totalEarnings || 0}
                         onCloseShift={handleCloseShift}
-                        onCancel={handleCancelClose}
+                        onCancel={() => {}}
                     />
                 </ScrollView>
             ) : (
@@ -326,7 +323,6 @@ export default function Index() {
                     <Text style={styles.greetingBig}>
                         Начните сегодняшнюю смену
                     </Text>
-
                     <View style={styles.card}>
                         <ShiftTimeModal
                             type="start"
@@ -340,12 +336,13 @@ export default function Index() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+// ============================================================================
+// Styles
+// ============================================================================
 
-    // Header
+const styles = StyleSheet.create({
+    container: { flex: 1 },
+
     header: {
         paddingHorizontal: 16,
         height: 56,
@@ -358,40 +355,27 @@ const styles = StyleSheet.create({
         letterSpacing: -0.24,
     },
 
-    // Loading states
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
         gap: 12,
     },
-    loadingText: {
-        color: "#fff",
-        fontSize: 16,
-    },
+    loadingText: { color: "#fff", fontSize: 16 },
     refreshIndicator: {
         position: "absolute",
         top: 8,
         right: 16,
         zIndex: 10,
     },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
+    buttonDisabled: { opacity: 0.6 },
 
-    // Inactive shift styles
-    main: {
-        flex: 1,
-    },
+    main: { flex: 1 },
     inactiveShiftContent: {
         alignItems: "center",
         paddingHorizontal: 16,
     },
-    greetingSmall: {
-        fontSize: 16,
-        color: "#aaa",
-        marginBottom: 4,
-    },
+    greetingSmall: { fontSize: 16, color: "#aaa", marginBottom: 4 },
     greetingBig: {
         fontSize: 20,
         color: "#fff",
@@ -404,49 +388,19 @@ const styles = StyleSheet.create({
         padding: 16,
         marginTop: 16,
     },
-    cardSubtitle: {
-        fontSize: 14,
-        color: "#aaa",
-        marginBottom: 4,
-    },
-    cardTitle: {
-        fontSize: 18,
-        color: "#fff",
-        fontWeight: "600",
-        marginBottom: 16,
-    },
 
-    // Active shift styles
-    activeShiftContainer: {
-        flex: 1,
-    },
-    activeShiftContent: {
-        padding: 16,
-        paddingBottom: 32,
-    },
-    row: {
-        flexDirection: "row",
-        gap: 16,
-        marginBottom: 16,
-    },
-    half: {
-        flex: 1,
-    },
+    activeShiftContainer: { flex: 1 },
+    activeShiftContent: { padding: 16, paddingBottom: 32 },
+    row: { flexDirection: "row", gap: 16, marginBottom: 16 },
+    half: { flex: 1 },
     divider: {
         height: 1,
         backgroundColor: "rgba(255,255,255,0.2)",
         marginBottom: 16,
     },
-    motivationContainer: {
-        marginBottom: 16,
-    },
-    endShiftButtonContainer: {
-        marginTop: 24,
-        width: "100%",
-    },
-    endShiftButton: {
-        width: "100%",
-    },
+    motivationContainer: { marginBottom: 16 },
+    endShiftButtonContainer: { marginTop: 24, width: "100%" },
+    endShiftButton: { width: "100%" },
     endShiftButtonText: {
         color: "#2C2D2E",
         fontWeight: "600",

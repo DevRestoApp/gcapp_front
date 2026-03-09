@@ -28,6 +28,7 @@ import {
     getWaiterSalary,
     getWaiterShiftStatus,
     payOrder,
+    cancelOrder,
 } from "@/src/server/waiter/general";
 
 import type { OrganizationIdType } from "@/src/server/types/waiter";
@@ -69,6 +70,10 @@ interface WaiterContextType {
         inputs: CreateOrdersInputType,
     ) => Promise<CreateOrdersType | null>;
     payOrderWrapper: (order_id: number) => Promise<PayOrderType | null>;
+    cancelOrderWrapper: (
+        order_id: number,
+        reason: string,
+    ) => Promise<PayOrderType | null>;
     fetchShiftStatus: (
         waiter_id: number,
         inputs: WaiterShiftStatusInputType,
@@ -217,6 +222,18 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         },
         [],
     );
+    const cancelOrderWrapper = useCallback(
+        async (order_id: number, reason: string): Promise<PayOrderType> => {
+            try {
+                const response = await cancelOrder(order_id, reason);
+                return response;
+            } catch (error) {
+                console.error("Error order pay:", error);
+                throw error;
+            }
+        },
+        [],
+    );
 
     const fetchShiftStatus = useCallback(
         async (
@@ -286,6 +303,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 endShift,
                 createOrderWrapper,
                 payOrderWrapper,
+                cancelOrderWrapper,
                 selectedTable,
                 setSelectedTable,
                 selectedRoom,
