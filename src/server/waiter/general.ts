@@ -8,6 +8,7 @@ import {
     WaiterShiftStatusInputType,
     WaiterOrdersInputType,
     CreateOrdersInputType,
+    UpdateOrdersInputType,
 } from "@/src/server/types/waiter";
 
 export async function getTables(filters: TablesInputsType) {
@@ -76,8 +77,19 @@ export async function payOrder(order_id: number) {
 }
 export async function cancelOrder(order_id: number, reason: string) {
     const params = checkFilters({ reason });
+
     const res = await api.post(`/orders/${order_id}/cancel`, params);
 
-    console.log("cancel", { res });
+    return res.data;
+}
+
+export async function updateOrder(
+    order_id: number,
+    input: UpdateOrdersInputType,
+) {
+    const params = checkFilters(input);
+
+    const res = await api.put(`/orders/${order_id}`, params);
+
     return res.data;
 }

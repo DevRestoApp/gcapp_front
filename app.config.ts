@@ -62,6 +62,7 @@ const config: ExpoConfig = {
     },
     ios: {
         bundleIdentifier: "com.gcapp.mobile",
+        buildNumber: "1",
         supportsTablet: true,
         infoPlist: {
             NSLocationWhenInUseUsageDescription:
@@ -80,6 +81,9 @@ const config: ExpoConfig = {
         [
             "expo-build-properties",
             {
+                ios: {
+                    privacyManifestAggregationEnabled: true,
+                },
                 android: {
                     usesCleartextTraffic: true,
                     networkInspector: true,

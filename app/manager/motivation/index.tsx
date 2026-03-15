@@ -134,6 +134,7 @@ export default function QuestManagementScreen() {
                     employeeNames: [],
                     date: selectedDate,
                     durationDate: data.durationDate,
+                    description: "", // TODO добавить поле description если надо уточнить у Хамзы
                 });
 
                 await refetch();

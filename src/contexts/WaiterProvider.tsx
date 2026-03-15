@@ -16,8 +16,11 @@ import {
     CreateOrdersInputType,
     PayOrderType,
     CreateOrdersType,
-    Dish,
+    UpdateOrdersInputType,
+    UpdateOrdersType,
 } from "@/src/server/types/waiter";
+
+import { Dish } from "@/src/client/types/waiter";
 
 import {
     createOrder,
@@ -29,6 +32,7 @@ import {
     getWaiterShiftStatus,
     payOrder,
     cancelOrder,
+    updateOrder,
 } from "@/src/server/waiter/general";
 
 import type { OrganizationIdType } from "@/src/server/types/waiter";
@@ -69,6 +73,10 @@ interface WaiterContextType {
     createOrderWrapper: (
         inputs: CreateOrdersInputType,
     ) => Promise<CreateOrdersType | null>;
+    updateOrderWrapper: (
+        order_id: number,
+        inputs: UpdateOrdersInputType,
+    ) => Promise<UpdateOrdersType | null>;
     payOrderWrapper: (order_id: number) => Promise<PayOrderType | null>;
     cancelOrderWrapper: (
         order_id: number,
@@ -92,7 +100,7 @@ interface WaiterContextType {
     selectedRoom: SelectedRoomContext;
     setSelectedRoom: (room: SelectedRoomContext) => void;
     selectedDishes: Dish[];
-    setSelectedDishes: (dishes: Dish[]) => void;
+    setSelectedDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
     setSelectedOrderId: (id: number) => void;
     setSelectedOrder: (order: any) => void;
     selectedOrder: any;
@@ -185,7 +193,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     const fetchOrders = useCallback(
-        async (inputs: WaiterOrdersInputType): Promise<WaiterSalaryType> => {
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
             try {
                 const response = await getOrders(inputs);
                 setOrders(response.orders);
@@ -205,6 +213,23 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 return response;
             } catch (error) {
                 console.error("Error create order:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const updateOrderWrapper = useCallback(
+        async (
+            order_id: number,
+            inputs: UpdateOrdersInputType,
+        ): Promise<UpdateOrdersType> => {
+            try {
+                const response = await updateOrder(order_id, inputs);
+
+                return response;
+            } catch (error) {
+                console.error("Error update order:", error);
                 throw error;
             }
         },
@@ -302,6 +327,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 startShift,
                 endShift,
                 createOrderWrapper,
+                updateOrderWrapper,
                 payOrderWrapper,
                 cancelOrderWrapper,
                 selectedTable,

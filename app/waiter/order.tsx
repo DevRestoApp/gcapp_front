@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback } from "react";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import React, { useMemo, useCallback, useState } from "react";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
     View,
     StyleSheet,
@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
+import { useAuth } from "@/src/contexts/AuthContext";
+import Loading from "@/src/client/components/Loading";
 
 // ============================================================================
 // Types
@@ -31,9 +33,17 @@ interface Order {
     location: string;
     room: string;
     items: OrderItem[];
+    totalBill: number;
     status: "draft" | "completed" | "cancelled";
     createdAt: Date;
-    completedAt?: Date;
+}
+
+interface ApiOrderItem {
+    product_id: number;
+    dish_name: string;
+    dish_amount_int: number;
+    dish_discount_sum_int: number;
+    comment?: string;
 }
 
 interface ApiOrder {
@@ -45,7 +55,7 @@ interface ApiOrder {
     sum_order: number;
     final_sum: number | null;
     bank_commission: number | null;
-    items: any[];
+    items: ApiOrderItem[];
 }
 
 // ============================================================================
@@ -74,20 +84,48 @@ const parseApiOrder = (raw: ApiOrder): Order => ({
 
 export default function OrderSelectionScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams();
-    const { selectedOrder } = useWaiter();
+    const params = useLocalSearchParams<{
+        orderId?: string;
+        orderData?: string;
+    }>();
 
-    // Params are primary source of truth; context is fallback
-    const apiOrder: ApiOrder | null = useMemo(() => {
+    const {
+        selectedOrder,
+        selectedDishes,
+        setSelectedDishes,
+        updateOrderWrapper,
+        fetchOrders,
+        orders,
+    } = useWaiter();
+    const { user, selectedLocation } = useAuth();
+
+    const [apiOrder, setApiOrder] = useState<ApiOrder | null>(() => {
+        // Initial parse — params are the primary source on first mount
         if (params.orderData) {
             try {
-                return JSON.parse(params.orderData as string);
+                return JSON.parse(params.orderData);
             } catch {
-                console.warn("Failed to parse orderData param");
+                console.warn("order: failed to parse orderData param");
             }
         }
         return selectedOrder ?? null;
-    }, []); // Parse once on mount — no race condition
+    });
+
+    const [isRefetching, setIsRefetching] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Re-fetch the order every time this screen comes into focus.
+    // This covers the case where the user edited dishes in menuNewOrder
+    // and navigated back — we want the latest server state.
+    useFocusEffect(
+        useCallback(() => {
+            if (!params.orderId || !orders) return;
+            const found = (orders as ApiOrder[]).find(
+                (o) => o.id.toString() === params.orderId,
+            );
+            if (found) setApiOrder(found);
+        }, [orders, params.orderId]),
+    );
 
     const currentOrder: Order | null = useMemo(
         () => (apiOrder ? parseApiOrder(apiOrder) : null),
@@ -100,24 +138,64 @@ export default function OrderSelectionScreen() {
     // Handlers
     // ========================================================================
 
-    const handleDishPress = useCallback((dish: any) => {
-        Alert.alert(dish.name, `${dish.description}\n\n${dish.price}`, [
-            { text: "Закрыть", style: "cancel" },
-            {
-                text: "Добавить в заказ",
-                onPress: () => {
-                    // TODO: Add dish to order via API
-                },
+    const handleEditDishes = useCallback(() => {
+        if (!apiOrder) return;
+        // Clear any stale selectedDishes before entering the menu
+        setSelectedDishes([]);
+        router.push({
+            pathname: "/waiter/menu",
+            params: {
+                mode: "edit",
+                orderId: String(params.orderId),
+                // Pass raw API items so menuNewOrder can seed selectedDishes
+                // with the correct productId/price/amount shapes
+                orderItems: JSON.stringify(apiOrder.items),
             },
-        ]);
-    }, []);
+        });
+    }, [apiOrder, params.orderId, router, setSelectedDishes]);
+
+    // Called when the user returns from edit mode and wants to persist changes
+    // REPLACE handleSaveEditedDishes with:
+    const handleSaveEditedDishes = useCallback(async () => {
+        if (!params.orderId || selectedDishes.length === 0) return;
+        try {
+            setIsSaving(true);
+            console.log(selectedDishes);
+            await updateOrderWrapper(Number(params.orderId), {
+                items: selectedDishes.map((d) => ({
+                    productId: d.productId,
+                    amount: d.amount,
+                    price: d.price,
+                    sum: d.sum,
+                    comment: d.comment,
+                })),
+            });
+            // Re-sync orders in context — useFocusEffect will pick up the change
+            await fetchOrders({
+                user_id: user?.id,
+                organization_id: selectedLocation,
+            });
+            setSelectedDishes([]);
+        } catch (e: any) {
+            Alert.alert("Ошибка", "Не удалось сохранить изменения");
+            console.error("order: save failed", e);
+        } finally {
+            setIsSaving(false);
+        }
+    }, [
+        params.orderId,
+        selectedDishes,
+        updateOrderWrapper,
+        fetchOrders,
+        user,
+        selectedLocation,
+        setSelectedDishes,
+    ]);
 
     const handleCancelOrder = useCallback(() => {
         router.push({
             pathname: "/waiter/cancel",
-            params: {
-                orderId: String(params.orderId),
-            },
+            params: { orderId: String(params.orderId) },
         });
     }, [router, params.orderId]);
 
@@ -130,24 +208,34 @@ export default function OrderSelectionScreen() {
             pathname: "/waiter/payment",
             params: {
                 orderId: String(params.orderId),
-                totalBill: currentOrder.totalBill,
+                totalBill: currentOrder?.totalBill,
             },
         });
     }, [hasItems, params.orderId, router, currentOrder]);
 
     // ========================================================================
-    // Empty / loading state
+    // Loading / empty states
     // ========================================================================
 
-    if (!currentOrder) {
+    if (!currentOrder && !isRefetching) {
         return (
             <SafeAreaView
                 style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>
-                        {apiOrder ? "Загрузка заказа..." : "Заказ не найден"}
-                    </Text>
+                    <Text style={styles.emptyStateText}>Заказ не найден</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    if (!currentOrder && isRefetching) {
+        return (
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
+                <View style={styles.emptyState}>
+                    <Loading text="Загрузка заказа..." />
                 </View>
             </SafeAreaView>
         );
@@ -157,6 +245,10 @@ export default function OrderSelectionScreen() {
     // Main render
     // ========================================================================
 
+    // If the user came back from edit mode with pending selectedDishes,
+    // show a save banner so they can persist or discard
+    const hasPendingEdits = selectedDishes.length > 0;
+
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
@@ -165,14 +257,42 @@ export default function OrderSelectionScreen() {
             />
 
             <View style={styles.content}>
+                {/* Pending edits banner */}
+                {hasPendingEdits && (
+                    <View style={styles.pendingBanner}>
+                        <Text style={styles.pendingBannerText}>
+                            Есть несохранённые изменения
+                        </Text>
+                        <View style={styles.pendingBannerActions}>
+                            <TouchableOpacity
+                                onPress={() => setSelectedDishes([])}
+                                style={styles.pendingDiscard}
+                            >
+                                <Text style={styles.pendingDiscardText}>
+                                    Отменить
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSaveEditedDishes}
+                                disabled={isSaving}
+                                style={styles.pendingSave}
+                            >
+                                <Text style={styles.pendingSaveText}>
+                                    {isSaving ? "Сохранение..." : "Сохранить"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
                 <OrderSelection
                     order={currentOrder}
                     dishes={currentOrder.items}
-                    onOrderUpdate={() => {}} // TODO: optimistic update via API
-                    onTableChange={() => {}} // TODO: update table via API
-                    onRoomChange={() => {}} // TODO: update room via API
-                    onDishPress={handleDishPress}
-                    onAddDish={() => {}}
+                    onOrderUpdate={() => {}}
+                    onTableChange={() => {}}
+                    onRoomChange={() => {}}
+                    onDishPress={() => {}}
+                    onAddDish={handleEditDishes}
                     onCancelOrder={handleCancelOrder}
                     onCompleteOrder={handleCompleteOrder}
                 />
@@ -187,7 +307,6 @@ export default function OrderSelectionScreen() {
                     <TouchableOpacity
                         style={styles.cancelButton}
                         onPress={handleCancelOrder}
-                        disabled={!hasItems}
                         activeOpacity={0.8}
                     >
                         <Text style={styles.cancelButtonText}>
@@ -229,6 +348,42 @@ const styles = StyleSheet.create({
 
     emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
     emptyStateText: { color: "#fff", fontSize: 16, opacity: 0.6 },
+
+    pendingBanner: {
+        marginHorizontal: 16,
+        marginTop: 12,
+        padding: 14,
+        borderRadius: 16,
+        backgroundColor: "rgba(255, 193, 7, 0.1)",
+        borderWidth: 1,
+        borderColor: "rgba(255, 193, 7, 0.3)",
+        gap: 10,
+    },
+    pendingBannerText: {
+        color: "#FFC107",
+        fontSize: 14,
+        fontWeight: "500",
+    },
+    pendingBannerActions: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    pendingDiscard: {
+        flex: 1,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        alignItems: "center",
+    },
+    pendingDiscardText: { color: "#797A80", fontSize: 14, fontWeight: "500" },
+    pendingSave: {
+        flex: 1,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: "#FFC107",
+        alignItems: "center",
+    },
+    pendingSaveText: { color: "#000", fontSize: 14, fontWeight: "600" },
 
     actionsSection: {
         flexDirection: "row",
