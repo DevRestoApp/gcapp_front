@@ -29,14 +29,13 @@ interface Location {
 
 interface QuestFormData {
     title: string;
+    description: string;
     amount: number;
     reward: number;
     unit: string;
     durationDate: string;
-    employeeId?: string;
-    employeeName?: string;
-    locationId?: string;
-    locationName?: string;
+    employeeIds?: string[];
+    organization_id?: string;
 }
 
 interface AddQuestModalProps {
@@ -75,6 +74,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [questName, setQuestName] = useState("");
+        const [questDescription, setQuestDescription] = useState("");
         const [amount, setAmount] = useState("");
         const [reward, setReward] = useState("");
         const [selectedEmployee, setSelectedEmployee] =
@@ -100,6 +100,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
         const handleOpen = useCallback(() => {
             setQuestName("");
+            setQuestDescription("");
             setSelectedMenuItem(null);
             setAmount("");
             setReward("");
@@ -114,6 +115,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
         const handleClose = useCallback(() => {
             setQuestName("");
+            setQuestDescription("");
             setAmount("");
             setReward("");
             setSelectedMenuItem(null);
@@ -177,14 +179,13 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
 
                 onAddQuest?.({
                     title: questName.trim(),
+                    description: questDescription.trim(),
                     amount: Number(amount),
                     reward: Number(reward),
                     unit: selectedMenuItem?.name?.trim() ?? "",
-                    durationDate,
-                    employeeId: selectedEmployee?.id,
-                    employeeName: selectedEmployee?.name,
-                    locationId: selectedLocation?.id,
-                    locationName: selectedLocation?.name,
+                    date: durationDate,
+                    employeeIds: [selectedEmployee?.id],
+                    organization_id: selectedLocation?.id,
                 });
 
                 handleClose();
@@ -364,6 +365,23 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             </View>
         );
 
+        const renderQuestDescriptionInput = () => (
+            <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>Описание</Text>
+                <TextInput
+                    style={styles.textInput}
+                    value={questDescription}
+                    onChangeText={setQuestDescription}
+                    placeholder="Введите описание квеста..."
+                    placeholderTextColor="rgba(121, 122, 128, 1)"
+                    maxLength={300}
+                />
+                <Text style={styles.characterCount}>
+                    {questDescription.length}/300
+                </Text>
+            </View>
+        );
+
         const renderMenuItemPickerButton = () => (
             <TouchableOpacity
                 style={styles.inputSection}
@@ -515,6 +533,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     {renderHeader()}
                     <View style={styles.formSection}>
                         {renderQuestNameInput()}
+                        {renderQuestDescriptionInput()}
                         {renderEmployeePicker()}
                         {renderLocationPicker()}
                         {renderAmountInput()}
