@@ -58,39 +58,43 @@ export default function ActiveOrdersSection({
     const displayOrders = useMemo((): DisplayOrder[] | null => {
         if (!orders) return null;
 
-        return orders.map((order) => {
-            // Determine table number display
-            const tableNumber = order.table
-                ? `${order.table}-стол`
-                : order.room || "Без стола";
+        return orders
+            .filter((order) => order.status === "CREATED")
+            .map((order) => {
+                // Determine table number display
+                const tableNumber = order.table
+                    ? `${order.table}-стол`
+                    : order.room || "Без стола";
 
-            // Create description from items or show count
-            let description = "";
-            if (order.items && order.items.length > 0) {
-                // If items have names, join them
-                const itemNames = order.items
-                    .map((item) => item.dish_name || item.name || item.title)
-                    .filter(Boolean);
+                // Create description from items or show count
+                let description = "";
+                if (order.items && order.items.length > 0) {
+                    // If items have names, join them
+                    const itemNames = order.items
+                        .map(
+                            (item) => item.dish_name || item.name || item.title,
+                        )
+                        .filter(Boolean);
 
-                description =
-                    itemNames.length > 0
-                        ? itemNames.join(", ")
-                        : `${order.items.length} позиций`;
-            } else {
-                description = "Заказ создан";
-            }
+                    description =
+                        itemNames.length > 0
+                            ? itemNames.join(", ")
+                            : `${order.items.length} позиций`;
+                } else {
+                    description = "Заказ создан";
+                }
 
-            // Format amount
-            const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
+                // Format amount
+                const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
 
-            return {
-                id: order.id.toString(),
-                tableNumber,
-                description,
-                amount,
-                rawOrder: order, // сохраняем оригинальный заказ
-            };
-        });
+                return {
+                    id: order.id.toString(),
+                    tableNumber,
+                    description,
+                    amount,
+                    rawOrder: order, // сохраняем оригинальный заказ
+                };
+            });
     }, [orders]);
 
     const handleNewOrder = useCallback(() => {

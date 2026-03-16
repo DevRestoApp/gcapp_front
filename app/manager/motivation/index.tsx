@@ -113,6 +113,7 @@ export default function QuestManagementScreen() {
     const handleAddQuest = useCallback(
         async (data: {
             title: string;
+            description: string;
             amount: number;
             reward: number;
             unit: string;
@@ -126,6 +127,7 @@ export default function QuestManagementScreen() {
             try {
                 createQuestAction({
                     title: data.title,
+                    description: data.description,
                     reward: data.reward,
                     target: data.amount,
                     unit: data.unit,
@@ -134,7 +136,6 @@ export default function QuestManagementScreen() {
                     employeeNames: [],
                     date: selectedDate,
                     durationDate: data.durationDate,
-                    description: "", // TODO добавить поле description если надо уточнить у Хамзы
                 });
 
                 await refetch();
