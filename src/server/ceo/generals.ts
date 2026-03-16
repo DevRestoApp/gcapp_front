@@ -1,6 +1,10 @@
 import api from "../api";
 import { checkFilters } from "@/src/utils/serverUtils";
-import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
+import {
+    FineInputsType,
+    QuestInputsType,
+    TaskInputsType,
+} from "@/src/server/types/ceo";
 
 export async function createFine(inputs: FineInputsType) {
     const params = checkFilters(inputs);
@@ -48,6 +52,32 @@ export async function createQuest(inputs: QuestInputsType) {
     const params = checkFilters(inputs);
 
     const res = await api.post("/quests", params);
+
+    return res.data;
+}
+
+export async function createTask(user_id: string, inputs: TaskInputsType) {
+    const params = checkFilters(inputs);
+
+    const res = await api.post("/tasks", params);
+
+    return res.data;
+}
+
+export async function getTasks(inputs: {
+    user_id?: string;
+    due_date?: number;
+    organization_id?: number;
+}) {
+    const params = checkFilters(inputs);
+
+    const res = await api.get(`/quests/active`, { params });
+
+    return res.data;
+}
+
+export async function completeTask(task_id: number) {
+    const res = await api.post(`/tasks/${task_id}/complete`);
 
     return res.data;
 }
