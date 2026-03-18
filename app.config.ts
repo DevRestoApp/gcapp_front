@@ -24,11 +24,6 @@ const config: ExpoConfig = {
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "light",
-    splash: {
-        image: "./assets/splash.png",
-        resizeMode: "contain",
-        backgroundColor: "#ffffff",
-    },
     extra: {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
         API_URL: getValidUrl(process.env.API_URL, "http://localhost:8008"),
@@ -47,7 +42,6 @@ const config: ExpoConfig = {
     android: {
         icon: "./assets/logo.png",
         package: "com.gcapp.mobile",
-        versionCode: 3,
         permissions: [
             "INTERNET",
             "ACCESS_NETWORK_STATE",
@@ -85,6 +79,7 @@ const config: ExpoConfig = {
                     privacyManifestAggregationEnabled: true,
                 },
                 android: {
+                    targetSdkVersion: 35,
                     usesCleartextTraffic: true,
                     networkInspector: true,
                 },

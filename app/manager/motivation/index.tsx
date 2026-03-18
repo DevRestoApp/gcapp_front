@@ -37,6 +37,7 @@ export default function QuestManagementScreen() {
         loading,
         refetch,
         createQuestAction,
+        createTaskWrapper,
         locations,
         setDate: setInputDate,
     } = useManager();
@@ -147,6 +148,32 @@ export default function QuestManagementScreen() {
         [selectedDate, safeEmployees.length, createQuestAction],
     );
 
+    const handleAddTask = useCallback(
+        async (data: {
+            title: string;
+            description: string;
+            user_id: number;
+            organization_id: number;
+            due_date: string;
+        }) => {
+            try {
+                await createTaskWrapper({
+                    title: data.title,
+                    description: data.description,
+                    user_id: data.user_id,
+                    organization_id: data.organization_id,
+                    due_date: data.due_date,
+                });
+
+                await refetch();
+            } catch (error) {
+                console.error("Failed to create task:", error);
+                Alert.alert("Ошибка", "Не удалось создать задачу");
+            }
+        },
+        [createTaskWrapper, refetch],
+    );
+
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
@@ -166,7 +193,6 @@ export default function QuestManagementScreen() {
                 Квесты ({safeShifts.questsCount || 0})
             </Text>
 
-            {/* Empty view to keep title centered */}
             <View style={styles.backButton} />
         </View>
     );
@@ -265,6 +291,7 @@ export default function QuestManagementScreen() {
             <AddQuestModal
                 ref={addQuestModalRef}
                 onAddQuest={handleAddQuest}
+                onAddTask={handleAddTask}
                 onCancel={() => {}}
                 employees={employees}
                 locations={locations}
@@ -274,11 +301,7 @@ export default function QuestManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-
-    // Header
+    container: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -303,33 +326,16 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginHorizontal: 16,
     },
-
-    // List
-    listContent: {
-        paddingHorizontal: 16,
-        paddingBottom: 170,
-        flexGrow: 1,
-    },
-    sectionHeader: {
-        marginBottom: 16,
-        gap: 4,
-    },
+    listContent: { paddingHorizontal: 16, paddingBottom: 170, flexGrow: 1 },
+    sectionHeader: { marginBottom: 16, gap: 4 },
     sectionTitle: {
         color: "#fff",
         fontSize: 24,
         fontWeight: "bold",
         lineHeight: 28,
     },
-    sectionSubtitle: {
-        color: "#797A80",
-        fontSize: 14,
-        lineHeight: 18,
-    },
-    itemSeparator: {
-        height: 16,
-    },
-
-    // Empty state
+    sectionSubtitle: { color: "#797A80", fontSize: 14, lineHeight: 18 },
+    itemSeparator: { height: 16 },
     emptyState: {
         flex: 1,
         justifyContent: "center",
@@ -337,10 +343,7 @@ const styles = StyleSheet.create({
         paddingVertical: 80,
         gap: 12,
     },
-    emptyIcon: {
-        fontSize: 64,
-        opacity: 0.3,
-    },
+    emptyIcon: { fontSize: 64, opacity: 0.3 },
     emptyText: {
         color: "rgba(255, 255, 255, 0.75)",
         fontSize: 18,

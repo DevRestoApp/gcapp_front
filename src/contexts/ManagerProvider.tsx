@@ -190,10 +190,7 @@ interface ManagerContextType {
         due_date?: number;
         organization_id?: number;
     }) => Promise<GetTaskType>;
-    createTaskWrapper: (
-        user_id: string,
-        inputs: TaskInputsType,
-    ) => Promise<TaskType>;
+    createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
 }
 
@@ -450,9 +447,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     );
 
     const createTaskWrapper = useCallback(
-        async (user_id: string, inputs: TaskInputsType): Promise<TaskType> => {
+        async (inputs: TaskInputsType): Promise<TaskType> => {
             try {
-                const response = await createTask(user_id, inputs);
+                const response = await createTask(inputs);
                 return response;
             } catch (error) {
                 console.error("Error creating task:", error);

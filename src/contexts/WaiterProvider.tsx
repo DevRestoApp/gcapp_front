@@ -101,7 +101,7 @@ interface WaiterContextType {
     fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
     fetchTasks: (inputs: {
         user_id?: string;
-        due_date?: number;
+        date?: string;
         organization_id?: number;
     }) => Promise<GetTaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
@@ -218,7 +218,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchTasks = useCallback(
         async (inputs: {
             user_id?: string;
-            due_date?: number;
+            date?: number;
             organization_id?: number;
         }): Promise<GetTaskType> => {
             try {

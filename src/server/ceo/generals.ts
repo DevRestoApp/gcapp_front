@@ -56,7 +56,7 @@ export async function createQuest(inputs: QuestInputsType) {
     return res.data;
 }
 
-export async function createTask(user_id: string, inputs: TaskInputsType) {
+export async function createTask(inputs: TaskInputsType) {
     const params = checkFilters(inputs);
 
     const res = await api.post("/tasks", params);
@@ -66,12 +66,12 @@ export async function createTask(user_id: string, inputs: TaskInputsType) {
 
 export async function getTasks(inputs: {
     user_id?: string;
-    due_date?: number;
+    date?: string;
     organization_id?: number;
 }) {
     const params = checkFilters(inputs);
 
-    const res = await api.get(`/quests/active`, { params });
+    const res = await api.get(`/tasks`, { params });
 
     return res.data;
 }
