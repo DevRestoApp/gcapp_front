@@ -122,8 +122,8 @@ export interface WaiterShiftStatusType {
 export type OrganizationIdType = number | null | undefined;
 
 export interface WaiterOrdersInputType {
-    organization_id?: number;
-    user_id?: number;
+    organization_id?: number | null | undefined;
+    user_id?: number | null | undefined;
     state?: string | null;
     date?: string;
     limit?: number;

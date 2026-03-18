@@ -123,7 +123,7 @@ const useMenuData = (restaurantId: string) => {
         } finally {
             setLoading(false);
         }
-    }, []); // no deps — stable reference, selectedCategory moved to functional update
+    }, []);
 
     useEffect(() => {
         fetchMenuData();
@@ -176,7 +176,7 @@ export default function MenuScreen() {
     const params = useLocalSearchParams<{
         mode?: string;
         orderId?: string;
-        orderItems?: string; // JSON string of ApiOrderItem[]
+        orderItems?: string;
     }>();
 
     const isEditMode = params.mode === "edit";
@@ -197,14 +197,11 @@ export default function MenuScreen() {
     const { selectedDishes, setSelectedDishes } = useWaiter();
 
     // Seed selectedDishes from existing order items when entering edit mode.
-    // Runs once on mount — dishes may not be loaded yet, that's fine because
-    // quantityMap only needs productId/amount which come from the seed, not
-    // from the menu fetch.
     useEffect(() => {
         if (!isEditMode || !params.orderItems) return;
         try {
             const rawItems: ApiOrderItem[] = JSON.parse(params.orderItems);
-            console.log("RAW ORDER ITEMS:", JSON.stringify(rawItems, null, 2)); // <-- add this
+            console.log("RAW ORDER ITEMS:", JSON.stringify(rawItems, null, 2));
             const seeded: DishItemType[] = rawItems.map((item) => ({
                 productId: item.product_id,
                 name: item.dish_name,
@@ -217,7 +214,7 @@ export default function MenuScreen() {
         } catch {
             console.warn("menuNewOrder: failed to parse orderItems param");
         }
-    }, []); // empty — seed once on mount only
+    }, []);
 
     const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
     const modalRef = useRef<DishDetailModalRef>(null);
@@ -262,6 +259,49 @@ export default function MenuScreen() {
         setSelectedDish(null);
     }, []);
 
+    // ── FIX: handles +/- buttons directly on the dish card ───────────────────
+    const handleQuantityChange = useCallback(
+        (dishId: string, newQuantity: number) => {
+            const productId = Number(dishId);
+            // Find the dish in the full menu to get price info
+            const menuDish = dishes.find((d) => d.id === productId);
+
+            setSelectedDishes((prev) => {
+                const idx = prev.findIndex((d) => d.productId === productId);
+
+                // quantity reached 0 — remove from cart
+                if (newQuantity <= 0) {
+                    if (idx !== -1) {
+                        return prev.filter((_, i) => i !== idx);
+                    }
+                    return prev;
+                }
+
+                const price = menuDish?.price ?? prev[idx]?.price ?? 0;
+                const name = menuDish?.name ?? prev[idx]?.name ?? "";
+
+                const updatedItem: DishItemType = {
+                    productId,
+                    name,
+                    amount: newQuantity,
+                    price,
+                    sum: price * newQuantity,
+                    comment: prev[idx]?.comment,
+                };
+
+                if (idx !== -1) {
+                    const updated = [...prev];
+                    updated[idx] = updatedItem;
+                    return updated;
+                }
+
+                // Not in cart yet — add it
+                return [...prev, updatedItem];
+            });
+        },
+        [dishes, setSelectedDishes],
+    );
+
     const handleAddToOrder = useCallback(
         (quantity: number, comment?: string) => {
             if (!selectedDish || quantity <= 0) return;
@@ -280,7 +320,6 @@ export default function MenuScreen() {
                     (d) => d.productId === selectedDish.id,
                 );
                 if (idx !== -1) {
-                    // quantity === 0 means the user cleared it — remove from list
                     if (quantity === 0) {
                         return prev.filter((_, i) => i !== idx);
                     }
@@ -291,13 +330,6 @@ export default function MenuScreen() {
                 return [...prev, newItem];
             });
 
-            Alert.alert(
-                MESSAGES.ADDED_TO_ORDER,
-                `${selectedDish.name} (${quantity} шт.) — ${formatPrice(selectedDish.price * quantity)}`,
-                [{ text: "OK" }],
-                { cancelable: true },
-            );
-
             modalRef.current?.close();
             setSelectedDish(null);
         },
@@ -306,7 +338,6 @@ export default function MenuScreen() {
 
     const handleViewCart = useCallback(() => {
         if (isEditMode) {
-            // Go back to order screen; it will re-fetch on focus to get fresh data
             router.back();
         } else {
             router.push("/waiter/newOrder");
@@ -410,7 +441,8 @@ export default function MenuScreen() {
     };
 
     const renderDishItem = (dish: MenuItem) => {
-        const qty = quantityMap[dish.id] || 0;
+        const qty = quantityMap[dish.id] ?? 0; // ✅ берём из quantityMap
+
         return (
             <DishItem
                 key={`dish-${dish.id}`}
@@ -420,9 +452,9 @@ export default function MenuScreen() {
                 price={formatPrice(dish.price)}
                 image=""
                 variant="informative"
-                initialQuantity={qty}
+                initialQuantity={qty} // ✅ теперь определено
                 showQuantity={true}
-                onQuantityChange={() => {}}
+                onQuantityChange={handleQuantityChange}
                 onPress={() => handleDishPress(dish)}
             />
         );
@@ -680,7 +712,6 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 8,
     },
-    // Edit mode: green tint to signal "save" intent
     cartButtonEdit: {
         backgroundColor: "#4CAF50",
     },

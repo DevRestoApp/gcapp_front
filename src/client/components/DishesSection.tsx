@@ -67,8 +67,8 @@ export default function DishesSection({
             >
                 {dishes.map((dish) => (
                     <DishItem
-                        key={String(dish.id)}
-                        id={String(dish.id)}
+                        key={String(dish.productId)}
+                        id={String(dish.productId)}
                         name={dish.name}
                         description={dish.description || ""}
                         price={formatPrice(dish.price)}
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderWidth: 1,
         borderColor: "rgba(255, 255, 255, 0.2)",
-        borderStyle: "dashed",
     },
     addDishButtonText: {
         color: "#fff",

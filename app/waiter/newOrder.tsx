@@ -174,7 +174,8 @@ export default function NewOrder() {
         fetchOrders,
     } = useWaiter();
     const { selectedLocation, user } = useAuth();
-    const { selectedDishes, createOrderWrapper } = useWaiter();
+    const { selectedDishes, createOrderWrapper, setSelectedDishes } =
+        useWaiter();
 
     const [selectedRoomId, setSelectedRoomId] = useState("");
     const [selectedTableId, setSelectedTableId] = useState("");
@@ -285,6 +286,9 @@ export default function NewOrder() {
                     };
                 }),
             });
+
+            setSelectedDishes([]);
+
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,

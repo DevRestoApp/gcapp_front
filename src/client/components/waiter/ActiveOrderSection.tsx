@@ -31,7 +31,8 @@ interface DisplayOrder {
     tableNumber: string;
     description: string;
     amount: string;
-    rawOrder: ApiOrder; // добавляем сырые данные для передачи
+    status: string;
+    rawOrder: ApiOrder;
 }
 
 interface ActiveOrdersSectionProps {
@@ -41,6 +42,7 @@ interface ActiveOrdersSectionProps {
     showScrollIndicator?: boolean;
     maxHeight?: number;
     isLoading?: boolean;
+    showStatus?: boolean;
 }
 
 export default function ActiveOrdersSection({
@@ -50,6 +52,7 @@ export default function ActiveOrdersSection({
     showScrollIndicator = false,
     maxHeight,
     isLoading = false,
+    showStatus = false,
 }: ActiveOrdersSectionProps) {
     const router = useRouter();
     const { selectedOrder, selectedOrderId } = useWaiter();
@@ -58,43 +61,36 @@ export default function ActiveOrdersSection({
     const displayOrders = useMemo((): DisplayOrder[] | null => {
         if (!orders) return null;
 
-        return orders
-            .filter((order) => order.status === "CREATED")
-            .map((order) => {
-                // Determine table number display
-                const tableNumber = order.table
-                    ? `${order.table}-стол`
-                    : order.room || "Без стола";
+        return orders.map((order) => {
+            const tableNumber = order.table
+                ? `${order.table}-стол`
+                : order.room || "Без стола";
 
-                // Create description from items or show count
-                let description = "";
-                if (order.items && order.items.length > 0) {
-                    // If items have names, join them
-                    const itemNames = order.items
-                        .map(
-                            (item) => item.dish_name || item.name || item.title,
-                        )
-                        .filter(Boolean);
+            let description = "";
+            if (order.items && order.items.length > 0) {
+                const itemNames = order.items
+                    .map((item) => item.dish_name || item.name || item.title)
+                    .filter(Boolean);
 
-                    description =
-                        itemNames.length > 0
-                            ? itemNames.join(", ")
-                            : `${order.items.length} позиций`;
-                } else {
-                    description = "Заказ создан";
-                }
+                description =
+                    itemNames.length > 0
+                        ? itemNames.join(", ")
+                        : `${order.items.length} позиций`;
+            } else {
+                description = "Заказ создан";
+            }
 
-                // Format amount
-                const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
+            const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
 
-                return {
-                    id: order.id.toString(),
-                    tableNumber,
-                    description,
-                    amount,
-                    rawOrder: order, // сохраняем оригинальный заказ
-                };
-            });
+            return {
+                id: order.id.toString(),
+                tableNumber,
+                description,
+                amount,
+                status: order.status,
+                rawOrder: order,
+            };
+        });
     }, [orders]);
 
     const handleNewOrder = useCallback(() => {
@@ -119,7 +115,6 @@ export default function ActiveOrdersSection({
         [onOrderClick, router],
     );
 
-    // Render header section
     const renderHeader = () => (
         <View style={styles.header}>
             <Text style={styles.title}>Активные заказы</Text>
@@ -127,7 +122,6 @@ export default function ActiveOrdersSection({
         </View>
     );
 
-    // Render loading state
     const renderLoading = () => (
         <View style={styles.loadingState}>
             <ActivityIndicator size="small" color="#ffffff" />
@@ -135,29 +129,16 @@ export default function ActiveOrdersSection({
         </View>
     );
 
-    // Render empty state
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>Нет активных заказов</Text>
         </View>
     );
 
-    // Render orders list
     const renderOrdersList = () => {
-        // Handle loading state
-        if (isLoading) {
-            return renderLoading();
-        }
-
-        // Handle null/undefined orders (still loading initial data)
-        if (!displayOrders) {
-            return renderLoading();
-        }
-
-        // Handle empty orders array
-        if (displayOrders.length === 0) {
-            return renderEmptyState();
-        }
+        if (isLoading) return renderLoading();
+        if (!displayOrders) return renderLoading();
+        if (displayOrders.length === 0) return renderEmptyState();
 
         const scrollViewStyle = maxHeight
             ? [styles.ordersList, { maxHeight }]
@@ -177,6 +158,8 @@ export default function ActiveOrdersSection({
                         tableNumber={order.tableNumber}
                         description={order.description}
                         amount={order.amount}
+                        status={order.status}
+                        showStatus={showStatus}
                         onClick={() =>
                             handleOrderClick(order.id, order.rawOrder)
                         }
@@ -200,8 +183,6 @@ const styles = StyleSheet.create({
         alignSelf: "center",
         gap: 20,
     },
-
-    // Header styles
     header: {
         gap: 16,
     },
@@ -211,8 +192,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         lineHeight: 28,
     },
-
-    // Loading state styles
     loadingState: {
         alignItems: "center",
         justifyContent: "center",
@@ -223,8 +202,6 @@ const styles = StyleSheet.create({
         color: "rgba(255, 255, 255, 0.6)",
         fontSize: 14,
     },
-
-    // Orders list styles
     ordersList: {
         flexGrow: 0,
     },
@@ -232,8 +209,6 @@ const styles = StyleSheet.create({
         gap: 12,
         paddingBottom: 8,
     },
-
-    // Empty state styles
     emptyState: {
         alignItems: "center",
         justifyContent: "center",

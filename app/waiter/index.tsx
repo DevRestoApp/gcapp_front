@@ -279,6 +279,7 @@ export default function Index() {
                             orders={orders}
                             isLoading={isLoading}
                             onOrderClick={handleOrderClick}
+                            showStatus={true}
                         />
                     )}
 
