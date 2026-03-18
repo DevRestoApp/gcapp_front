@@ -17,9 +17,15 @@ export default function EmployeesLayout() {
                     }}
                 />
                 <Stack.Screen
-                    name="[id]"
+                    name="[id]/index"
                     options={{
                         title: "Профиль сотрудника",
+                    }}
+                />
+                <Stack.Screen
+                    name="[id]/table/[tableId]"
+                    options={{
+                        title: "Стол",
                     }}
                 />
             </Stack>

@@ -201,8 +201,7 @@ export default function QuestManagementScreen() {
         <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Квесты на {selectedDate}</Text>
             <Text style={styles.sectionSubtitle}>
-                {safeQuests.length}{" "}
-                {safeQuests.length === 1 ? "квест" : "квестов"}
+                {`${safeQuests.length} ${safeQuests.length === 1 ? "квест" : "квестов"}`}
             </Text>
         </View>
     );

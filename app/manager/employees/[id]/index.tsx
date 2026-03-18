@@ -14,13 +14,13 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
-import { createFine } from "@/src/server/ceo/generals";
 import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 import TableNumberGrid from "@/src/client/components/TableNumberGrid";
 import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
 import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
 import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
+import Loading from "@/src/client/components/Loading";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 const rooms = [
@@ -40,15 +40,26 @@ export default function EmployeeDetailScreen() {
 
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<"info" | "history">("info");
-    const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+    const [selectedRoom, setSelectedRoom] = useState<string>("");
 
     const toggleRoom = (room: string) => {
-        setSelectedRooms((prev) =>
-            prev.includes(room)
-                ? prev.filter((r) => r !== room)
-                : [...prev, room],
-        );
+        setSelectedRoom((prev) => (prev === room ? "" : room));
     };
+
+    // Guard: selectedEmployee may be null when navigating directly to this screen
+    if (!selectedEmployee) {
+        return (
+            <SafeAreaView
+                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+            >
+                <StatusBar
+                    barStyle="light-content"
+                    backgroundColor="rgba(25, 25, 26, 1)"
+                />
+                <Loading text="Загрузка..." />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView
@@ -100,21 +111,7 @@ export default function EmployeeDetailScreen() {
                     </DropdownMenuDots>
                 </View>
 
-                <ShiftTimeModal
-                    ref={editModalRef}
-                    type="edit"
-                    initialTime="09:30"
-                    onShiftEdit={(time) => {
-                        console.log("New time:", time);
-                        // Handle the time update here
-
-                        // Close dropdown after modal completes
-                        dropdownRef.current?.close();
-                    }}
-                />
-
-                {/* Segmented Control // TODO redo as reusable component*/}
-
+                {/* Segmented Control */}
                 <View style={styles.segmentedControlContainer}>
                     <View style={styles.segmentedControl}>
                         <TouchableOpacity
@@ -157,36 +154,38 @@ export default function EmployeeDetailScreen() {
                         </TouchableOpacity>
                     </View>
                 </View>
+
                 {/* Info Tab Content */}
                 {activeTab === "info" && (
                     <View style={styles.contentContainer}>
                         <EmployeeCard
                             name={selectedEmployee.name}
                             amount={""}
-                            avatar={selectedEmployee.avatarUrl}
+                            avatar={selectedEmployee.avatarUrl || undefined}
                             role={selectedEmployee.role}
                             totalAmount={selectedEmployee.totalAmount}
                             shiftTime={selectedEmployee.shiftTime}
                             variant="full"
-                            showStats={activeTab === "info"}
+                            showStats={true}
                             onPress={() => {}}
                         />
-                        <Text style={styles.headerTitle}>
+                        <Text style={styles.sectionTitle}>
                             Выберите помещение
                         </Text>
                         <RoomNumberGrid
                             rooms={rooms}
-                            selectedRoom={"2"}
-                        ></RoomNumberGrid>
-                        <Text style={styles.headerTitle}>Стол</Text>
+                            selectedRoom={selectedRoom}
+                            onRoomSelect={toggleRoom}
+                        />
+                        <Text style={styles.sectionTitle}>Стол</Text>
                         <TableNumberGrid
                             tableCount={21}
                             columns={7}
                             selectedTable={5}
-                            disabledTables={[3, 7, 12]} // These tables will be grayed out
+                            disabledTables={[3, 7, 12]}
                             onTableSelect={(tableNumber) => {
                                 router.push(
-                                    `ceo/employees/${id}/table/${tableNumber}`,
+                                    `/manager/employees/${id}/table/${tableNumber}`,
                                 );
                             }}
                         />
@@ -201,6 +200,17 @@ export default function EmployeeDetailScreen() {
                     </View>
                 )}
             </ScrollView>
+
+            {/* Modal must be outside ScrollView to avoid positioning issues */}
+            <ShiftTimeModal
+                ref={editModalRef}
+                type="edit"
+                initialTime="09:30"
+                onShiftEdit={(time) => {
+                    console.log("New time:", time);
+                    dropdownRef.current?.close();
+                }}
+            />
         </SafeAreaView>
     );
 }
@@ -289,110 +299,11 @@ const styles = StyleSheet.create({
         paddingTop: 28,
         gap: 28,
     },
-    section: {
-        gap: 16,
-    },
     sectionTitle: {
         color: "#FFFFFF",
         fontSize: 24,
         fontWeight: "700",
         lineHeight: 28,
-    },
-    employeeCard: {
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 20,
-        padding: 12,
-        gap: 12,
-    },
-    employeeHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-    },
-    employeeInfo: {
-        flex: 1,
-        gap: 4,
-    },
-    employeeName: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "400",
-        lineHeight: 20,
-    },
-    employeeRole: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        fontWeight: "400",
-        lineHeight: 16,
-    },
-    statusBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: "rgba(13, 194, 104, 0.08)",
-        borderRadius: 12,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-    statusText: {
-        color: "#0DC268",
-        fontSize: 12,
-        fontWeight: "400",
-        lineHeight: 16,
-    },
-    statsRow: {
-        flexDirection: "row",
-        gap: 8,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        borderRadius: 12,
-        padding: 8,
-        gap: 8,
-    },
-    statInfo: {
-        gap: 4,
-    },
-    statLabel: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        fontWeight: "400",
-        lineHeight: 16,
-    },
-    statValue: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "600",
-        lineHeight: 16,
-    },
-    roomsContainer: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-    },
-    roomButton: {
-        height: 44,
-        paddingHorizontal: 12,
-        borderRadius: 16,
-        backgroundColor: "rgba(43, 43, 44, 1)",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    roomButtonActive: {
-        backgroundColor: "rgba(13, 194, 104, 0.12)",
-    },
-    roomButtonText: {
-        color: "#797A80",
-        fontSize: 16,
-        fontWeight: "400",
-        textAlign: "center",
-        letterSpacing: -0.24,
     },
     bottomSection: {
         position: "absolute",

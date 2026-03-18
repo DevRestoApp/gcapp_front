@@ -186,7 +186,7 @@ export default function EmployeeDetailScreen() {
                             disabledTables={[3, 7, 12]} // These tables will be grayed out
                             onTableSelect={(tableNumber) => {
                                 router.push(
-                                    `ceo/employees/${id}/table/${tableNumber}`,
+                                    `/ceo/employees/${id}/table/${tableNumber}`,
                                 );
                             }}
                         />

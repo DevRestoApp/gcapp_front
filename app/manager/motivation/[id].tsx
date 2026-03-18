@@ -64,6 +64,7 @@ export default function QuestDetailScreen() {
 
                 return {
                     ...employee,
+                    avatarUrl: employee.avatarUrl || undefined,
                     questProgress: Math.round(progress),
                     questCompleted: isCompleted,
                     questPoints: points,

@@ -202,7 +202,7 @@ export default function QuestDetailScreen() {
             <EmployeeCardExtended
                 name={item.name}
                 role={item.role}
-                avatar={item.avatarUrl}
+                avatar={item.avatarUrl || undefined}
                 stats={stats}
                 onPress={() => {
                     // Optional: Navigate to employee detail

@@ -123,7 +123,7 @@ export default function EmployeesScreen() {
                                 key={employee.id}
                                 name={employee.name}
                                 role={employee.role}
-                                avatar={employee.avatarUrl}
+                                avatar={employee.avatarUrl || undefined}
                                 totalAmount={employee.totalAmount}
                                 shiftTime={employee.shiftTime}
                                 showStats={activeTab === "open"}
@@ -131,7 +131,7 @@ export default function EmployeesScreen() {
                                     setSelectedEmployee(employee);
                                     // Navigate to employee detail page
                                     router.push({
-                                        pathname: `ceo/employees/${employee.id}`,
+                                        pathname: `/ceo/employees/${employee.id}`,
                                     });
                                 }}
                             />

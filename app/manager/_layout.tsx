@@ -118,26 +118,19 @@ export default function ManagerLayout() {
                         }}
                     />
                     <Tabs.Screen
-                        name="employees"
-                        options={{
-                            href: null,
-                            title: "Сотрудники",
-                        }}
+                        name="employees/index"
+                        options={{ href: null, title: "Сотрудники" }}
+                    />
+                    <Tabs.Screen
+                        name="employees/[id]/index"
+                        options={{ href: null, title: "Профиль сотрудника" }}
+                    />
+                    <Tabs.Screen
+                        name="employees/[id]/table/[tableId]"
+                        options={{ href: null }}
                     />
                     <Tabs.Screen
                         name="expenses/expense"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="expenses/income"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="expenses/[id]"
                         options={{
                             href: null,
                         }}

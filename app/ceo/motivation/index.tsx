@@ -38,6 +38,7 @@ export default function QuestManagementScreen() {
         createQuestAction,
         createTaskWrapper,
         locations,
+        setDate: setInputDate,
         refetch,
     } = useCeo();
 
@@ -94,6 +95,7 @@ export default function QuestManagementScreen() {
                 year: "numeric",
             });
 
+            setInputDate(dateStr);
             setSelectedDate(dateStr);
 
             setQuestsLoading(true);
@@ -112,6 +114,7 @@ export default function QuestManagementScreen() {
     const handleAddQuest = useCallback(
         async (data: {
             title: string;
+            description: string;
             amount: number;
             reward: number;
             unit: string;
@@ -125,6 +128,7 @@ export default function QuestManagementScreen() {
             try {
                 createQuestAction({
                     title: data.title,
+                    description: data.description,
                     reward: data.reward,
                     target: data.amount,
                     unit: data.unit,
