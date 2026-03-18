@@ -64,9 +64,9 @@ const MESSAGES = {
     LOADING_MENU: "Загрузка меню",
     SEARCH_PLACEHOLDER: "Искать блюда...",
     RETRY: "Попробовать снова",
-    ADDED_TO_ORDER: "Добавлено в заказ",
     CART_CREATE: "Корзина",
-    CART_EDIT: "Сохранить изменения",
+    // In edit mode the button just means "go back — order screen will auto-save"
+    CART_EDIT: "Готово",
     CLEAR_SEARCH: "Очистить поиск",
     NO_RESULTS: "По вашему запросу ничего не найдено",
     EMPTY_CATEGORY: "пока нет блюд",
@@ -201,7 +201,6 @@ export default function MenuScreen() {
         if (!isEditMode || !params.orderItems) return;
         try {
             const rawItems: ApiOrderItem[] = JSON.parse(params.orderItems);
-            console.log("RAW ORDER ITEMS:", JSON.stringify(rawItems, null, 2));
             const seeded: DishItemType[] = rawItems.map((item) => ({
                 productId: item.product_id,
                 name: item.dish_name,
@@ -259,22 +258,16 @@ export default function MenuScreen() {
         setSelectedDish(null);
     }, []);
 
-    // ── FIX: handles +/- buttons directly on the dish card ───────────────────
     const handleQuantityChange = useCallback(
         (dishId: string, newQuantity: number) => {
             const productId = Number(dishId);
-            // Find the dish in the full menu to get price info
             const menuDish = dishes.find((d) => d.id === productId);
 
             setSelectedDishes((prev) => {
                 const idx = prev.findIndex((d) => d.productId === productId);
 
-                // quantity reached 0 — remove from cart
                 if (newQuantity <= 0) {
-                    if (idx !== -1) {
-                        return prev.filter((_, i) => i !== idx);
-                    }
-                    return prev;
+                    return idx !== -1 ? prev.filter((_, i) => i !== idx) : prev;
                 }
 
                 const price = menuDish?.price ?? prev[idx]?.price ?? 0;
@@ -295,7 +288,6 @@ export default function MenuScreen() {
                     return updated;
                 }
 
-                // Not in cart yet — add it
                 return [...prev, updatedItem];
             });
         },
@@ -336,6 +328,9 @@ export default function MenuScreen() {
         [selectedDish, setSelectedDishes],
     );
 
+    // In edit mode: navigate back → order screen's useFocusEffect fires and
+    // auto-saves whatever is currently in selectedDishes. No manual save step.
+    // In create mode: navigate to newOrder so user can confirm and submit.
     const handleViewCart = useCallback(() => {
         if (isEditMode) {
             router.back();
@@ -441,8 +436,7 @@ export default function MenuScreen() {
     };
 
     const renderDishItem = (dish: MenuItem) => {
-        const qty = quantityMap[dish.id] ?? 0; // ✅ берём из quantityMap
-
+        const qty = quantityMap[dish.id] ?? 0;
         return (
             <DishItem
                 key={`dish-${dish.id}`}
@@ -452,7 +446,7 @@ export default function MenuScreen() {
                 price={formatPrice(dish.price)}
                 image=""
                 variant="informative"
-                initialQuantity={qty} // ✅ теперь определено
+                initialQuantity={qty}
                 showQuantity={true}
                 onQuantityChange={handleQuantityChange}
                 onPress={() => handleDishPress(dish)}

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState, useRef } from "react";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import {
     View,
@@ -7,6 +7,7 @@ import {
     Alert,
     Text,
     TouchableOpacity,
+    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -100,7 +101,6 @@ export default function OrderSelectionScreen() {
     const { user, selectedLocation } = useAuth();
 
     const [apiOrder, setApiOrder] = useState<ApiOrder | null>(() => {
-        // Initial parse — params are the primary source on first mount
         if (params.orderData) {
             try {
                 return JSON.parse(params.orderData);
@@ -111,20 +111,75 @@ export default function OrderSelectionScreen() {
         return selectedOrder ?? null;
     });
 
-    const [isRefetching, setIsRefetching] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Re-fetch the order every time this screen comes into focus.
-    // This covers the case where the user edited dishes in menuNewOrder
-    // and navigated back — we want the latest server state.
+    // ── Key fix: read selectedDishes via ref inside useFocusEffect ───────────
+    //
+    // Problem: useFocusEffect memoizes its callback. If we add selectedDishes
+    // to the dep array, the effect re-subscribes on every dish change and fires
+    // again immediately. If we omit it, the closure captures the initial empty
+    // array (stale closure). The ref always reflects the current value without
+    // triggering re-subscription.
+    const selectedDishesRef = useRef(selectedDishes);
+    selectedDishesRef.current = selectedDishes;
+
+    // Skip auto-save on the very first focus (screen just opened, nothing to save)
+    const isFirstFocus = useRef(true);
+
     useFocusEffect(
         useCallback(() => {
-            if (!params.orderId || !orders) return;
-            const found = (orders as ApiOrder[]).find(
-                (o) => o.id.toString() === params.orderId,
-            );
-            if (found) setApiOrder(found);
-        }, [orders, params.orderId]),
+            // Always sync apiOrder from the latest fetched orders list
+            if (params.orderId && orders) {
+                const found = (orders as ApiOrder[]).find(
+                    (o) => o.id.toString() === params.orderId,
+                );
+                if (found) setApiOrder(found);
+            }
+
+            // Don't try to save on initial mount
+            if (isFirstFocus.current) {
+                isFirstFocus.current = false;
+                return;
+            }
+
+            // Read current dishes from ref — never stale
+            const pendingDishes = selectedDishesRef.current;
+            if (!params.orderId || pendingDishes.length === 0) return;
+
+            (async () => {
+                try {
+                    setIsSaving(true);
+                    console.log(
+                        "[order] auto-saving",
+                        pendingDishes.length,
+                        "dishes →",
+                        params.orderId,
+                    );
+                    await updateOrderWrapper(Number(params.orderId), {
+                        items: pendingDishes.map((d) => ({
+                            productId: d.productId,
+                            amount: d.amount,
+                            price: d.price,
+                            sum: d.sum,
+                            comment: d.comment,
+                        })),
+                    });
+
+                    await fetchOrders({
+                        user_id: user?.id,
+                        organization_id: selectedLocation,
+                    });
+                } catch (e: any) {
+                    Alert.alert("Ошибка", "Не удалось сохранить изменения");
+                    console.error("[order] auto-save failed", e);
+                } finally {
+                    setIsSaving(false);
+                    setSelectedDishes([]);
+                }
+            })();
+            // selectedDishes intentionally omitted — using ref instead
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [params.orderId, orders]),
     );
 
     const currentOrder: Order | null = useMemo(
@@ -140,57 +195,17 @@ export default function OrderSelectionScreen() {
 
     const handleEditDishes = useCallback(() => {
         if (!apiOrder) return;
-        // Clear any stale selectedDishes before entering the menu
+        // Clear any stale dishes before going into edit mode
         setSelectedDishes([]);
         router.push({
             pathname: "/waiter/menu",
             params: {
                 mode: "edit",
                 orderId: String(params.orderId),
-                // Pass raw API items so menuNewOrder can seed selectedDishes
-                // with the correct productId/price/amount shapes
                 orderItems: JSON.stringify(apiOrder.items),
             },
         });
     }, [apiOrder, params.orderId, router, setSelectedDishes]);
-
-    // Called when the user returns from edit mode and wants to persist changes
-    // REPLACE handleSaveEditedDishes with:
-    const handleSaveEditedDishes = useCallback(async () => {
-        if (!params.orderId || selectedDishes.length === 0) return;
-        try {
-            setIsSaving(true);
-            console.log(selectedDishes);
-            await updateOrderWrapper(Number(params.orderId), {
-                items: selectedDishes.map((d) => ({
-                    productId: d.productId,
-                    amount: d.amount,
-                    price: d.price,
-                    sum: d.sum,
-                    comment: d.comment,
-                })),
-            });
-            // Re-sync orders in context — useFocusEffect will pick up the change
-            await fetchOrders({
-                user_id: user?.id,
-                organization_id: selectedLocation,
-            });
-            setSelectedDishes([]);
-        } catch (e: any) {
-            Alert.alert("Ошибка", "Не удалось сохранить изменения");
-            console.error("order: save failed", e);
-        } finally {
-            setIsSaving(false);
-        }
-    }, [
-        params.orderId,
-        selectedDishes,
-        updateOrderWrapper,
-        fetchOrders,
-        user,
-        selectedLocation,
-        setSelectedDishes,
-    ]);
 
     const handleCancelOrder = useCallback(() => {
         router.push({
@@ -214,10 +229,10 @@ export default function OrderSelectionScreen() {
     }, [hasItems, params.orderId, router, currentOrder]);
 
     // ========================================================================
-    // Loading / empty states
+    // Empty state
     // ========================================================================
 
-    if (!currentOrder && !isRefetching) {
+    if (!currentOrder) {
         return (
             <SafeAreaView
                 style={[styles.container, backgroundsStyles.generalBg]}
@@ -229,25 +244,9 @@ export default function OrderSelectionScreen() {
         );
     }
 
-    if (!currentOrder && isRefetching) {
-        return (
-            <SafeAreaView
-                style={[styles.container, backgroundsStyles.generalBg]}
-            >
-                <View style={styles.emptyState}>
-                    <Loading text="Загрузка заказа..." />
-                </View>
-            </SafeAreaView>
-        );
-    }
-
     // ========================================================================
     // Main render
     // ========================================================================
-
-    // If the user came back from edit mode with pending selectedDishes,
-    // show a save banner so they can persist or discard
-    const hasPendingEdits = selectedDishes.length > 0;
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
@@ -257,31 +256,10 @@ export default function OrderSelectionScreen() {
             />
 
             <View style={styles.content}>
-                {/* Pending edits banner */}
-                {hasPendingEdits && (
-                    <View style={styles.pendingBanner}>
-                        <Text style={styles.pendingBannerText}>
-                            Есть несохранённые изменения
-                        </Text>
-                        <View style={styles.pendingBannerActions}>
-                            <TouchableOpacity
-                                onPress={() => setSelectedDishes([])}
-                                style={styles.pendingDiscard}
-                            >
-                                <Text style={styles.pendingDiscardText}>
-                                    Отменить
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={handleSaveEditedDishes}
-                                disabled={isSaving}
-                                style={styles.pendingSave}
-                            >
-                                <Text style={styles.pendingSaveText}>
-                                    {isSaving ? "Сохранение..." : "Сохранить"}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
+                {isSaving && (
+                    <View style={styles.savingIndicator}>
+                        <ActivityIndicator size="small" color="#4CAF50" />
+                        <Text style={styles.savingText}>Сохранение...</Text>
                     </View>
                 )}
 
@@ -297,7 +275,6 @@ export default function OrderSelectionScreen() {
                     onCompleteOrder={handleCompleteOrder}
                 />
 
-                {/* Action Buttons */}
                 <View
                     style={[
                         styles.actionsSection,
@@ -317,16 +294,18 @@ export default function OrderSelectionScreen() {
                     <TouchableOpacity
                         style={[
                             styles.completeButton,
-                            !hasItems && styles.completeButtonDisabled,
+                            (!hasItems || isSaving) &&
+                                styles.completeButtonDisabled,
                         ]}
                         onPress={handleCompleteOrder}
-                        disabled={!hasItems}
+                        disabled={!hasItems || isSaving}
                         activeOpacity={0.8}
                     >
                         <Text
                             style={[
                                 styles.completeButtonText,
-                                !hasItems && styles.completeButtonTextDisabled,
+                                (!hasItems || isSaving) &&
+                                    styles.completeButtonTextDisabled,
                             ]}
                         >
                             Завершить
@@ -349,41 +328,24 @@ const styles = StyleSheet.create({
     emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
     emptyStateText: { color: "#fff", fontSize: 16, opacity: 0.6 },
 
-    pendingBanner: {
+    savingIndicator: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
         marginHorizontal: 16,
         marginTop: 12,
-        padding: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
         borderRadius: 16,
-        backgroundColor: "rgba(255, 193, 7, 0.1)",
+        backgroundColor: "rgba(76, 175, 80, 0.1)",
         borderWidth: 1,
-        borderColor: "rgba(255, 193, 7, 0.3)",
-        gap: 10,
+        borderColor: "rgba(76, 175, 80, 0.3)",
     },
-    pendingBannerText: {
-        color: "#FFC107",
+    savingText: {
+        color: "#4CAF50",
         fontSize: 14,
         fontWeight: "500",
     },
-    pendingBannerActions: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    pendingDiscard: {
-        flex: 1,
-        paddingVertical: 8,
-        borderRadius: 12,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
-        alignItems: "center",
-    },
-    pendingDiscardText: { color: "#797A80", fontSize: 14, fontWeight: "500" },
-    pendingSave: {
-        flex: 1,
-        paddingVertical: 8,
-        borderRadius: 12,
-        backgroundColor: "#FFC107",
-        alignItems: "center",
-    },
-    pendingSaveText: { color: "#000", fontSize: 14, fontWeight: "600" },
 
     actionsSection: {
         flexDirection: "row",
