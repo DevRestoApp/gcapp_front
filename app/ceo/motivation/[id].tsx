@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     View,
     Text,
     FlatList,
     StyleSheet,
     StatusBar,
-    ActivityIndicator,
     TouchableOpacity,
     Alert,
 } from "react-native";
@@ -13,92 +12,83 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
-import QuestCardEmployees, {
-    QuestEmployees,
-} from "@/src/client/components/ceo/QuestCardEmployees";
+import QuestCardEmployees from "@/src/client/components/ceo/QuestCardEmployees";
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
-import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useCeo } from "@/src/contexts/CeoProvider";
 import Loading from "@/src/client/components/Loading";
+import type { QuestDetail, EmployeeProgress } from "@/src/server/types/ceo";
 
-interface EmployeeQuestProgress {
-    id: string;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-    questProgress: number; // Progress for this specific quest (0-100)
-    questCompleted: boolean;
-    questPoints: number; // Points earned from quest
-    questRank: number; // Ranking in this quest
-}
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function QuestDetailScreen() {
     const router = useRouter();
-    const { id } = useLocalSearchParams();
-    const { quests, employees, loading } = useCeo();
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const { fetchQuestDetailWrapper, queryInputs } = useCeo();
 
-    const [questLoading, setQuestLoading] = useState(false);
     const questId = Array.isArray(id) ? id[0] : id;
 
-    // Find the specific quest
-    const quest = useMemo(() => {
-        return quests.find((q) => q.id === questId) || null;
-    }, [quests, questId]);
+    const [quest, setQuest] = useState<QuestDetail | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Generate employee quest progress data
-    const employeeQuestProgress = useMemo(() => {
-        if (!quest) return [];
+    // ── Fetch quest detail ────────────────────────────────────────────────────
 
-        const progressData: EmployeeQuestProgress[] = employees.map(
-            (employee, index) => {
-                const isCompleted =
-                    quest.employeeNames?.includes(employee.name) || false;
-                const progress = isCompleted ? 100 : Math.random() * 80; // Mock progress data
-                const points = isCompleted
-                    ? quest.reward
-                    : Math.floor((progress / 100) * quest.reward);
+    const loadQuestDetail = useCallback(async () => {
+        if (!questId) return;
 
-                return {
-                    ...employee,
-                    questProgress: Math.round(progress),
-                    questCompleted: isCompleted,
-                    questPoints: points,
-                    questRank: index + 1, // Will be sorted later
-                };
-            },
-        );
-
-        // Sort by quest points (descending) and assign ranks
-        const sortedData = progressData.sort(
-            (a, b) => b.questPoints - a.questPoints,
-        );
-        return sortedData.map((employee, index) => ({
-            ...employee,
-            questRank: index + 1,
-        }));
-    }, [quest, employees]);
-
-    // Handle quest not found
-    useEffect(() => {
-        if (!loading && !quest) {
-            Alert.alert(
-                "Квест не найден",
-                "Квест с указанным ID не существует",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => router.back(),
-                    },
-                ],
-            );
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await fetchQuestDetailWrapper(Number(questId), {
+                organization_id: queryInputs.organization_id
+                    ? Number(queryInputs.organization_id)
+                    : undefined,
+            });
+            setQuest(data);
+        } catch (err: any) {
+            console.error("Error fetching quest detail:", err);
+            setError(err?.message ?? "Не удалось загрузить квест");
+            Alert.alert("Ошибка", "Не удалось загрузить данные квеста", [
+                { text: "OK", onPress: () => router.back() },
+            ]);
+        } finally {
+            setLoading(false);
         }
-    }, [quest, loading, router]);
+    }, [questId, fetchQuestDetailWrapper, queryInputs.organization_id]);
 
-    // Render header
+    useEffect(() => {
+        loadQuestDetail();
+    }, [loadQuestDetail]);
+
+    // ── employeeProgress уже приходит отсортированным по rank из API ─────────
+    const sortedProgress = useMemo(
+        () =>
+            quest
+                ? [...quest.employeeProgress].sort((a, b) => a.rank - b.rank)
+                : [],
+        [quest],
+    );
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    const getRankIcon = (rank: number): string => {
+        switch (rank) {
+            case 1:
+                return "🥇";
+            case 2:
+                return "🥈";
+            case 3:
+                return "🥉";
+            default:
+                return `#${rank}`;
+        }
+    };
+
+    // ── Render helpers ────────────────────────────────────────────────────────
+
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
@@ -114,132 +104,103 @@ export default function QuestDetailScreen() {
                 </Svg>
             </TouchableOpacity>
             <Text style={styles.headerTitle} numberOfLines={1}>
-                {quest?.title || "Квест"}
+                {quest?.title ?? "Квест"}
             </Text>
             <View style={styles.headerSpacer} />
         </View>
     );
 
-    // Render leaderboard header
-    const renderLeaderboardHeader = () => (
-        <View style={styles.leaderboardHeader}>
-            <Text style={styles.leaderboardTitle}>Лидерборд 🏆</Text>
-            <Text style={styles.leaderboardSubtitle}>
-                {employeeQuestProgress.length} участника
-            </Text>
-        </View>
+    const renderEmployeeItem = useCallback(
+        ({ item }: { item: EmployeeProgress }) => {
+            const stats = [
+                {
+                    icon: <Text style={styles.statIcon}>🏆</Text>,
+                    label: "Позиция:",
+                    value: getRankIcon(item.rank),
+                },
+                {
+                    icon: (
+                        <Text style={styles.statIcon}>
+                            {item.completed ? "✅" : "⏳"}
+                        </Text>
+                    ),
+                    label: "Баллы:",
+                    value: `${item.points.toLocaleString()} тг`,
+                },
+                {
+                    icon: <Text style={styles.statIcon}>📊</Text>,
+                    label: "Прогресс:",
+                    value: `${item.progress}%`,
+                },
+                {
+                    icon: (
+                        <Text style={styles.statIcon}>
+                            {item.completed ? "🎉" : "💪"}
+                        </Text>
+                    ),
+                    label: "Статус:",
+                    value: item.completed ? "Выполнен" : "В процессе",
+                },
+            ];
+
+            return (
+                <EmployeeCardExtended
+                    name={item.employeeName}
+                    role=""
+                    stats={stats}
+                />
+            );
+        },
+        [],
     );
 
-    // Render employee item for leaderboard
-    const renderEmployeeItem = ({
-        item,
-        index,
-    }: {
-        item: EmployeeQuestProgress;
-        index: number;
-    }) => {
-        // Create rank icon based on position
-        const getRankIcon = (rank: number) => {
-            switch (rank) {
-                case 1:
-                    return "🥇";
-                case 2:
-                    return "🥈";
-                case 3:
-                    return "🥉";
-                default:
-                    return `#${rank}`;
-            }
-        };
+    const keyExtractor = useCallback(
+        (item: EmployeeProgress) => `${questId}-${item.employeeId}`,
+        [questId],
+    );
 
-        // Generate stats for the employee
-        const stats = [
-            {
-                icon: (
-                    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <Path
-                            d="M8 1.5C6.71442 1.5 5.45772 1.88122 4.3888 2.59545C3.31988 3.30968 2.48676 4.32484 1.99479 5.51256C1.50282 6.70028 1.37409 8.00721 1.6249 9.26809C1.8757 10.529 2.49477 11.6872 3.40381 12.5962C4.31285 13.5052 5.47104 14.1243 6.73192 14.3751C7.99279 14.6259 9.29973 14.4972 10.4874 14.0052C11.6752 13.5132 12.6903 12.6801 13.4046 11.6112C14.1188 10.5423 14.5 9.28558 14.5 8C14.4967 6.27711 13.8108 4.62573 12.5925 3.40746C11.3743 2.18918 9.7229 1.5033 8 1.5V1.5Z"
-                            fill="#FF9E00"
-                        />
-                    </Svg>
-                ),
-                label: "Позиция:",
-                value: getRankIcon(item.questRank),
-            },
-            {
-                icon: (
-                    <Svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <Path
-                            d="M7 0.333008C10.6819 0.333008 13.667 3.3181 13.667 7C13.667 10.6819 10.6819 13.667 7 13.667C3.3181 13.667 0.333008 10.6819 0.333008 7C0.333008 3.3181 3.3181 0.333008 7 0.333008Z"
-                            fill={item.questCompleted ? "#0DC268" : "#FF9E00"}
-                        />
-                    </Svg>
-                ),
-                label: "Баллы:",
-                value: `${item.questPoints.toLocaleString()} тг`,
-            },
-            {
-                icon: (
-                    <Text style={{ fontSize: 14 }}>
-                        {item.questCompleted ? "✅" : "⏳"}
-                    </Text>
-                ),
-                label: "Прогресс:",
-                value: `${item.questProgress}%`,
-            },
-            {
-                icon: (
-                    <Text style={{ fontSize: 14 }}>
-                        {item.questCompleted ? "🎉" : "💪"}
-                    </Text>
-                ),
-                label: "Статус:",
-                value: item.questCompleted ? "Выполнен" : "В процессе",
-            },
-        ];
+    const ItemSeparator = useCallback(
+        () => <View style={styles.itemSeparator} />,
+        [],
+    );
 
+    const ListHeader = useCallback(() => {
+        if (!quest) return null;
         return (
-            <EmployeeCardExtended
-                name={item.name}
-                role={item.role}
-                avatar={item.avatarUrl || undefined}
-                stats={stats}
-                onPress={() => {
-                    // Optional: Navigate to employee detail
-                    console.log("Navigate to employee detail:", item.id);
-                }}
-            />
+            <View style={styles.listHeader}>
+                <QuestCardEmployees quest={quest} />
+                <View style={styles.sectionSpacer} />
+                <View style={styles.leaderboardHeader}>
+                    <Text style={styles.leaderboardTitle}>Лидерборд 🏆</Text>
+                    <Text style={styles.leaderboardSubtitle}>
+                        {sortedProgress.length} участника
+                    </Text>
+                </View>
+            </View>
         );
-    };
+    }, [quest, sortedProgress.length]);
 
-    // Key extractor for FlatList
-    const keyExtractor = (item: EmployeeQuestProgress) =>
-        `${questId}-${item.id}`;
+    // ── States ────────────────────────────────────────────────────────────────
 
-    // Item separator
-    const ItemSeparator = () => <View style={styles.itemSeparator} />;
-
-    // Render loading state
-    if (loading || questLoading) {
+    if (loading) {
         return (
             <SafeAreaView
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+                style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <StatusBar
                     barStyle="light-content"
                     backgroundColor="rgba(25, 25, 26, 1)"
                 />
                 {renderHeader()}
-                <Loading text={"Загрузка данных"} />
+                <Loading text="Загрузка данных" />
             </SafeAreaView>
         );
     }
 
-    // Render quest not found
-    if (!quest) {
+    if (error || !quest) {
         return (
             <SafeAreaView
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+                style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <StatusBar
                     barStyle="light-content"
@@ -247,16 +208,24 @@ export default function QuestDetailScreen() {
                 />
                 {renderHeader()}
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>Квест не найден</Text>
+                    <Text style={styles.errorText}>
+                        {error ?? "Квест не найден"}
+                    </Text>
+                    <TouchableOpacity
+                        style={styles.retryButton}
+                        onPress={loadQuestDetail}
+                    >
+                        <Text style={styles.retryButtonText}>
+                            Попробовать снова
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -265,35 +234,31 @@ export default function QuestDetailScreen() {
             {renderHeader()}
 
             <FlatList
-                data={employeeQuestProgress}
+                data={sortedProgress}
                 renderItem={renderEmployeeItem}
                 keyExtractor={keyExtractor}
-                ListHeaderComponent={() => (
-                    <View style={styles.listHeader}>
-                        {/* Quest Card */}
-                        <QuestCardEmployees quest={quest} />
-
-                        {/* Spacer */}
-                        <View style={styles.sectionSpacer} />
-
-                        {/* Leaderboard Header */}
-                        {renderLeaderboardHeader()}
-                    </View>
-                )}
+                ListHeaderComponent={ListHeader}
                 ItemSeparatorComponent={ItemSeparator}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>
+                            Нет данных по участникам
+                        </Text>
+                    </View>
+                }
             />
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+// ============================================================================
+// Styles
+// ============================================================================
 
-    // Header
+const styles = StyleSheet.create({
+    container: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -318,49 +283,26 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginHorizontal: 16,
     },
-    headerSpacer: {
-        width: 28,
-        height: 28,
-    },
-
-    // List
-    listContent: {
-        paddingHorizontal: 16,
-        paddingBottom: 128,
-    },
-    listHeader: {
-        paddingBottom: 8,
-    },
-    sectionSpacer: {
-        height: 32,
-    },
-
-    // Leaderboard
-    leaderboardHeader: {
-        marginBottom: 16,
-        gap: 4,
-    },
+    headerSpacer: { width: 28, height: 28 },
+    listContent: { paddingHorizontal: 16, paddingBottom: 128 },
+    listHeader: { paddingBottom: 8 },
+    sectionSpacer: { height: 32 },
+    leaderboardHeader: { marginBottom: 16, gap: 4 },
     leaderboardTitle: {
         color: "#fff",
         fontSize: 24,
         fontWeight: "bold",
         lineHeight: 28,
     },
-    leaderboardSubtitle: {
-        color: "#797A80",
-        fontSize: 14,
-        lineHeight: 18,
-    },
-    itemSeparator: {
-        height: 16,
-    },
-
-    // Error states
+    leaderboardSubtitle: { color: "#797A80", fontSize: 14, lineHeight: 18 },
+    itemSeparator: { height: 16 },
+    statIcon: { fontSize: 14 },
     errorContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
         paddingHorizontal: 16,
+        gap: 16,
     },
     errorText: {
         color: "#fff",
@@ -368,4 +310,13 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
     },
+    retryButton: {
+        backgroundColor: "rgba(35, 35, 36, 1)",
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 20,
+    },
+    retryButtonText: { color: "#fff", fontSize: 16, fontWeight: "500" },
+    emptyState: { paddingVertical: 40, alignItems: "center" },
+    emptyText: { color: "rgba(255, 255, 255, 0.5)", fontSize: 16 },
 });

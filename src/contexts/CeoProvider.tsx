@@ -26,9 +26,12 @@ import {
     getTasks,
     createTask,
     completeTask,
+    getQuestDetail,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
+
+import type { QuestDetail } from "@/src/server/types/ceo";
 
 // ============================================================================
 // Types
@@ -149,8 +152,12 @@ interface CeoContextType {
     fetchTasksWrapper: (inputs: {
         user_id?: number;
         date?: string;
-        organization_id?: number;
+        organization_id?: number | string;
     }) => Promise<GetTaskType>;
+    fetchQuestDetailWrapper: (
+        quest_id: number,
+        inputs: { organization_id?: number },
+    ) => Promise<QuestDetail>;
     fetchQuestsData: (inputs: {
         date?: string;
         organization_id?: number;
@@ -427,6 +434,24 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    // Загружает детальную информацию по квесту включая employeeProgress
+    // Не пишет в стейт провайдера — данные локальны для экрана деталей
+    const fetchQuestDetailWrapper = useCallback(
+        async (
+            quest_id: number,
+            inputs: { organization_id?: number },
+        ): Promise<QuestDetail> => {
+            try {
+                const response = await getQuestDetail(quest_id, inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching quest detail:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     // ========================================================================
     // Context value
     // ========================================================================
@@ -453,6 +478,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         completeTaskWrapper,
         fetchQuestsData,
         setQuests,
+        fetchQuestDetailWrapper,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

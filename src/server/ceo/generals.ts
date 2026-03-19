@@ -81,3 +81,16 @@ export async function completeTask(task_id: number) {
 
     return res.data;
 }
+
+export async function getQuestDetail(
+    quest_id: number,
+    inputs: {
+        organization_id?: number;
+    },
+) {
+    const params = checkFilters(inputs);
+
+    const res = await api.get(`/quests/${quest_id}`, { params });
+
+    return res.data;
+}

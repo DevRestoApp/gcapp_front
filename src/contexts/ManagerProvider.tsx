@@ -18,6 +18,7 @@ import {
     getTasks,
     createTask,
     completeTask,
+    getQuestDetail,
 } from "@/src/server/ceo/generals";
 
 import {
@@ -44,6 +45,7 @@ import type {
 } from "@/src/server/types/expenses";
 
 import type { EmployeesData as Employee } from "@/src/server/types/waiter";
+import type { QuestDetail } from "@/src/server/types/ceo";
 
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
 import {
@@ -55,7 +57,6 @@ import {
     getPayoutTypesData,
 } from "@/src/server/general/expenses";
 import { getDocumentsAccounts } from "@/src/server/general/warehouse";
-import { SelectedRoomContext } from "@/src/contexts/WaiterProvider";
 
 // ============================================================================
 // Types
@@ -97,15 +98,6 @@ interface Shift {
     status: string;
 }
 
-type EmployeeProgress = {
-    employeeId: string;
-    employeeName: string;
-    progress: number;
-    completed: true;
-    points: number;
-    rank: number;
-};
-
 interface Quest {
     id: string;
     title: string;
@@ -114,14 +106,13 @@ interface Quest {
     current: number;
     target: number;
     unit: string;
-    completed: true;
+    completed: boolean;
     progress: number;
     expiresAt: string;
     totalEmployees: number;
     completedEmployees: number;
     employeeNames: string[];
     date: string;
-    employeeProgress: EmployeeProgress[];
 }
 
 type GeneralType = {
@@ -181,14 +172,18 @@ interface ManagerContextType {
         new_password: string;
     }) => Promise<void>;
     fetchTasksWrapper: (inputs: {
-        user_id?: number | undefined;
-        date?: string | undefined;
-        organization_id?: number | undefined;
+        user_id?: number;
+        date?: string;
+        organization_id?: number | string;
     }) => Promise<GetTaskType>;
     fetchQuestsData: (inputs: {
         date?: string;
         organization_id?: number;
     }) => Promise<Quest[]>;
+    fetchQuestDetailWrapper: (
+        quest_id: number,
+        inputs: { organization_id?: number },
+    ) => Promise<QuestDetail>;
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
     setQuests: (quests: Quest[]) => void;
@@ -430,9 +425,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchTasksWrapper = useCallback(
         async (inputs: {
-            user_id?: number | undefined;
-            date?: string | undefined;
-            organization_id?: number | string | undefined;
+            user_id?: number;
+            date?: string;
+            organization_id?: number | string;
         }): Promise<GetTaskType> => {
             try {
                 const response = await getTasks(inputs);
@@ -446,11 +441,28 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    // Загружает детальную информацию по квесту включая employeeProgress
+    // Не пишет в стейт провайдера — данные локальны для экрана деталей
+    const fetchQuestDetailWrapper = useCallback(
+        async (
+            quest_id: number,
+            inputs: { organization_id?: number },
+        ): Promise<QuestDetail> => {
+            try {
+                const response = await getQuestDetail(quest_id, inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching quest detail:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     const createTaskWrapper = useCallback(
         async (inputs: TaskInputsType): Promise<TaskType> => {
             try {
-                const response = await createTask(inputs);
-                return response;
+                return await createTask(inputs);
             } catch (error) {
                 console.error("Error creating task:", error);
                 throw error;
@@ -462,8 +474,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const completeTaskWrapper = useCallback(
         async (task_id: number): Promise<TaskType> => {
             try {
-                const response = await completeTask(task_id);
-                return response;
+                return await completeTask(task_id);
             } catch (error) {
                 console.error("Error completing task:", error);
                 throw error;
@@ -505,7 +516,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setShifts(shiftsData);
             setAnalytics(analyticsData);
             setQuests(questsData);
-            setTasks(tasksData);
+            setTasks(tasksData.tasks ?? tasksData);
         } catch (err: any) {
             console.error("Error fetching Manager data:", err);
             setError(
@@ -541,9 +552,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         await fetchAll();
     }, [fetchAll]);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
+    const clearError = useCallback(() => setError(null), []);
 
     const createFineAction = useCallback(
         async (inputs: FineInputsType): Promise<void> => {
@@ -609,11 +618,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             new_password: string;
         }): Promise<void> => {
             try {
-                const response = await changeEmployeePassword(params);
-                return response;
+                await changeEmployeePassword(params);
             } catch (e) {
                 console.error(e);
-                return;
             }
         },
         [],
@@ -659,10 +666,14 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         changePasswordWrapper,
         tasks,
         fetchTasksWrapper,
+        fetchQuestDetailWrapper,
         createTaskWrapper,
         completeTaskWrapper,
-        fetchQuestsData,
-        setQuests,
+        fetchQuestsData: async (inputs) => {
+            const result = await fetchQuestsData(inputs);
+            return result ? [result] : [];
+        },
+        setQuests: (q) => setQuests(q[0] ?? null),
     };
 
     return (
