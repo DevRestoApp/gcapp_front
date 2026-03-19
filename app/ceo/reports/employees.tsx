@@ -25,6 +25,7 @@ const RenderEmployeeCard = (employeeData) => {
             role={role}
             stats={data}
             onPress={() => {}}
+            questPercentage={0} // TODO Добавить % выполненных квестов
         />
     );
 };
@@ -100,15 +101,15 @@ export default function ExpensesReports() {
                 },
                 {
                     label: "Средний чек",
-                    value: "0",
+                    value: employees.average_check,
                 },
                 {
                     label: "Количество чеков",
-                    value: "0",
+                    value: employees.checks_count,
                 },
                 {
                     label: "Количество возвратов",
-                    value: "0",
+                    value: employees.returns_count,
                 },
             ],
         };

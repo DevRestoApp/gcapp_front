@@ -81,6 +81,9 @@ interface EmployeesData {
     amount: string;
     shiftTime?: string;
     isActive?: boolean;
+    average_check?: string | number;
+    checks_count?: string | number;
+    returns_count?: string | number;
     data?: { label: string; value: string }[];
 }
 type byPayType = {
