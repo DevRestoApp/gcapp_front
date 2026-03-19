@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
     TouchableOpacity,
     ScrollView,
@@ -9,48 +9,84 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
-
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
+import { useManager } from "@/src/contexts/ManagerProvider";
 import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
-import TableNumberGrid from "@/src/client/components/TableNumberGrid";
-import RoomNumberGrid from "@/src/client/components/RoomNumberGrid";
 import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
-import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 import Loading from "@/src/client/components/Loading";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-
-const rooms = [
-    "Общий зал",
-    "Открытая VIP-беседка",
-    "Летняя терраса",
-    "VIP-залы",
-];
-
-// TODO add useEffect to get info about all rooms + active and disabled tables
+import ActiveOrdersSection from "@/src/client/components/waiter/ActiveOrderSection";
+import SegmentedControl from "@/src/client/components/Tabs";
 
 export default function EmployeeDetailScreen() {
-    const { id } = useLocalSearchParams();
+    const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
+
     const { selectedEmployee } = useEmployee();
+    const { fetchEmployeeOrders } = useManager();
+
     const editModalRef = useRef<ModalWrapperRef>(null);
     const dropdownRef = useRef<any>(null);
 
-    const router = useRouter();
     const [activeTab, setActiveTab] = useState<"info" | "history">("info");
-    const [selectedRoom, setSelectedRoom] = useState<string>("");
+    const [orders, setOrders] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
 
-    const toggleRoom = (room: string) => {
-        setSelectedRoom((prev) => (prev === room ? "" : room));
-    };
+    const tabs = [{ label: "Информация", value: "info" }];
 
-    // Guard: selectedEmployee may be null when navigating directly to this screen
+    // ── Fetch orders on mount ─────────────────────────────────────────────────
+
+    useEffect(() => {
+        if (!selectedEmployee) return;
+
+        const loadOrders = async () => {
+            setIsLoading(true);
+            try {
+                const userId =
+                    selectedEmployee.id !== 322256 ? selectedEmployee.id : 10;
+                const response = await fetchEmployeeOrders({
+                    user_id: userId,
+                });
+                const filtered = response.orders.filter(
+                    (order) => order.status === "CREATED",
+                );
+                setOrders(filtered);
+            } catch (error) {
+                console.error("Error fetching employee orders:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadOrders();
+    }, [selectedEmployee?.id]);
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
+
+    const handleOrderClick = useCallback(
+        ({ itemId, item }: { itemId: string; item: any }) => {
+            const orderId = Number(itemId);
+            setLoadingOrderId(orderId);
+            router.push({
+                pathname: `/manager/employees/${id}/order/${itemId}`,
+                params: { orderData: JSON.stringify(item) },
+            });
+            setTimeout(() => setLoadingOrderId(null), 500);
+        },
+        [id, router],
+    );
+
+    // ── Guard ─────────────────────────────────────────────────────────────────
+
     if (!selectedEmployee) {
         return (
             <SafeAreaView
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+                style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <StatusBar
                     barStyle="light-content"
@@ -62,9 +98,7 @@ export default function EmployeeDetailScreen() {
     }
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
@@ -112,119 +146,54 @@ export default function EmployeeDetailScreen() {
                 </View>
 
                 {/* Segmented Control */}
-                <View style={styles.segmentedControlContainer}>
-                    <View style={styles.segmentedControl}>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("info")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "info" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "info" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                Инфо
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("history")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "history" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "history" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                История
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={(value) =>
+                        setActiveTab(value as "info" | "history")
+                    }
+                />
 
-                {/* Info Tab Content */}
+                {/* Info Tab */}
                 {activeTab === "info" && (
                     <View style={styles.contentContainer}>
                         <EmployeeCard
                             name={selectedEmployee.name}
-                            amount={""}
+                            amount=""
                             avatar={selectedEmployee.avatarUrl || undefined}
                             role={selectedEmployee.role}
                             totalAmount={selectedEmployee.totalAmount}
                             shiftTime={selectedEmployee.shiftTime}
                             variant="full"
-                            showStats={true}
+                            showStats
                             onPress={() => {}}
                         />
-                        <Text style={styles.sectionTitle}>
-                            Выберите помещение
-                        </Text>
-                        <RoomNumberGrid
-                            rooms={rooms}
-                            selectedRoom={selectedRoom}
-                            onRoomSelect={toggleRoom}
-                        />
-                        <Text style={styles.sectionTitle}>Стол</Text>
-                        <TableNumberGrid
-                            tableCount={21}
-                            columns={7}
-                            selectedTable={5}
-                            disabledTables={[3, 7, 12]}
-                            onTableSelect={(tableNumber) => {
-                                router.push(
-                                    `/manager/employees/${id}/table/${tableNumber}`,
-                                );
-                            }}
+                        <ActiveOrdersSection
+                            orders={orders}
+                            isLoading={isLoading}
+                            onOrderClick={handleOrderClick}
+                            showStatus={true}
+                            showAddOrderButton={false}
+                            disableDefaultOrderClickPush={true}
                         />
                     </View>
                 )}
 
-                {/* History Tab Content */}
+                {/* History Tab */}
                 {activeTab === "history" && (
                     <View style={styles.contentContainer}>
                         <Text style={styles.sectionTitle}>История</Text>
-                        {/* Add history content here */}
                     </View>
                 )}
             </ScrollView>
-
-            {/* Modal must be outside ScrollView to avoid positioning issues */}
-            <ShiftTimeModal
-                ref={editModalRef}
-                type="edit"
-                initialTime="09:30"
-                onShiftEdit={(time) => {
-                    console.log("New time:", time);
-                    dropdownRef.current?.close();
-                }}
-            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingBottom: 166,
-    },
+    container: { flex: 1 },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingBottom: 166 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -259,41 +228,6 @@ const styles = StyleSheet.create({
         color: "#FFFFFF",
         fontSize: 16,
     },
-    segmentedControlContainer: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-    },
-    segmentedControl: {
-        flexDirection: "row",
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderRadius: 12,
-        padding: 2,
-        gap: 2,
-    },
-    segmentButton: {
-        flex: 1,
-        height: 32,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    segmentButtonActive: {
-        backgroundColor: "rgba(25, 25, 26, 1)",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        elevation: 2,
-    },
-    segmentText: {
-        fontSize: 16,
-        fontWeight: "400",
-        lineHeight: 20,
-        color: "#BFC1C5",
-    },
-    segmentTextActive: {
-        color: "#FFFFFF",
-    },
     contentContainer: {
         paddingHorizontal: 16,
         paddingTop: 28,
@@ -304,35 +238,5 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "700",
         lineHeight: 28,
-    },
-    bottomSection: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "rgba(25, 25, 26, 0.85)",
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 16,
-        gap: 16,
-        height: 166,
-    },
-    penaltyButton: {
-        width: "100%",
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "rgba(237, 10, 52, 0.08)",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    penaltyButtonText: {
-        color: "#EE1E44",
-        fontSize: 16,
-        fontWeight: "600",
-        lineHeight: 24,
-        textAlign: "center",
-    },
-    bottomNavPlaceholder: {
-        height: 94,
     },
 });

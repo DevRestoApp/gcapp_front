@@ -93,7 +93,6 @@ export default function OrderScreen() {
     // Берём актуальный заказ из списка orders если есть, иначе из params
     const apiOrder = useMemo<ApiOrder | null>(() => {
         if (params.orderId && params.orderData) {
-            console.log("inside");
             try {
                 console.log("try in params orderdata", params.orderData);
                 return JSON.parse(params.orderData);
@@ -101,13 +100,10 @@ export default function OrderScreen() {
                 console.warn("order: failed to parse orderData param");
             }
         }
-        console.log("selectedOrdeer?? null", selectedOrder);
         return selectedOrder ?? null;
     }, [params.orderData, selectedOrder]);
 
     const currentOrder = useMemo(() => {
-        console.log("curOrd", apiOrder);
-        console.log("curOrd parsed", parseApiOrder(apiOrder));
         return apiOrder ? parseApiOrder(apiOrder) : null;
     }, [apiOrder]);
 

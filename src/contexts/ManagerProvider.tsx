@@ -20,6 +20,7 @@ import {
     completeTask,
     getQuestDetail,
 } from "@/src/server/ceo/generals";
+import { getOrders } from "@/src/server/waiter/general";
 
 import {
     changeEmployeePassword,
@@ -44,7 +45,11 @@ import type {
     WarehouseDocumentsAccountsType,
 } from "@/src/server/types/expenses";
 
-import type { EmployeesData as Employee } from "@/src/server/types/waiter";
+import {
+    EmployeesData as Employee,
+    OrderType,
+    WaiterOrdersInputType,
+} from "@/src/server/types/waiter";
 import type { QuestDetail } from "@/src/server/types/ceo";
 
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
@@ -187,6 +192,7 @@ interface ManagerContextType {
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
     setQuests: (quests: Quest[]) => void;
+    fetchEmployeeOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
 }
 
 // ============================================================================
@@ -625,6 +631,18 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         },
         [],
     );
+    const fetchEmployeeOrders = useCallback(
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
+            try {
+                const response = await getOrders(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+                throw error;
+            }
+        },
+        [],
+    );
 
     // ========================================================================
     // Context value
@@ -674,6 +692,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             return result ? [result] : [];
         },
         setQuests: (q) => setQuests(q[0] ?? null),
+        fetchEmployeeOrders,
     };
 
     return (

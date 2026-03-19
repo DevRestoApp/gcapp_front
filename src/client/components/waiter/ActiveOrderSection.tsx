@@ -43,6 +43,8 @@ interface ActiveOrdersSectionProps {
     maxHeight?: number;
     isLoading?: boolean;
     showStatus?: boolean;
+    showAddOrderButton?: boolean;
+    disableDefaultOrderClickPush?: boolean;
 }
 
 export default function ActiveOrdersSection({
@@ -53,9 +55,10 @@ export default function ActiveOrdersSection({
     maxHeight,
     isLoading = false,
     showStatus = false,
+    showAddOrderButton = true,
+    disableDefaultOrderClickPush = false,
 }: ActiveOrdersSectionProps) {
     const router = useRouter();
-    const { selectedOrder, selectedOrderId } = useWaiter();
 
     // Transform API orders to display format
     const displayOrders = useMemo((): DisplayOrder[] | null => {
@@ -99,18 +102,19 @@ export default function ActiveOrdersSection({
 
     const handleOrderClick = useCallback(
         (orderId: string, rawOrder: ApiOrder) => {
-            console.log("rawOrder", rawOrder);
             onOrderClick?.({
                 itemId: orderId,
                 item: rawOrder,
             });
-            router.push({
-                pathname: `/waiter/order`,
-                params: {
-                    orderId: orderId,
-                    orderData: JSON.stringify(rawOrder),
-                },
-            });
+            if (!disableDefaultOrderClickPush) {
+                router.push({
+                    pathname: `/waiter/order`,
+                    params: {
+                        orderId: orderId,
+                        orderData: JSON.stringify(rawOrder),
+                    },
+                });
+            }
         },
         [onOrderClick, router],
     );
@@ -118,7 +122,7 @@ export default function ActiveOrdersSection({
     const renderHeader = () => (
         <View style={styles.header}>
             <Text style={styles.title}>Активные заказы</Text>
-            <AddOrder onNewOrder={handleNewOrder} />
+            {showAddOrderButton && <AddOrder onNewOrder={handleNewOrder} />}
         </View>
     );
 
