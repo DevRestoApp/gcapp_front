@@ -199,18 +199,6 @@ export default function TableDetailScreen() {
                     room={mockData.order.room}
                 ></OrderHistory>
             </ScrollView>
-
-            {/* Bottom Fixed Section */}
-            <View style={styles.bottomSection}>
-                <TouchableOpacity
-                    style={styles.penaltyButton}
-                    activeOpacity={0.9}
-                >
-                    <Text style={styles.penaltyButtonText}>Написать штраф</Text>
-                </TouchableOpacity>
-                {/* Bottom Navigation Placeholder - 94px height */}
-                <View style={styles.bottomNavPlaceholder} />
-            </View>
         </SafeAreaView>
     );
 }

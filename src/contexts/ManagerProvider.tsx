@@ -19,10 +19,12 @@ import {
     createTask,
     completeTask,
 } from "@/src/server/ceo/generals";
+
 import {
     changeEmployeePassword,
     getEmployeesData,
 } from "@/src/server/general/employees";
+
 import type {
     FineInputsType,
     QuestInputsType,
@@ -30,6 +32,7 @@ import type {
     GetTaskType,
     TaskType,
 } from "@/src/server/types/ceo";
+
 import type {
     AddExpensesInputType,
     ExpensesDataInputType,
@@ -39,6 +42,9 @@ import type {
     UpdateExpensesInputType,
     WarehouseDocumentsAccountsType,
 } from "@/src/server/types/expenses";
+
+import type { EmployeesData as Employee } from "@/src/server/types/waiter";
+
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
 import {
     getExpensesData,
@@ -75,18 +81,6 @@ interface FinesSummary {
     succes: boolean;
     message: string;
     fines: Fine[];
-}
-
-interface Employee {
-    id: number;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-    deleted?: boolean;
-    data?: { label: string; value: string }[];
 }
 
 interface Shift {

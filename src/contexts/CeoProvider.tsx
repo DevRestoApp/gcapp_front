@@ -9,6 +9,7 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getEmployeesData } from "@/src/server/general/employees";
+import type { EmployeesData as Employee } from "@/src/server/types/waiter";
 import type {
     FineInputsType,
     QuestInputsType,
@@ -52,18 +53,6 @@ interface FinesSummary {
     succes: boolean;
     message: string;
     fines: Fine[];
-}
-
-interface Employee {
-    id: number;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-    deleted?: boolean;
-    data?: { label: string; value: string }[];
 }
 
 interface Shift {

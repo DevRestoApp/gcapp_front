@@ -20,6 +20,8 @@ import { getSalesDynamicsData } from "@/src/server/reports/salesDynamics";
 import { storage } from "@/src/server/storage";
 import { getOrganizationsData } from "@/src/server/general/organizations";
 
+import type { EmployeesData } from "@/src/server/types/waiter";
+
 // Define your report data types
 interface MetricData {
     id: number;
@@ -73,19 +75,6 @@ interface CategoryData {
     listItems: { label: string; sublabel: string; value: string }[];
 }
 
-interface EmployeesData {
-    id: string;
-    name: string;
-    role?: string;
-    avatar: string;
-    amount: string;
-    shiftTime?: string;
-    isActive?: boolean;
-    average_check?: string | number;
-    checks_count?: string | number;
-    returns_count?: string | number;
-    data?: { label: string; value: string }[];
-}
 type byPayType = {
     id: number;
     amount: number;
