@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     View,
@@ -8,26 +8,19 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    Alert,
     KeyboardAvoidingView,
     Platform,
+    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
+import type { PaymentType } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
-// Constants
+// Types
 // ============================================================================
-
-const PAYMENT_METHODS = [
-    "Банковские карты",
-    "Наличные",
-    "Kaspi QR",
-    "Kaspi Red",
-    "Halyk Bank",
-];
 
 // ============================================================================
 // Component
@@ -36,24 +29,43 @@ const PAYMENT_METHODS = [
 export default function PaymentScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { fetchOrders, payOrderWrapper } = useWaiter();
+    const { fetchOrders, payOrderWrapper, fetchPaymentTypes } = useWaiter();
     const { user, selectedLocation } = useAuth();
 
-    const orderId = Number(params.orderId);
+    const order_id = Number(params.orderId);
     const totalBill = Number(params.totalBill) || 0;
 
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-        string | null
-    >(null);
+    const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
+    const [paymentTypesLoading, setPaymentTypesLoading] = useState(true);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] =
+        useState<PaymentType | null>(null);
     const [tipAmount, setTipAmount] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
 
     const finalAmount = totalBill + (parseFloat(tipAmount) || 0);
     const isValid = selectedPaymentMethod !== null;
 
-    // ========================================================================
-    // Handlers
-    // ========================================================================
+    // ── Fetch payment types on mount ──────────────────────────────────────────
+
+    useEffect(() => {
+        const load = async () => {
+            setPaymentTypesLoading(true);
+            try {
+                const response = await fetchPaymentTypes({
+                    organization_id: selectedLocation ?? undefined,
+                });
+                setPaymentTypes(response.payment_types ?? []);
+            } catch (error) {
+                console.error("Error fetching payment types:", error);
+            } finally {
+                setPaymentTypesLoading(false);
+            }
+        };
+
+        load();
+    }, []);
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
 
     const handleTipChange = useCallback((text: string) => {
         setTipAmount(text.replace(/[^0-9]/g, ""));
@@ -64,7 +76,10 @@ export default function PaymentScreen() {
 
         setIsProcessing(true);
         try {
-            await payOrderWrapper(orderId);
+            const input = {};
+            if (paymentTypes) input.paymentTypes = paymentTypes;
+            if (tipAmount) input.tipAmount = tipAmount;
+            await payOrderWrapper(order_id, input);
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,
@@ -75,11 +90,17 @@ export default function PaymentScreen() {
         } finally {
             setIsProcessing(false);
         }
-    }, [isValid, orderId, payOrderWrapper, router]);
+    }, [
+        isValid,
+        order_id,
+        payOrderWrapper,
+        fetchOrders,
+        user.id,
+        selectedLocation,
+        router,
+    ]);
 
-    // ========================================================================
-    // Render
-    // ========================================================================
+    // ── Render ────────────────────────────────────────────────────────────────
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
@@ -113,37 +134,51 @@ export default function PaymentScreen() {
                 >
                     {/* Payment Methods */}
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Оплата</Text>
-                        <View style={styles.paymentMethodsContainer}>
-                            {PAYMENT_METHODS.map((method) => {
-                                const isSelected =
-                                    selectedPaymentMethod === method;
-                                return (
-                                    <TouchableOpacity
-                                        key={method}
-                                        onPress={() =>
-                                            setSelectedPaymentMethod(method)
-                                        }
-                                        style={[
-                                            styles.paymentMethodButton,
-                                            isSelected &&
-                                                styles.paymentMethodButtonActive,
-                                        ]}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text
+                        <Text style={styles.sectionTitle}>Способ оплаты</Text>
+
+                        {paymentTypesLoading ? (
+                            <View style={styles.loadingRow}>
+                                <ActivityIndicator size="small" color="#fff" />
+                                <Text style={styles.loadingText}>
+                                    Загрузка...
+                                </Text>
+                            </View>
+                        ) : paymentTypes.length === 0 ? (
+                            <Text style={styles.emptyText}>
+                                Нет доступных способов оплаты
+                            </Text>
+                        ) : (
+                            <View style={styles.paymentMethodsContainer}>
+                                {paymentTypes.map((method) => {
+                                    const isSelected =
+                                        selectedPaymentMethod?.id === method.id;
+                                    return (
+                                        <TouchableOpacity
+                                            key={method.id}
+                                            onPress={() =>
+                                                setSelectedPaymentMethod(method)
+                                            }
                                             style={[
-                                                styles.paymentMethodText,
+                                                styles.paymentMethodButton,
                                                 isSelected &&
-                                                    styles.paymentMethodTextActive,
+                                                    styles.paymentMethodButtonActive,
                                             ]}
+                                            activeOpacity={0.7}
                                         >
-                                            {method}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                                            <Text
+                                                style={[
+                                                    styles.paymentMethodText,
+                                                    isSelected &&
+                                                        styles.paymentMethodTextActive,
+                                                ]}
+                                            >
+                                                {method.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </View>
 
                     {/* Tips */}
@@ -252,6 +287,21 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "bold",
         lineHeight: 28,
+    },
+
+    loadingRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingVertical: 8,
+    },
+    loadingText: {
+        color: "rgba(255, 255, 255, 0.5)",
+        fontSize: 14,
+    },
+    emptyText: {
+        color: "rgba(255, 255, 255, 0.5)",
+        fontSize: 15,
     },
 
     paymentMethodsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

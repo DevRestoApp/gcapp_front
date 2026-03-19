@@ -313,7 +313,10 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     const formData: TaskFormData = {
                         title: taskTitle.trim(),
                         description: taskDescription.trim(),
-                        user_id: Number(taskSelectedEmployee!.id),
+                        user_id:
+                            Number(taskSelectedEmployee!.id) === 322256
+                                ? 10
+                                : Number(taskSelectedEmployee!.id),
                         organization_id: Number(taskSelectedLocation!.id),
                         due_date: taskDueDate,
                     };

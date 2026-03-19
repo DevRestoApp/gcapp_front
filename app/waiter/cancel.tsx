@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
 // Constants
@@ -30,7 +31,8 @@ const CANCEL_REASONS = [
 export default function CancelScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
-    const { cancelOrderWrapper } = useWaiter();
+    const { fetchOrders, cancelOrderWrapper } = useWaiter();
+    const { user, selectedLocation } = useAuth();
 
     const orderId = Number(params.orderId);
 
@@ -47,6 +49,10 @@ export default function CancelScreen() {
         setIsProcessing(true);
         try {
             await cancelOrderWrapper(orderId, selectedReason);
+            await fetchOrders({
+                user_id: user.id,
+                organization_id: selectedLocation,
+            });
             router.push("/waiter");
         } catch {
             // TODO: show error toast/banner

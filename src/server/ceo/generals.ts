@@ -39,7 +39,7 @@ export async function getShifts(inputs: {
 
 export async function getQuests(inputs: {
     data?: string;
-    organization_id?: string;
+    organization_id?: number | string | null;
 }) {
     const params = checkFilters(inputs);
 
@@ -65,9 +65,9 @@ export async function createTask(inputs: TaskInputsType) {
 }
 
 export async function getTasks(inputs: {
-    user_id?: string;
+    user_id?: number;
     date?: string;
-    organization_id?: number;
+    organization_id?: number | string | undefined;
 }) {
     const params = checkFilters(inputs);
 
@@ -78,6 +78,19 @@ export async function getTasks(inputs: {
 
 export async function completeTask(task_id: number) {
     const res = await api.post(`/tasks/${task_id}/complete`);
+
+    return res.data;
+}
+
+export async function getQuestDetail(
+    quest_id: number,
+    inputs: {
+        organization_id?: number;
+    },
+) {
+    const params = checkFilters(inputs);
+
+    const res = await api.get(`/quests/${quest_id}`, { params });
 
     return res.data;
 }

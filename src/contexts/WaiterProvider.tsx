@@ -33,6 +33,7 @@ import {
     payOrder,
     cancelOrder,
     updateOrder,
+    getPaymentTypes,
 } from "@/src/server/waiter/general";
 
 import type { OrganizationIdType } from "@/src/server/types/waiter";
@@ -56,6 +57,23 @@ export type SelectedRoomContext = {
     name: string;
 } | null;
 
+export type PaymentType = {
+    id: number;
+    iiko_id: string;
+    name: string;
+    code: string;
+    payment_type_kind: string;
+    comment: string;
+    combinable: boolean;
+    print_cheque: boolean;
+    payment_processing_type: string;
+};
+
+interface PaymentTypes {
+    success: boolean;
+    message: string;
+    payment_types: PaymentType[];
+}
 interface WaiterContextType {
     rooms: RoomsType[];
     tables: TablesType[];
@@ -81,7 +99,10 @@ interface WaiterContextType {
         order_id: number,
         inputs: UpdateOrdersInputType,
     ) => Promise<UpdateOrdersType | null>;
-    payOrderWrapper: (order_id: number) => Promise<PayOrderType | null>;
+    payOrderWrapper: (
+        order_id: number,
+        input: any,
+    ) => Promise<PayOrderType | null>;
     cancelOrderWrapper: (
         order_id: number,
         reason: string,
@@ -99,8 +120,9 @@ interface WaiterContextType {
         organization_id?: OrganizationIdType,
     ) => Promise<void>;
     fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
+    fetchPaymentTypes: (inputs: { organization_id?: number }) => Promise<void>;
     fetchTasks: (inputs: {
-        user_id?: string;
+        user_id?: number;
         date?: string;
         organization_id?: number;
     }) => Promise<GetTaskType>;
@@ -276,9 +298,9 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     const payOrderWrapper = useCallback(
-        async (order_id: number): Promise<PayOrderType> => {
+        async (order_id: number, input: any): Promise<PayOrderType> => {
             try {
-                const response = await payOrder(order_id);
+                const response = await payOrder(order_id, input);
                 return response;
             } catch (error) {
                 console.error("Error order pay:", error);
@@ -311,6 +333,19 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 const response = await getWaiterShiftStatus(waiter_id, inputs);
                 console.log("res", response);
                 setShiftStatus(response);
+                return response;
+            } catch (error) {
+                console.error("Error fetching shift status:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const fetchPaymentTypes = useCallback(
+        async (inputs: { organization_id?: number }): Promise<PaymentTypes> => {
+            try {
+                const response = await getPaymentTypes(inputs);
                 return response;
             } catch (error) {
                 console.error("Error fetching shift status:", error);
@@ -379,6 +414,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 selectedOrderId,
                 setSelectedOrder,
                 setSelectedOrderId,
+                fetchPaymentTypes,
             }}
         >
             {children}

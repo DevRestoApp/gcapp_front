@@ -1,5 +1,5 @@
 export interface ExpensesDataInputType {
-    organization_id?: string;
+    organization_id?: number | string | null;
     expense_type?: string;
     from_date?: string;
     to_date?: string;
@@ -9,7 +9,7 @@ export interface ExpensesDataInputType {
 
 type ExpensesData = {
     id: number;
-    organization_id: number;
+    organization_id: number | string | null;
     expense_type: string;
     amount: number;
     date: string;

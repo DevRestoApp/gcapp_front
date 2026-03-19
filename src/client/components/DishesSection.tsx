@@ -43,6 +43,7 @@ export default function DishesSection({
     onDishPress,
     onAddMoreDishes,
 }: DishesSectionProps) {
+    console.log("DISHESSECTION", dishes);
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>🍽️</Text>
@@ -71,9 +72,11 @@ export default function DishesSection({
                         id={String(dish.productId)}
                         name={dish.name}
                         description={dish.description || ""}
+                        initialQuantity={dish.quantity}
                         price={formatPrice(dish.price)}
                         image={dish.image || ""}
                         variant="informative"
+                        showQuantity={false}
                         onPress={onDishPress}
                         maxLines={2}
                     />

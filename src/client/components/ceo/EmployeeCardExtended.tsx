@@ -20,11 +20,12 @@ interface EmployeeCardProps {
     role?: string; // for full variant
     stats?: StatItem[]; // Array of stats to display
     onPress?: () => void;
+    questPercentage?: number;
 }
 
 export default function EmployeeCardExtended({
     name,
-    amount,
+    questPercentage,
     avatar,
     role,
     stats,
@@ -48,7 +49,7 @@ export default function EmployeeCardExtended({
                         <View style={styles.textContainer}>
                             <Text style={styles.name}>{name}</Text>
 
-                            {amount && (
+                            {questPercentage && (
                                 <View style={styles.amountContainer}>
                                     <MaterialCommunityIcons
                                         name="lightning-bolt"
@@ -56,7 +57,7 @@ export default function EmployeeCardExtended({
                                         color={textStyles.positive.color}
                                     />
                                     <Text style={textStyles.positive}>
-                                        Выполнил квест на {amount} %
+                                        Выполнил квест на {questPercentage} %
                                     </Text>
                                 </View>
                             )}

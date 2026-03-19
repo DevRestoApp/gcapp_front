@@ -40,3 +40,34 @@ export interface TaskType {
     message: string;
     task: Tasks;
 }
+
+export interface EmployeeProgress {
+    employeeId: string;
+    employeeName: string;
+    progress: number;
+    completed: boolean;
+    points: number;
+    rank: number;
+}
+
+export interface QuestDetail {
+    id: string;
+    title: string;
+    description: string;
+    reward: number;
+    current: number;
+    target: number;
+    unit: string;
+    completed: boolean;
+    progress: number;
+    expiresAt: string;
+    totalEmployees: number;
+    completedEmployees: number;
+    employeeNames: string[];
+    date: string;
+    employeeProgress: EmployeeProgress[];
+}
+
+export interface GetQuestDetailType {
+    quest: QuestDetail;
+}

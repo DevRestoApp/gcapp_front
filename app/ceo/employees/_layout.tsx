@@ -23,9 +23,9 @@ export default function EmployeesLayout() {
                     }}
                 />
                 <Stack.Screen
-                    name="[id]/table/[tableId]"
+                    name="[id]/order/[orderId]"
                     options={{
-                        title: "Стол",
+                        title: "Заказ",
                     }}
                 />
             </Stack>

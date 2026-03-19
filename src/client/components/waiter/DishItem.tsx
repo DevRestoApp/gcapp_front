@@ -6,7 +6,7 @@ interface DishItemProps {
     name: string;
     description: string;
     price: string;
-    image?: string; // Keep for future use
+    image?: string;
     initialQuantity?: number;
     onQuantityChange?: (id: string, quantity: number) => void;
     variant?: "interactive" | "informative";
@@ -29,47 +29,48 @@ export default function DishItem({
     maxLines = 2,
     disabled = false,
 }: DishItemProps) {
-    const [quantity, setQuantity] = useState(initialQuantity);
+    // В informative режиме — полностью controlled через initialQuantity (источник правды в родителе)
+    // В interactive режиме — локальный стейт (standalone компонент)
+    const isControlled = variant === "informative";
 
-    // Sync quantity with prop changes
+    const [localQuantity, setLocalQuantity] = useState(initialQuantity);
+
+    // Sync только для interactive режима при внешнем изменении
     useEffect(() => {
-        setQuantity(initialQuantity);
-    }, [initialQuantity]);
+        if (!isControlled) {
+            setLocalQuantity(initialQuantity);
+        }
+    }, [initialQuantity, isControlled]);
 
-    // Quantity handlers
+    const quantity = isControlled ? initialQuantity : localQuantity;
+
     const handleDecrease = useCallback(() => {
-        if (disabled) return;
-
-        const newQuantity = Math.max(0, quantity - 1);
-        setQuantity(newQuantity);
-        onQuantityChange?.(id, newQuantity);
-    }, [disabled, quantity, onQuantityChange, id]);
+        if (disabled || quantity <= 0) return;
+        const next = quantity - 1;
+        if (!isControlled) setLocalQuantity(next);
+        onQuantityChange?.(id, next);
+    }, [disabled, quantity, isControlled, onQuantityChange, id]);
 
     const handleIncrease = useCallback(() => {
         if (disabled) return;
+        const next = quantity + 1;
+        if (!isControlled) setLocalQuantity(next);
+        onQuantityChange?.(id, next);
+    }, [disabled, quantity, isControlled, onQuantityChange, id]);
 
-        const newQuantity = quantity + 1;
-        setQuantity(newQuantity);
-        onQuantityChange?.(id, newQuantity);
-    }, [disabled, quantity, onQuantityChange, id]);
-
-    // Item press handler
     const handlePress = useCallback(() => {
         if (disabled) return;
         onPress?.(id);
     }, [disabled, onPress, id]);
 
-    // Format price
     const formatPrice = (priceString: string) => {
         const match = priceString.match(/(\d[\d\s]*)/);
         if (match) {
-            const number = match[1].replace(/\s/g, "");
-            return `${parseInt(number).toLocaleString()} тг`;
+            return `${parseInt(match[1].replace(/\s/g, "")).toLocaleString()} тг`;
         }
         return priceString;
     };
 
-    // Render info section
     const renderInfo = () => (
         <View style={styles.info}>
             <View style={styles.titleRow}>
@@ -88,12 +89,68 @@ export default function DishItem({
                 </Text>
             )}
             {variant === "informative" && (
-                <Text style={styles.priceInline}>{formatPrice(price)}</Text>
+                <View style={styles.informativeBottom}>
+                    <Text style={styles.priceInline}>{formatPrice(price)}</Text>
+                    {showQuantity && (
+                        <View style={styles.quantityBoxInformative}>
+                            <TouchableOpacity
+                                onPress={handleDecrease}
+                                disabled={disabled}
+                                style={[
+                                    styles.button,
+                                    disabled && styles.buttonDisabled,
+                                ]}
+                                hitSlop={{
+                                    top: 8,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text
+                                    style={[
+                                        styles.buttonText,
+                                        disabled && styles.buttonTextDisabled,
+                                    ]}
+                                >
+                                    −
+                                </Text>
+                            </TouchableOpacity>
+                            <View style={styles.quantityDisplay}>
+                                <Text style={styles.quantity}>{quantity}</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={handleIncrease}
+                                disabled={disabled}
+                                style={[
+                                    styles.button,
+                                    disabled && styles.buttonDisabled,
+                                ]}
+                                hitSlop={{
+                                    top: 8,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text
+                                    style={[
+                                        styles.buttonText,
+                                        disabled && styles.buttonTextDisabled,
+                                    ]}
+                                >
+                                    +
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             )}
         </View>
     );
 
-    // Render quantity controls (interactive mode)
     const renderQuantityControls = () => {
         if (variant !== "interactive" || !showQuantity) return null;
 
@@ -119,11 +176,9 @@ export default function DishItem({
                         −
                     </Text>
                 </TouchableOpacity>
-
                 <View style={styles.quantityDisplay}>
                     <Text style={styles.quantity}>{quantity}</Text>
                 </View>
-
                 <TouchableOpacity
                     onPress={handleIncrease}
                     disabled={disabled}
@@ -144,12 +199,8 @@ export default function DishItem({
         );
     };
 
-    // Render bottom section
     const renderBottomSection = () => {
-        if (variant === "informative") {
-            return null;
-        }
-
+        if (variant === "informative") return null;
         return (
             <>
                 <View style={styles.divider} />
@@ -161,14 +212,9 @@ export default function DishItem({
         );
     };
 
-    // Main container - touchable if onPress is provided
     const ContainerComponent = onPress ? TouchableOpacity : View;
     const containerProps = onPress
-        ? {
-              onPress: handlePress,
-              activeOpacity: 0.8,
-              disabled: disabled,
-          }
+        ? { onPress: handlePress, activeOpacity: 0.8, disabled }
         : {};
 
     return (
@@ -193,17 +239,10 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 12,
     },
-    containerInformative: {
-        padding: 12,
-    },
-    containerDisabled: {
-        opacity: 0.6,
-    },
+    containerInformative: { padding: 12 },
+    containerDisabled: { opacity: 0.6 },
 
-    // Info styles
-    info: {
-        gap: 8,
-    },
+    info: { gap: 8 },
     titleRow: {
         flexDirection: "row",
         alignItems: "flex-start",
@@ -222,11 +261,16 @@ const styles = StyleSheet.create({
         color: "rgba(121, 122, 128, 1)",
         lineHeight: 20,
     },
+    informativeBottom: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 4,
+    },
     priceInline: {
         fontSize: 16,
         fontWeight: "600",
         color: "#fff",
-        marginTop: 4,
     },
     quantityBadge: {
         backgroundColor: "#fff",
@@ -242,13 +286,8 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 3,
     },
-    quantityBadgeText: {
-        color: "#000",
-        fontSize: 12,
-        fontWeight: "700",
-    },
+    quantityBadgeText: { color: "#000", fontSize: 12, fontWeight: "700" },
 
-    // Bottom section styles
     divider: {
         height: 1,
         backgroundColor: "rgba(43, 43, 44, 1)",
@@ -259,14 +298,8 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
     },
-    price: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#fff",
-        flex: 1,
-    },
+    price: { fontSize: 18, fontWeight: "bold", color: "#fff", flex: 1 },
 
-    // Quantity controls styles
     quantityBox: {
         flexDirection: "row",
         alignItems: "center",
@@ -276,6 +309,15 @@ const styles = StyleSheet.create({
         height: 36,
         minWidth: 100,
     },
+    quantityBoxInformative: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        borderRadius: 18,
+        paddingHorizontal: 6,
+        height: 32,
+        minWidth: 90,
+    },
     button: {
         width: 28,
         height: 28,
@@ -283,17 +325,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderRadius: 14,
     },
-    buttonDisabled: {
-        opacity: 0.3,
-    },
-    buttonText: {
-        fontSize: 18,
-        fontWeight: "600",
-        color: "#fff",
-    },
-    buttonTextDisabled: {
-        color: "rgba(255, 255, 255, 0.3)",
-    },
+    buttonDisabled: { opacity: 0.3 },
+    buttonText: { fontSize: 18, fontWeight: "600", color: "#fff" },
+    buttonTextDisabled: { color: "rgba(255, 255, 255, 0.3)" },
     quantityDisplay: {
         flex: 1,
         alignItems: "center",

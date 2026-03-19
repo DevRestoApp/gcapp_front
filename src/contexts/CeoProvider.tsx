@@ -9,6 +9,11 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getEmployeesData } from "@/src/server/general/employees";
+import {
+    EmployeesData as Employee,
+    OrderType,
+    WaiterOrdersInputType,
+} from "@/src/server/types/waiter";
 import type {
     FineInputsType,
     QuestInputsType,
@@ -25,9 +30,13 @@ import {
     getTasks,
     createTask,
     completeTask,
+    getQuestDetail,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
+
+import type { QuestDetail } from "@/src/server/types/ceo";
+import { getOrders } from "@/src/server/waiter/general";
 
 // ============================================================================
 // Types
@@ -35,6 +44,7 @@ import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 interface QueryInputs {
     date?: string;
+    organization_id?: string | number | null;
 }
 
 type Fine = {
@@ -51,18 +61,6 @@ interface FinesSummary {
     succes: boolean;
     message: string;
     fines: Fine[];
-}
-
-interface Employee {
-    id: number;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-    deleted?: boolean;
-    data?: { label: string; value: string }[];
 }
 
 interface Shift {
@@ -157,12 +155,22 @@ interface CeoContextType {
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
     fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
     fetchTasksWrapper: (inputs: {
-        user_id?: string;
-        due_date?: number;
-        organization_id?: number;
+        user_id?: number;
+        date?: string;
+        organization_id?: number | string;
     }) => Promise<GetTaskType>;
+    fetchQuestDetailWrapper: (
+        quest_id: number,
+        inputs: { organization_id?: number },
+    ) => Promise<QuestDetail>;
+    fetchQuestsData: (inputs: {
+        date?: string;
+        organization_id?: number;
+    }) => Promise<Quest[]>;
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
+    setQuests: (quests: Quest[]) => void;
+    fetchEmployeeOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
 }
 
 // ============================================================================
@@ -293,6 +301,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 organizations,
                 fines,
                 analyticsData,
+                tasksData,
             ] = await Promise.all([
                 fetchEmployeesData(inputs),
                 fetchShiftsData(inputs),
@@ -300,6 +309,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 fetchOrganizations(),
                 fetchFinesSummary(inputs),
                 fetchAnalyticsData(inputs),
+                fetchTasksWrapper(inputs),
             ]);
 
             setEmployees(employeesData);
@@ -308,6 +318,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setLocations(organizations);
             setFinesSummary(fines);
             setAnalytics(analyticsData);
+            setTasks(tasksData.tasks);
         } catch (err: any) {
             console.error("Error fetching CEO data:", err);
             setError(
@@ -387,8 +398,8 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchTasksWrapper = useCallback(
         async (inputs: {
-            user_id?: string;
-            due_date?: number;
+            user_id?: number;
+            date?: string;
             organization_id?: number;
         }): Promise<GetTaskType> => {
             try {
@@ -429,6 +440,37 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    // Загружает детальную информацию по квесту включая employeeProgress
+    // Не пишет в стейт провайдера — данные локальны для экрана деталей
+    const fetchQuestDetailWrapper = useCallback(
+        async (
+            quest_id: number,
+            inputs: { organization_id?: number },
+        ): Promise<QuestDetail> => {
+            try {
+                const response = await getQuestDetail(quest_id, inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching quest detail:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const fetchEmployeeOrders = useCallback(
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
+            try {
+                const response = await getOrders(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     // ========================================================================
     // Context value
     // ========================================================================
@@ -453,6 +495,10 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksWrapper,
         createTaskWrapper,
         completeTaskWrapper,
+        fetchQuestsData,
+        setQuests,
+        fetchQuestDetailWrapper,
+        fetchEmployeeOrders,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

@@ -17,12 +17,23 @@ import { useEmployee, Employee } from "@/src/contexts/EmployeeContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
 import { useManager } from "@/src/contexts/ManagerProvider";
+import SegmentedControl from "@/src/client/components/Tabs";
 
 export default function EmployeesScreen() {
     const router = useRouter();
     const { employees, shifts, loading, error, refetch } = useManager();
 
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+    const tabs = [
+        {
+            value: "open",
+            label: "Открыто",
+        },
+        {
+            value: "all",
+            label: "Все",
+        },
+    ];
 
     const { setSelectedEmployee } = useEmployee();
 
@@ -114,49 +125,13 @@ export default function EmployeesScreen() {
                     <View style={styles.headerSpacer} />
                 </View>
 
-                {/* Segmented Control */}
-                <View style={styles.segmentedControlContainer}>
-                    <View style={styles.segmentedControl}>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("open")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "open" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "open" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                Открытий
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setActiveTab("all")}
-                            style={[
-                                styles.segmentButton,
-                                activeTab === "all" &&
-                                    styles.segmentButtonActive,
-                            ]}
-                            activeOpacity={0.7}
-                        >
-                            <Text
-                                style={[
-                                    styles.segmentText,
-                                    activeTab === "all" &&
-                                        styles.segmentTextActive,
-                                ]}
-                            >
-                                Все
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                <SegmentedControl
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={(value) => {
+                        setActiveTab(value as "all" | "open");
+                    }}
+                />
 
                 {/* Employees Section */}
                 <View style={styles.employeesSection}>

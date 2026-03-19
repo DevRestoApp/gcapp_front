@@ -18,11 +18,15 @@ import {
     getTasks,
     createTask,
     completeTask,
+    getQuestDetail,
 } from "@/src/server/ceo/generals";
+import { getOrders } from "@/src/server/waiter/general";
+
 import {
     changeEmployeePassword,
     getEmployeesData,
 } from "@/src/server/general/employees";
+
 import type {
     FineInputsType,
     QuestInputsType,
@@ -30,6 +34,7 @@ import type {
     GetTaskType,
     TaskType,
 } from "@/src/server/types/ceo";
+
 import type {
     AddExpensesInputType,
     ExpensesDataInputType,
@@ -39,6 +44,14 @@ import type {
     UpdateExpensesInputType,
     WarehouseDocumentsAccountsType,
 } from "@/src/server/types/expenses";
+
+import {
+    EmployeesData as Employee,
+    OrderType,
+    WaiterOrdersInputType,
+} from "@/src/server/types/waiter";
+import type { QuestDetail } from "@/src/server/types/ceo";
+
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
 import {
     getExpensesData,
@@ -57,7 +70,7 @@ import { getDocumentsAccounts } from "@/src/server/general/warehouse";
 interface QueryInputs {
     date?: string;
     period?: string;
-    organization_id?: string;
+    organization_id?: string | number;
 }
 
 type Fine = {
@@ -76,18 +89,6 @@ interface FinesSummary {
     fines: Fine[];
 }
 
-interface Employee {
-    id: number;
-    name: string;
-    role: string;
-    avatarUrl: string;
-    totalAmount: string;
-    shiftTime: string;
-    isActive: boolean;
-    deleted?: boolean;
-    data?: { label: string; value: string }[];
-}
-
 interface Shift {
     id: string;
     date: string;
@@ -102,15 +103,6 @@ interface Shift {
     status: string;
 }
 
-type EmployeeProgress = {
-    employeeId: string;
-    employeeName: string;
-    progress: number;
-    completed: true;
-    points: number;
-    rank: number;
-};
-
 interface Quest {
     id: string;
     title: string;
@@ -119,14 +111,13 @@ interface Quest {
     current: number;
     target: number;
     unit: string;
-    completed: true;
+    completed: boolean;
     progress: number;
     expiresAt: string;
     totalEmployees: number;
     completedEmployees: number;
     employeeNames: string[];
     date: string;
-    employeeProgress: EmployeeProgress[];
 }
 
 type GeneralType = {
@@ -186,12 +177,22 @@ interface ManagerContextType {
         new_password: string;
     }) => Promise<void>;
     fetchTasksWrapper: (inputs: {
-        user_id?: string;
-        due_date?: number;
-        organization_id?: number;
+        user_id?: number;
+        date?: string;
+        organization_id?: number | string;
     }) => Promise<GetTaskType>;
+    fetchQuestsData: (inputs: {
+        date?: string;
+        organization_id?: number;
+    }) => Promise<Quest[]>;
+    fetchQuestDetailWrapper: (
+        quest_id: number,
+        inputs: { organization_id?: number },
+    ) => Promise<QuestDetail>;
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
+    setQuests: (quests: Quest[]) => void;
+    fetchEmployeeOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
 }
 
 // ============================================================================
@@ -430,9 +431,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchTasksWrapper = useCallback(
         async (inputs: {
-            user_id?: string;
-            due_date?: number;
-            organization_id?: number;
+            user_id?: number;
+            date?: string;
+            organization_id?: number | string;
         }): Promise<GetTaskType> => {
             try {
                 const response = await getTasks(inputs);
@@ -446,11 +447,28 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    // Загружает детальную информацию по квесту включая employeeProgress
+    // Не пишет в стейт провайдера — данные локальны для экрана деталей
+    const fetchQuestDetailWrapper = useCallback(
+        async (
+            quest_id: number,
+            inputs: { organization_id?: number },
+        ): Promise<QuestDetail> => {
+            try {
+                const response = await getQuestDetail(quest_id, inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching quest detail:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     const createTaskWrapper = useCallback(
         async (inputs: TaskInputsType): Promise<TaskType> => {
             try {
-                const response = await createTask(inputs);
-                return response;
+                return await createTask(inputs);
             } catch (error) {
                 console.error("Error creating task:", error);
                 throw error;
@@ -462,8 +480,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const completeTaskWrapper = useCallback(
         async (task_id: number): Promise<TaskType> => {
             try {
-                const response = await completeTask(task_id);
-                return response;
+                return await completeTask(task_id);
             } catch (error) {
                 console.error("Error completing task:", error);
                 throw error;
@@ -488,6 +505,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 shiftsData,
                 analyticsData,
                 questsData,
+                tasksData,
             ] = await Promise.all([
                 fetchOrganizations(),
                 fetchFinesSummary(inputs),
@@ -495,6 +513,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 fetchShiftsData(inputs),
                 fetchAnalyticsData(inputs),
                 fetchQuestsData(inputs),
+                fetchTasksWrapper(inputs),
             ]);
 
             setLocations(organizations);
@@ -503,6 +522,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setShifts(shiftsData);
             setAnalytics(analyticsData);
             setQuests(questsData);
+            setTasks(tasksData.tasks ?? tasksData);
         } catch (err: any) {
             console.error("Error fetching Manager data:", err);
             setError(
@@ -538,9 +558,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         await fetchAll();
     }, [fetchAll]);
 
-    const clearError = useCallback(() => {
-        setError(null);
-    }, []);
+    const clearError = useCallback(() => setError(null), []);
 
     const createFineAction = useCallback(
         async (inputs: FineInputsType): Promise<void> => {
@@ -606,11 +624,21 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             new_password: string;
         }): Promise<void> => {
             try {
-                const response = await changeEmployeePassword(params);
-                return response;
+                await changeEmployeePassword(params);
             } catch (e) {
                 console.error(e);
-                return;
+            }
+        },
+        [],
+    );
+    const fetchEmployeeOrders = useCallback(
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
+            try {
+                const response = await getOrders(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+                throw error;
             }
         },
         [],
@@ -656,8 +684,15 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         changePasswordWrapper,
         tasks,
         fetchTasksWrapper,
+        fetchQuestDetailWrapper,
         createTaskWrapper,
         completeTaskWrapper,
+        fetchQuestsData: async (inputs) => {
+            const result = await fetchQuestsData(inputs);
+            return result ? [result] : [];
+        },
+        setQuests: (q) => setQuests(q[0] ?? null),
+        fetchEmployeeOrders,
     };
 
     return (
