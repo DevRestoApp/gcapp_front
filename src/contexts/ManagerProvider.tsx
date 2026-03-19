@@ -49,6 +49,7 @@ import {
     getPayoutTypesData,
 } from "@/src/server/general/expenses";
 import { getDocumentsAccounts } from "@/src/server/general/warehouse";
+import { SelectedRoomContext } from "@/src/contexts/WaiterProvider";
 
 // ============================================================================
 // Types
@@ -57,7 +58,7 @@ import { getDocumentsAccounts } from "@/src/server/general/warehouse";
 interface QueryInputs {
     date?: string;
     period?: string;
-    organization_id?: string;
+    organization_id?: string | number;
 }
 
 type Fine = {
@@ -186,12 +187,17 @@ interface ManagerContextType {
         new_password: string;
     }) => Promise<void>;
     fetchTasksWrapper: (inputs: {
-        user_id?: string;
-        due_date?: number;
-        organization_id?: number;
+        user_id?: number | undefined;
+        date?: string | undefined;
+        organization_id?: number | undefined;
     }) => Promise<GetTaskType>;
+    fetchQuestsData: (inputs: {
+        date?: string;
+        organization_id?: number;
+    }) => Promise<Quest[]>;
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
+    setQuests: (quests: Quest[]) => void;
 }
 
 // ============================================================================
@@ -430,9 +436,9 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchTasksWrapper = useCallback(
         async (inputs: {
-            user_id?: string;
-            due_date?: number;
-            organization_id?: number;
+            user_id?: number | undefined;
+            date?: string | undefined;
+            organization_id?: number | string | undefined;
         }): Promise<GetTaskType> => {
             try {
                 const response = await getTasks(inputs);
@@ -488,6 +494,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 shiftsData,
                 analyticsData,
                 questsData,
+                tasksData,
             ] = await Promise.all([
                 fetchOrganizations(),
                 fetchFinesSummary(inputs),
@@ -495,6 +502,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
                 fetchShiftsData(inputs),
                 fetchAnalyticsData(inputs),
                 fetchQuestsData(inputs),
+                fetchTasksWrapper(inputs),
             ]);
 
             setLocations(organizations);
@@ -503,6 +511,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setShifts(shiftsData);
             setAnalytics(analyticsData);
             setQuests(questsData);
+            setTasks(tasksData);
         } catch (err: any) {
             console.error("Error fetching Manager data:", err);
             setError(
@@ -658,6 +667,8 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksWrapper,
         createTaskWrapper,
         completeTaskWrapper,
+        fetchQuestsData,
+        setQuests,
     };
 
     return (

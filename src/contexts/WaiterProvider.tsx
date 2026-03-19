@@ -100,7 +100,7 @@ interface WaiterContextType {
     ) => Promise<void>;
     fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
     fetchTasks: (inputs: {
-        user_id?: string;
+        user_id?: number;
         date?: string;
         organization_id?: number;
     }) => Promise<GetTaskType>;

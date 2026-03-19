@@ -3,6 +3,7 @@ import {
     View,
     Text,
     FlatList,
+    ScrollView,
     StyleSheet,
     StatusBar,
     Alert,
@@ -18,20 +19,22 @@ import { Day } from "@/src/client/types/waiter";
 import QuestCard, {
     QuestEmployees,
 } from "@/src/client/components/ceo/QuestCard";
+import TaskCard, { Task } from "@/src/client/components/waiter/TaskCard";
 import AddQuestModal, {
     AddQuestModalRef,
 } from "@/src/client/components/modals/AddQuestModal";
+import Loading from "@/src/client/components/Loading";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
-import Loading from "@/src/client/components/Loading";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { useManager } from "@/src/contexts/ManagerProvider";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
     const {
         quests,
+        tasks,
         employees,
         shifts,
         loading,
@@ -40,9 +43,13 @@ export default function QuestManagementScreen() {
         createTaskWrapper,
         locations,
         setDate: setInputDate,
+        fetchTasksWrapper,
+        fetchQuestsData,
+        setQuests,
     } = useManager();
 
     const safeQuests = quests.quests || [];
+    const safeTasks = tasks.tasks || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
 
@@ -54,18 +61,15 @@ export default function QuestManagementScreen() {
 
     useEffect(() => {
         const today = new Date();
-        const weekDays: Day[] = [];
-
-        for (let i = 0; i < 7; i++) {
+        const weekDays: Day[] = Array.from({ length: 7 }, (_, i) => {
             const date = new Date(today);
             date.setDate(today.getDate() - (6 - i));
-
-            weekDays.push({
+            return {
                 date: date.getDate().toString(),
                 day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
                 active: i === 6,
-            });
-        }
+            };
+        });
 
         setDays(weekDays);
 
@@ -78,12 +82,10 @@ export default function QuestManagementScreen() {
     }, []);
 
     const handleDayPress = useCallback(
-        (index: number) => {
-            const newDays = days.map((day, i) => ({
-                ...day,
-                active: i === index,
-            }));
-            setDays(newDays);
+        async (index: number) => {
+            setDays((prev) =>
+                prev.map((day, i) => ({ ...day, active: i === index })),
+            );
 
             const today = new Date();
             const selectedDay = new Date(today);
@@ -100,15 +102,20 @@ export default function QuestManagementScreen() {
 
             setQuestsLoading(true);
             try {
-                // change to getQuests api point
+                const questsResponse = await fetchQuestsData({
+                    date: dateStr,
+                });
+                setQuests(questsResponse);
+                await fetchTasksWrapper({
+                    date: dateStr,
+                });
             } catch (error) {
                 console.error("Error fetching quests:", error);
-                Alert.alert("Ошибка", "Не удалось загрузить квесты");
             } finally {
                 setQuestsLoading(false);
             }
         },
-        [days],
+        [setInputDate],
     );
 
     const handleAddQuest = useCallback(
@@ -124,7 +131,6 @@ export default function QuestManagementScreen() {
                 Alert.alert("Ошибка", "Функция создания квеста недоступна");
                 return;
             }
-
             try {
                 createQuestAction({
                     title: data.title,
@@ -138,14 +144,13 @@ export default function QuestManagementScreen() {
                     date: selectedDate,
                     durationDate: data.durationDate,
                 });
-
                 await refetch();
             } catch (error) {
                 console.error("Failed to create quest:", error);
                 Alert.alert("Ошибка", "Не удалось создать квест");
             }
         },
-        [selectedDate, safeEmployees.length, createQuestAction],
+        [selectedDate, safeEmployees.length, createQuestAction, refetch],
     );
 
     const handleAddTask = useCallback(
@@ -164,7 +169,6 @@ export default function QuestManagementScreen() {
                     organization_id: data.organization_id,
                     due_date: data.due_date,
                 });
-
                 await refetch();
             } catch (error) {
                 console.error("Failed to create task:", error);
@@ -172,6 +176,40 @@ export default function QuestManagementScreen() {
             }
         },
         [createTaskWrapper, refetch],
+    );
+
+    const renderQuestItem = useCallback(
+        ({ item }: { item: QuestEmployees }) => (
+            <QuestCard
+                quest={item}
+                onPress={() => router.push(`/manager/motivation/${item.id}`)}
+            />
+        ),
+        [router],
+    );
+
+    const renderTaskItem = useCallback(
+        ({ item }: { item: Task }) => <TaskCard task={item} />,
+        [],
+    );
+
+    const questKeyExtractor = useCallback(
+        (item: QuestEmployees) => item.id,
+        [],
+    );
+    const taskKeyExtractor = useCallback(
+        (item: Task) => item.id.toString(),
+        [],
+    );
+    const ItemSeparator = useCallback(
+        () => <View style={styles.itemSeparator} />,
+        [],
+    );
+
+    const renderLoadingState = () => (
+        <View style={loadingStyles.loadingContainer}>
+            <Loading text="Загрузка данных" />
+        </View>
     );
 
     const renderHeader = () => (
@@ -188,64 +226,17 @@ export default function QuestManagementScreen() {
                     />
                 </Svg>
             </TouchableOpacity>
-
             <Text style={styles.headerTitle}>
                 Квесты ({safeShifts.questsCount || 0})
             </Text>
-
             <View style={styles.backButton} />
         </View>
     );
 
-    const renderSectionTitle = () => (
-        <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Квесты на {selectedDate}</Text>
-            <Text style={styles.sectionSubtitle}>
-                {`${safeQuests.length} ${safeQuests.length === 1 ? "квест" : "квестов"}`}
-            </Text>
-        </View>
-    );
-
-    const renderEmptyState = () => (
-        <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🎯</Text>
-            <Text style={styles.emptyText}>Нет квестов на выбранную дату</Text>
-            <Text style={styles.emptySubtext}>
-                Создайте новый квест, нажав на кнопку &#34;+&#34;
-            </Text>
-        </View>
-    );
-
-    const renderLoadingState = () => (
-        <View>
-            <Loading text={"Загрузка квестов"} />
-        </View>
-    );
-
-    const renderQuestItem = ({ item }: { item: QuestEmployees }) => (
-        <QuestCard
-            quest={item}
-            onPress={() => router.push(`/manager/motivation/${item.id}`)}
-        />
-    );
-
-    const renderAddButton = () => (
-        <TouchableOpacity
-            onPress={() => addQuestModalRef.current?.open()}
-            style={ButtonStyles.addButtonManager}
-            activeOpacity={0.7}
-        >
-            <Entypo name="plus" size={24} color="black" />
-        </TouchableOpacity>
-    );
-
-    const keyExtractor = (item: QuestEmployees) => item.id;
-    const ItemSeparator = () => <View style={styles.itemSeparator} />;
-
     if (loading) {
         return (
             <SafeAreaView
-                style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+                style={[styles.container, backgroundsStyles.generalBg]}
             >
                 <StatusBar
                     barStyle="light-content"
@@ -258,34 +249,95 @@ export default function QuestManagementScreen() {
     }
 
     return (
-        <SafeAreaView
-            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
-        >
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <StatusBar
                 barStyle="light-content"
                 backgroundColor="rgba(25, 25, 26, 1)"
             />
 
             {renderHeader()}
-
             <Calendar days={days} onDayPress={handleDayPress} />
 
             {questsLoading ? (
                 renderLoadingState()
             ) : (
-                <FlatList
-                    data={safeQuests}
-                    renderItem={renderQuestItem}
-                    keyExtractor={keyExtractor}
-                    ListHeaderComponent={renderSectionTitle}
-                    ListEmptyComponent={renderEmptyState}
-                    ItemSeparatorComponent={ItemSeparator}
-                    contentContainerStyle={styles.listContent}
+                <ScrollView
+                    style={styles.scrollView}
                     showsVerticalScrollIndicator={false}
-                />
+                    contentContainerStyle={styles.scrollContent}
+                >
+                    {/* Quests section */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>
+                            Квесты на {selectedDate}
+                        </Text>
+                        <Text style={styles.sectionSubtitle}>
+                            {safeQuests.length}{" "}
+                            {safeQuests.length === 1 ? "квест" : "квестов"}
+                        </Text>
+                    </View>
+                    <FlatList
+                        data={safeQuests}
+                        renderItem={renderQuestItem}
+                        keyExtractor={questKeyExtractor}
+                        ItemSeparatorComponent={ItemSeparator}
+                        ListEmptyComponent={
+                            <View style={styles.emptyState}>
+                                <Text style={styles.emptyIcon}>🎯</Text>
+                                <Text style={styles.emptyText}>
+                                    Нет квестов на выбранную дату
+                                </Text>
+                                <Text style={styles.emptySubtext}>
+                                    Создайте новый квест, нажав на кнопку "+"
+                                </Text>
+                            </View>
+                        }
+                        scrollEnabled={false}
+                    />
+
+                    {/* Tasks section */}
+                    <View
+                        style={[
+                            styles.sectionHeader,
+                            styles.sectionHeaderTasks,
+                        ]}
+                    >
+                        <Text style={styles.sectionTitle}>
+                            Задачи на {selectedDate}
+                        </Text>
+                        <Text style={styles.sectionSubtitle}>
+                            {safeTasks.length}{" "}
+                            {safeTasks.length === 1 ? "задача" : "задач"}
+                        </Text>
+                    </View>
+                    <FlatList
+                        data={safeTasks}
+                        renderItem={renderTaskItem}
+                        keyExtractor={taskKeyExtractor}
+                        ItemSeparatorComponent={ItemSeparator}
+                        ListEmptyComponent={
+                            <View style={styles.emptyState}>
+                                <Text style={styles.emptyIcon}>📋</Text>
+                                <Text style={styles.emptyText}>
+                                    Нет задач на выбранную дату
+                                </Text>
+                                <Text style={styles.emptySubtext}>
+                                    Создайте новую задачу, нажав на кнопку "+"
+                                </Text>
+                            </View>
+                        }
+                        scrollEnabled={false}
+                    />
+                </ScrollView>
             )}
 
-            {renderAddButton()}
+            <TouchableOpacity
+                onPress={() => addQuestModalRef.current?.open()}
+                style={ButtonStyles.addButtonManager}
+                activeOpacity={0.7}
+            >
+                <Entypo name="plus" size={24} color="black" />
+            </TouchableOpacity>
 
             <AddQuestModal
                 ref={addQuestModalRef}
@@ -325,8 +377,18 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginHorizontal: 16,
     },
-    listContent: { paddingHorizontal: 16, paddingBottom: 170, flexGrow: 1 },
-    sectionHeader: { marginBottom: 16, gap: 4 },
+    scrollView: { flex: 1 },
+    scrollContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 170,
+    },
+    sectionHeader: {
+        marginBottom: 12,
+        gap: 4,
+    },
+    sectionHeaderTasks: {
+        marginTop: 24,
+    },
     sectionTitle: {
         color: "#fff",
         fontSize: 24,
@@ -334,18 +396,17 @@ const styles = StyleSheet.create({
         lineHeight: 28,
     },
     sectionSubtitle: { color: "#797A80", fontSize: 14, lineHeight: 18 },
-    itemSeparator: { height: 16 },
+    itemSeparator: { height: 12 },
     emptyState: {
-        flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        paddingVertical: 80,
+        paddingVertical: 40,
         gap: 12,
     },
-    emptyIcon: { fontSize: 64, opacity: 0.3 },
+    emptyIcon: { fontSize: 48, opacity: 0.3 },
     emptyText: {
         color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: "600",
         textAlign: "center",
     },

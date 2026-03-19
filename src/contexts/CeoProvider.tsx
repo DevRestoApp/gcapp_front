@@ -35,6 +35,7 @@ import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 interface QueryInputs {
     date?: string;
+    organization_id?: string | number | null;
 }
 
 type Fine = {
@@ -157,12 +158,17 @@ interface CeoContextType {
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
     fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
     fetchTasksWrapper: (inputs: {
-        user_id?: string;
-        due_date?: number;
+        user_id?: number;
+        date?: string;
         organization_id?: number;
     }) => Promise<GetTaskType>;
+    fetchQuestsData: (inputs: {
+        date?: string;
+        organization_id?: number;
+    }) => Promise<Quest[]>;
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
+    setQuests: (quests: Quest[]) => void;
 }
 
 // ============================================================================
@@ -293,6 +299,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 organizations,
                 fines,
                 analyticsData,
+                tasksData,
             ] = await Promise.all([
                 fetchEmployeesData(inputs),
                 fetchShiftsData(inputs),
@@ -300,6 +307,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
                 fetchOrganizations(),
                 fetchFinesSummary(inputs),
                 fetchAnalyticsData(inputs),
+                fetchTasksWrapper(inputs),
             ]);
 
             setEmployees(employeesData);
@@ -308,6 +316,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
             setLocations(organizations);
             setFinesSummary(fines);
             setAnalytics(analyticsData);
+            setTasks(tasksData.tasks);
         } catch (err: any) {
             console.error("Error fetching CEO data:", err);
             setError(
@@ -387,8 +396,8 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchTasksWrapper = useCallback(
         async (inputs: {
-            user_id?: string;
-            due_date?: number;
+            user_id?: number;
+            date?: string;
             organization_id?: number;
         }): Promise<GetTaskType> => {
             try {
@@ -453,6 +462,8 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         fetchTasksWrapper,
         createTaskWrapper,
         completeTaskWrapper,
+        fetchQuestsData,
+        setQuests,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

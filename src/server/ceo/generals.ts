@@ -39,7 +39,7 @@ export async function getShifts(inputs: {
 
 export async function getQuests(inputs: {
     data?: string;
-    organization_id?: string;
+    organization_id?: number | string | null;
 }) {
     const params = checkFilters(inputs);
 
@@ -65,9 +65,9 @@ export async function createTask(inputs: TaskInputsType) {
 }
 
 export async function getTasks(inputs: {
-    user_id?: string;
+    user_id?: number;
     date?: string;
-    organization_id?: number;
+    organization_id?: number | string | undefined;
 }) {
     const params = checkFilters(inputs);
 
