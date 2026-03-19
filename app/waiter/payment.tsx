@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     ScrollView,
     StyleSheet,
@@ -18,14 +17,6 @@ import { useWaiter } from "@/src/contexts/WaiterProvider";
 import type { PaymentType } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
 
-// ============================================================================
-// Types
-// ============================================================================
-
-// ============================================================================
-// Component
-// ============================================================================
-
 export default function PaymentScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
@@ -39,10 +30,8 @@ export default function PaymentScreen() {
     const [paymentTypesLoading, setPaymentTypesLoading] = useState(true);
     const [selectedPaymentMethod, setSelectedPaymentMethod] =
         useState<PaymentType | null>(null);
-    const [tipAmount, setTipAmount] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const finalAmount = totalBill + (parseFloat(tipAmount) || 0);
     const isValid = selectedPaymentMethod !== null;
 
     // ── Fetch payment types on mount ──────────────────────────────────────────
@@ -54,7 +43,9 @@ export default function PaymentScreen() {
                 const response = await fetchPaymentTypes({
                     organization_id: selectedLocation ?? undefined,
                 });
-                setPaymentTypes(response.payment_types ?? []);
+                const types = response.payment_types ?? [];
+                setPaymentTypes(types);
+                if (types.length > 0) setSelectedPaymentMethod(types[0]);
             } catch (error) {
                 console.error("Error fetching payment types:", error);
             } finally {
@@ -67,18 +58,14 @@ export default function PaymentScreen() {
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
-    const handleTipChange = useCallback((text: string) => {
-        setTipAmount(text.replace(/[^0-9]/g, ""));
-    }, []);
-
     const handleComplete = useCallback(async () => {
         if (!isValid) return;
 
         setIsProcessing(true);
         try {
-            const input = {};
-            if (paymentTypes) input.paymentTypes = paymentTypes;
-            if (tipAmount) input.tipAmount = tipAmount;
+            const input: Record<string, any> = {};
+            if (selectedPaymentMethod)
+                input.paymentType = selectedPaymentMethod.id;
             await payOrderWrapper(order_id, input);
             await fetchOrders({
                 user_id: user.id,
@@ -93,6 +80,7 @@ export default function PaymentScreen() {
     }, [
         isValid,
         order_id,
+        selectedPaymentMethod,
         payOrderWrapper,
         fetchOrders,
         user.id,
@@ -181,8 +169,8 @@ export default function PaymentScreen() {
                         )}
                     </View>
 
-                    {/* Tips */}
-                    <View style={styles.section}>
+                    {/* Tips — temporarily disabled */}
+                    {/* <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Чаевые</Text>
                         <View style={styles.inputContainer}>
                             <TextInput
@@ -201,18 +189,17 @@ export default function PaymentScreen() {
                         </View>
                         {tipAmount.length > 0 && (
                             <Text style={styles.tipHint}>
-                                Чаевые: {parseFloat(tipAmount).toLocaleString()}{" "}
-                                тг
+                                Чаевые: {parseFloat(tipAmount).toLocaleString()} тг
                             </Text>
                         )}
-                    </View>
+                    </View> */}
                 </ScrollView>
 
                 {/* Bottom */}
                 <View style={styles.bottomSection}>
                     <View style={styles.bottomContent}>
                         <Text style={styles.totalText}>
-                            Общий счет: {finalAmount.toLocaleString()} тг
+                            Общий счет: {totalBill.toLocaleString()} тг
                         </Text>
                         <TouchableOpacity
                             style={[
@@ -240,10 +227,6 @@ export default function PaymentScreen() {
         </SafeAreaView>
     );
 }
-
-// ============================================================================
-// Styles
-// ============================================================================
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
@@ -295,14 +278,8 @@ const styles = StyleSheet.create({
         gap: 10,
         paddingVertical: 8,
     },
-    loadingText: {
-        color: "rgba(255, 255, 255, 0.5)",
-        fontSize: 14,
-    },
-    emptyText: {
-        color: "rgba(255, 255, 255, 0.5)",
-        fontSize: 15,
-    },
+    loadingText: { color: "rgba(255, 255, 255, 0.5)", fontSize: 14 },
+    emptyText: { color: "rgba(255, 255, 255, 0.5)", fontSize: 15 },
 
     paymentMethodsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     paymentMethodButton: {
@@ -322,39 +299,6 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     paymentMethodTextActive: { color: "#fff", fontWeight: "500" },
-
-    inputContainer: {
-        position: "relative",
-        height: 44,
-        borderRadius: 20,
-        backgroundColor: "rgba(35, 35, 36, 1)",
-        borderWidth: 0.5,
-        borderColor: "rgba(0, 0, 0, 0.12)",
-        justifyContent: "center",
-    },
-    input: {
-        flex: 1,
-        paddingHorizontal: 12,
-        paddingRight: 40,
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "400",
-        letterSpacing: -0.32,
-        lineHeight: 20,
-    },
-    inputSuffix: {
-        position: "absolute",
-        right: 12,
-        color: "#797A80",
-        fontSize: 16,
-        fontWeight: "400",
-    },
-    tipHint: {
-        color: "rgba(121, 122, 128, 1)",
-        fontSize: 14,
-        marginTop: 4,
-        marginLeft: 4,
-    },
 
     bottomSection: {
         backgroundColor: "rgba(25, 25, 26, 0.85)",
