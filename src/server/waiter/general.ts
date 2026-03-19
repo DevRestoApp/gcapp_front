@@ -70,8 +70,10 @@ export async function createOrder(input: CreateOrdersInputType) {
     return res.data;
 }
 
-export async function payOrder(order_id: number) {
-    const res = await api.post(`/orders/${order_id}/pay`);
+export async function payOrder(order_id: number, input: any) {
+    const params = checkFilters(input);
+
+    const res = await api.post(`/orders/${order_id}/pay`, params);
 
     return res.data;
 }
@@ -90,6 +92,14 @@ export async function updateOrder(
     const params = checkFilters(input);
 
     const res = await api.put(`/orders/${order_id}`, params);
+
+    return res.data;
+}
+
+export async function getPaymentTypes(input: { organization_id?: number }) {
+    const params = checkFilters(input);
+
+    const res = await api.get(`/payment-types`, { params });
 
     return res.data;
 }
