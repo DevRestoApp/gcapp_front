@@ -215,7 +215,7 @@ export default function QuestManagementScreen() {
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => router.push("/manager")}
+                onPress={() => router.push("/ceo")}
                 style={styles.backButton}
                 activeOpacity={0.7}
             >

@@ -9,7 +9,11 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getEmployeesData } from "@/src/server/general/employees";
-import type { EmployeesData as Employee } from "@/src/server/types/waiter";
+import {
+    EmployeesData as Employee,
+    OrderType,
+    WaiterOrdersInputType,
+} from "@/src/server/types/waiter";
 import type {
     FineInputsType,
     QuestInputsType,
@@ -32,6 +36,7 @@ import { getOrganizationsData } from "@/src/server/general/organizations";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
 
 import type { QuestDetail } from "@/src/server/types/ceo";
+import { getOrders } from "@/src/server/waiter/general";
 
 // ============================================================================
 // Types
@@ -165,6 +170,7 @@ interface CeoContextType {
     createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
     completeTaskWrapper: (task_id: number) => Promise<TaskType>;
     setQuests: (quests: Quest[]) => void;
+    fetchEmployeeOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
 }
 
 // ============================================================================
@@ -452,6 +458,19 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    const fetchEmployeeOrders = useCallback(
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
+            try {
+                const response = await getOrders(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     // ========================================================================
     // Context value
     // ========================================================================
@@ -479,6 +498,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         fetchQuestsData,
         setQuests,
         fetchQuestDetailWrapper,
+        fetchEmployeeOrders,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

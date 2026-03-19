@@ -13,7 +13,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { useEmployee } from "@/src/contexts/EmployeeContext";
-import { useManager } from "@/src/contexts/ManagerProvider";
+import { useCeo } from "@/src/contexts/CeoProvider";
 import { ModalWrapperRef } from "@/src/client/components/modals/ModalWrapper";
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
 import DropdownMenuDots from "@/src/client/components/DropdownMenuDots";
@@ -27,7 +27,7 @@ export default function EmployeeDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
 
     const { selectedEmployee } = useEmployee();
-    const { fetchEmployeeOrders } = useManager();
+    const { fetchEmployeeOrders } = useCeo();
 
     const editModalRef = useRef<ModalWrapperRef>(null);
     const dropdownRef = useRef<any>(null);
@@ -73,7 +73,7 @@ export default function EmployeeDetailScreen() {
             const orderId = Number(itemId);
             setLoadingOrderId(orderId);
             router.push({
-                pathname: `/manager/employees/${id}/order/${itemId}`,
+                pathname: `/ceo/employees/${id}/order/${itemId}`,
                 params: { orderData: JSON.stringify(item) },
             });
             setTimeout(() => setLoadingOrderId(null), 500);
