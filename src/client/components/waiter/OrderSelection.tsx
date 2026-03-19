@@ -55,7 +55,7 @@ interface OrderSelectionProps {
 
 export default function OrderSelection({
     order,
-    dishes, // ✅ Пустой массив по умолчанию вместо моки
+    dishes,
     onOrderUpdate,
     onAddDish,
     onDishPress,

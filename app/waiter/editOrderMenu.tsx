@@ -13,9 +13,10 @@ import {
     ScrollView,
     StyleSheet,
     Alert,
+    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import DishItem from "@/src/client/components/waiter/DishItem";
 import DishDetailModal, {
@@ -26,6 +27,7 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { getMenu } from "@/src/server/general/menu";
 import Loading from "@/src/client/components/Loading";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
+import { useAuth } from "@/src/contexts/AuthContext";
 import { DishItemCreateOrderType as DishItemType } from "@/src/client/types/waiter";
 
 // ============================================================================
@@ -41,6 +43,14 @@ interface MenuItem {
     category: string;
 }
 
+interface ApiOrderItem {
+    product_id: number;
+    dish_name: string;
+    dish_amount_int: number;
+    dish_discount_sum_int: number;
+    comment?: string;
+}
+
 type QuantitiesMap = Record<number, number>;
 
 // ============================================================================
@@ -48,7 +58,6 @@ type QuantitiesMap = Record<number, number>;
 // ============================================================================
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
-const DEFAULT_RESTAURANT_ID = "restaurant-123";
 
 const MESSAGES = {
     ERROR_LOAD_MENU: "Не удалось загрузить меню",
@@ -56,7 +65,6 @@ const MESSAGES = {
     LOADING_MENU: "Загрузка меню",
     SEARCH_PLACEHOLDER: "Искать блюда...",
     RETRY: "Попробовать снова",
-    CART_LABEL: "Корзина",
     CLEAR_SEARCH: "Очистить поиск",
     NO_RESULTS: "По вашему запросу ничего не найдено",
     EMPTY_CATEGORY: "пока нет блюд",
@@ -68,7 +76,7 @@ const MESSAGES = {
 } as const;
 
 // ============================================================================
-// Utility Functions
+// Utility
 // ============================================================================
 
 const extractUniqueCategories = (items: MenuItem[]): string[] =>
@@ -86,7 +94,7 @@ const getDishCountText = (count: number): string =>
 // Custom Hooks
 // ============================================================================
 
-const useMenuData = (_restaurantId: string) => {
+const useMenuData = () => {
     const [dishes, setDishes] = useState<MenuItem[]>([]);
     const [categories, setCategories] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -157,8 +165,21 @@ const useMenuFilters = (dishes: MenuItem[], selectedCategory: string) => {
 // Component
 // ============================================================================
 
-export default function MenuScreen() {
+export default function EditOrderMenuScreen() {
     const router = useRouter();
+    // orderId и orderItems приходят явно — никакого mode флага
+    const { orderId, orderItems } = useLocalSearchParams<{
+        orderId: string;
+        orderItems: string;
+    }>();
+
+    const {
+        updateOrderWrapper,
+        fetchOrders,
+        setSelectedDishes,
+        selectedDishes,
+    } = useWaiter();
+    const { user, selectedLocation } = useAuth();
 
     const {
         dishes,
@@ -168,15 +189,34 @@ export default function MenuScreen() {
         selectedCategory,
         setSelectedCategory,
         refetch,
-    } = useMenuData(DEFAULT_RESTAURANT_ID);
-
+    } = useMenuData();
     const { searchQuery, setSearchQuery, clearSearch, filteredDishes } =
         useMenuFilters(dishes, selectedCategory);
 
-    const { selectedDishes, setSelectedDishes } = useWaiter();
-
+    const [isSaving, setIsSaving] = useState(false);
     const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
     const modalRef = useRef<DishDetailModalRef>(null);
+
+    // Seed selectedDishes из текущих позиций заказа при открытии экрана
+    useEffect(() => {
+        if (!orderItems) return;
+        try {
+            const rawItems: ApiOrderItem[] = JSON.parse(orderItems);
+            const seeded: DishItemType[] = rawItems.map((item) => ({
+                productId: item.product_id,
+                name: item.dish_name,
+                amount: item.dish_amount_int,
+                price: item.dish_discount_sum_int,
+                sum: item.dish_discount_sum_int * item.dish_amount_int,
+                comment: item.comment ?? undefined,
+            }));
+            setSelectedDishes(seeded);
+        } catch {
+            console.warn("editOrderMenu: failed to parse orderItems param");
+        }
+        // Намеренно только при маунте — orderItems не меняется
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ── Computed ─────────────────────────────────────────────────────────────
 
@@ -288,12 +328,46 @@ export default function MenuScreen() {
         [selectedDish, setSelectedDishes],
     );
 
-    // Переходим в newOrder для подтверждения и создания заказа
-    const handleViewCart = useCallback(() => {
-        router.push("/waiter/newOrder");
-    }, [router]);
+    // Явное сохранение — никакого useFocusEffect авто-сейва
+    const handleSave = useCallback(async () => {
+        if (!orderId) return;
 
-    // ── Render helpers ────────────────────────────────────────────────────────
+        setIsSaving(true);
+        try {
+            await updateOrderWrapper(Number(orderId), {
+                items: selectedDishes.map((d) => ({
+                    productId: d.productId,
+                    amount: d.amount,
+                    price: d.price,
+                    sum: d.sum,
+                    comment: d.comment,
+                })),
+            });
+
+            await fetchOrders({
+                user_id: user?.id,
+                organization_id: selectedLocation,
+            });
+
+            setSelectedDishes([]);
+            router.back();
+        } catch {
+            Alert.alert("Ошибка", "Не удалось сохранить изменения");
+        } finally {
+            setIsSaving(false);
+        }
+    }, [
+        orderId,
+        selectedDishes,
+        updateOrderWrapper,
+        fetchOrders,
+        user?.id,
+        selectedLocation,
+        setSelectedDishes,
+        router,
+    ]);
+
+    // ── Render ────────────────────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -329,6 +403,28 @@ export default function MenuScreen() {
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
+            {/* Header с явной кнопкой Готово */}
+            <View style={styles.header}>
+                <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={styles.headerCancel}
+                >
+                    <Text style={styles.headerCancelText}>Отмена</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Редактировать заказ</Text>
+                <TouchableOpacity
+                    onPress={handleSave}
+                    style={styles.headerDone}
+                    disabled={isSaving}
+                >
+                    {isSaving ? (
+                        <ActivityIndicator size="small" color="#4CAF50" />
+                    ) : (
+                        <Text style={styles.headerDoneText}>Готово</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
+
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
@@ -474,16 +570,24 @@ export default function MenuScreen() {
                 </View>
             </ScrollView>
 
-            {/* Cart button */}
+            {/* Кнопка "Готово" внизу — дублирует хедер для удобства при длинном списке */}
             {totalItems > 0 && (
                 <TouchableOpacity
-                    style={styles.cartButton}
-                    onPress={handleViewCart}
+                    style={[
+                        styles.doneButton,
+                        isSaving && styles.doneButtonDisabled,
+                    ]}
+                    onPress={handleSave}
+                    disabled={isSaving}
                     activeOpacity={0.8}
                 >
-                    <Text style={styles.cartButtonText}>
-                        {`${MESSAGES.CART_LABEL} (${totalItems}) • ${formatPrice(totalPrice)}`}
-                    </Text>
+                    {isSaving ? (
+                        <ActivityIndicator size="small" color="#000" />
+                    ) : (
+                        <Text style={styles.doneButtonText}>
+                            {`Готово (${totalItems}) • ${formatPrice(totalPrice)}`}
+                        </Text>
+                    )}
                 </TouchableOpacity>
             )}
 
@@ -518,6 +622,19 @@ export default function MenuScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: 56,
+        paddingHorizontal: 16,
+        backgroundColor: "rgba(25, 25, 26, 1)",
+    },
+    headerCancel: { minWidth: 60 },
+    headerCancelText: { color: "#797A80", fontSize: 16 },
+    headerTitle: { color: "#fff", fontSize: 16, fontWeight: "600" },
+    headerDone: { minWidth: 60, alignItems: "flex-end" },
+    headerDoneText: { color: "#4CAF50", fontSize: 16, fontWeight: "600" },
     scrollContent: {
         paddingHorizontal: 16,
         paddingTop: 20,
@@ -626,21 +743,22 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255, 255, 255, 0.1)",
     },
     clearSearchButtonText: { color: "#fff", fontSize: 14, fontWeight: "500" },
-    cartButton: {
+    doneButton: {
         position: "absolute",
         bottom: 20,
         left: 16,
         right: 16,
         height: 50,
-        backgroundColor: "#fff",
+        backgroundColor: "#4CAF50",
         borderRadius: 25,
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
+        shadowColor: "#4CAF50",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
     },
-    cartButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
+    doneButtonDisabled: { opacity: 0.6 },
+    doneButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });
