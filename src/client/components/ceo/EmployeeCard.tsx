@@ -6,7 +6,7 @@ import { Entypo } from "@expo/vector-icons";
 interface EmployeeCardProps {
     name: string;
     amount?: string; // for simple variant
-    avatar: string;
+    avatar: string | undefined;
     role?: string; // for full variant
     totalAmount?: string; // for full variant
     shiftTime?: string; // for full variant

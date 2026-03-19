@@ -17,11 +17,7 @@ import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
-import {
-    CreateOrderItem,
-    RoomsType,
-    TablesType,
-} from "@/src/server/types/waiter";
+import { RoomsType, TablesType } from "@/src/server/types/waiter";
 import Loading from "@/src/client/components/Loading";
 import DishesSection from "@/src/client/components/DishesSection";
 
@@ -174,7 +170,8 @@ export default function NewOrder() {
         fetchOrders,
     } = useWaiter();
     const { selectedLocation, user } = useAuth();
-    const { selectedDishes, createOrderWrapper } = useWaiter();
+    const { selectedDishes, createOrderWrapper, setSelectedDishes } =
+        useWaiter();
 
     const [selectedRoomId, setSelectedRoomId] = useState("");
     const [selectedTableId, setSelectedTableId] = useState("");
@@ -269,29 +266,28 @@ export default function NewOrder() {
 
     const handleCreateOrder = async () => {
         try {
-            // TODO доавить что то для смены guest из константы на другое
             await createOrderWrapper({
                 organizationId: selectedLocation,
                 tableId: Number(selectedTable?.id),
                 waiterId: user?.id,
                 guests: 2,
-                items: selectedDishes.map((el) => {
-                    return {
-                        productId: el.productId,
-                        amount: el.amount,
-                        price: el.price,
-                        sum: el.sum,
-                        comment: el.comment,
-                    };
-                }),
+                items: selectedDishes.map((el) => ({
+                    productId: el.productId,
+                    amount: el.amount,
+                    price: el.price,
+                    sum: el.sum,
+                    comment: el.comment,
+                })),
             });
+
+            setSelectedDishes([]);
+
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,
             });
         } catch (e) {
             console.log(`Error creating order: ${e.message} \n ${e.stack}`);
-            router.push("/waiter");
         } finally {
             router.push("/waiter");
         }
@@ -308,22 +304,9 @@ export default function NewOrder() {
             </SafeAreaView>
         );
     }
-    const renderCreateOrderButton = () => {
-        const dishesValid = selectedDishes.length > 0;
-        const tableValid = !!selectedTableId;
-        const roomValid = !!selectedRoomId;
 
-        if (!dishesValid || !tableValid || !roomValid) return null;
-        return (
-            <TouchableOpacity
-                style={[ButtonStyles.buttonWhite, styles.addButton]}
-                onPress={handleCreateOrder}
-                activeOpacity={0.7}
-            >
-                <Text style={ButtonStyles.buttonText}>Создать заказ</Text>
-            </TouchableOpacity>
-        );
-    };
+    const canCreateOrder =
+        selectedDishes.length > 0 && !!selectedTableId && !!selectedRoomId;
 
     return (
         <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
@@ -369,7 +352,7 @@ export default function NewOrder() {
                                 onAddMoreDishes={() =>
                                     router.push("/waiter/menu")
                                 }
-                            ></DishesSection>
+                            />
                         </View>
                     ) : (
                         <View style={styles.section}>
@@ -402,7 +385,17 @@ export default function NewOrder() {
                         </View>
                     )}
 
-                    {renderCreateOrderButton()}
+                    {canCreateOrder && (
+                        <TouchableOpacity
+                            style={[ButtonStyles.buttonWhite, styles.addButton]}
+                            onPress={handleCreateOrder}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={ButtonStyles.buttonText}>
+                                Создать заказ
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </ScrollView>
 

@@ -69,6 +69,7 @@ export default function Index() {
         setSelectedOrderId,
         setSelectedOrder,
     } = useWaiter();
+    console.log("quests: ", quests);
 
     const [days, setDays] = useState<Day[]>(() => buildWeekDays());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -192,6 +193,7 @@ export default function Index() {
 
     const renderMotivationCard = () => {
         if (!quests?.length) return null;
+        const percentage = (quests[0].current / quests[0].target) * 100;
         return (
             <View style={styles.motivationContainer}>
                 <TouchableOpacity
@@ -201,7 +203,7 @@ export default function Index() {
                         goalText={quests[0].description || ""}
                         targetAmount={String(quests[0].target)}
                         currentProgress={String(quests[0].current)}
-                        progressPercentage={15}
+                        progressPercentage={percentage}
                     />
                 </TouchableOpacity>
             </View>
@@ -277,6 +279,7 @@ export default function Index() {
                             orders={orders}
                             isLoading={isLoading}
                             onOrderClick={handleOrderClick}
+                            showStatus={true}
                         />
                     )}
 

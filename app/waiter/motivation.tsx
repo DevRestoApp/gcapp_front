@@ -20,8 +20,8 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 import { useAuth } from "@/src/contexts/AuthContext";
 
 export default function MotivationScreen() {
-    const { quests, fetchQuest } = useWaiter();
-    const { user } = useAuth();
+    const { quests, fetchQuest, fetchTasks, tasks } = useWaiter();
+    const { user, selectedLocation } = useAuth();
     const waiter_id = user?.id;
 
     const [days, setDays] = useState<Day[]>([]);
@@ -64,7 +64,12 @@ export default function MotivationScreen() {
             setLoading(true);
 
             try {
-                await Promise.all([fetchQuest(waiter_id, { date })]);
+                await fetchTasks({
+                    user_id: Number(waiter_id),
+                    date: date,
+                    organization_id: selectedLocation,
+                });
+                await fetchQuest(waiter_id, { date });
             } catch (error) {
                 console.error("Error fetching data:", error);
                 Alert.alert("Ошибка", "Не удалось загрузить данные");

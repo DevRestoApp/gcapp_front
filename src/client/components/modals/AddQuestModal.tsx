@@ -11,6 +11,7 @@ import {
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 import MenuPicker, { MenuItem } from "@/src/client/components/form/MenuPicker";
 import { ReportCalendar } from "@/src/client/components/reports/Calendar";
+import SegmentedControl from "@/src/client/components/Tabs";
 
 // ============================================================================
 // Types
@@ -29,20 +30,28 @@ interface Location {
 
 interface QuestFormData {
     title: string;
+    description?: string;
     amount: number;
     reward: number;
     unit: string;
-    durationDate: string;
-    employeeId?: string;
-    employeeName?: string;
-    locationId?: string;
-    locationName?: string;
+    date: string;
+    employeeIds: string[];
+    organization_id?: string;
+}
+
+interface TaskFormData {
+    title: string;
+    description: string;
+    user_id: number;
+    organization_id: number;
+    due_date: string;
 }
 
 interface AddQuestModalProps {
     employees?: Employee[];
     locations?: Location[];
     onAddQuest?: (data: QuestFormData) => void;
+    onAddTask?: (data: TaskFormData) => void;
     onCancel?: () => void;
 }
 
@@ -71,26 +80,55 @@ const getDefaultDuration = (): string => {
 // ============================================================================
 
 const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
-    ({ employees = [], locations = [], onAddQuest, onCancel }, ref) => {
+    (
+        { employees = [], locations = [], onAddQuest, onAddTask, onCancel },
+        ref,
+    ) => {
         const modalRef = useRef<ModalWrapperRef>(null);
         const [isSubmitting, setIsSubmitting] = useState(false);
+
+        // Tab state
+        const [activeTab, setActiveTab] = useState<"quest" | "task">("quest");
+        const tabs = [
+            { label: "Квест", value: "quest" },
+            { label: "Задача", value: "task" },
+        ];
+
+        // Quest form fields
         const [questName, setQuestName] = useState("");
+        const [questDescription, setQuestDescription] = useState("");
         const [amount, setAmount] = useState("");
         const [reward, setReward] = useState("");
-        const [selectedEmployee, setSelectedEmployee] =
-            useState<Employee | null>(null);
+        const [durationDate, setDurationDate] =
+            useState<string>(getDefaultDuration());
+        const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>(
+            [],
+        );
         const [selectedLocation, setSelectedLocation] =
             useState<Location | null>(null);
-        const [showEmployeePicker, setShowEmployeePicker] = useState(false);
-        const [showLocationPicker, setShowLocationPicker] = useState(false);
-
-        const [showMenuPicker, setShowMenuPicker] = useState(false);
         const [selectedMenuItem, setSelectedMenuItem] =
             useState<MenuItem | null>(null);
 
-        const [durationDate, setDurationDate] =
+        // Task form fields
+        const [taskTitle, setTaskTitle] = useState("");
+        const [taskDescription, setTaskDescription] = useState("");
+        const [taskDueDate, setTaskDueDate] =
             useState<string>(getDefaultDuration());
+        const [taskSelectedEmployee, setTaskSelectedEmployee] =
+            useState<Employee | null>(null);
+        const [taskSelectedLocation, setTaskSelectedLocation] =
+            useState<Location | null>(null);
+
+        // UI state
+        const [showEmployeePicker, setShowEmployeePicker] = useState(false);
+        const [showLocationPicker, setShowLocationPicker] = useState(false);
+        const [showMenuPicker, setShowMenuPicker] = useState(false);
         const [showCalendar, setShowCalendar] = useState(false);
+        const [showTaskEmployeePicker, setShowTaskEmployeePicker] =
+            useState(false);
+        const [showTaskLocationPicker, setShowTaskLocationPicker] =
+            useState(false);
+        const [showTaskCalendar, setShowTaskCalendar] = useState(false);
 
         React.useImperativeHandle(ref, () => ({
             open: () => modalRef.current?.open(),
@@ -98,43 +136,62 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             isVisible: () => modalRef.current?.isVisible() || false,
         }));
 
-        const handleOpen = useCallback(() => {
+        const resetForm = useCallback(() => {
+            // Quest form reset
             setQuestName("");
-            setSelectedMenuItem(null);
+            setQuestDescription("");
             setAmount("");
             setReward("");
-            setSelectedEmployee(null);
+            setDurationDate(getDefaultDuration());
+            setSelectedEmployees([]);
             setSelectedLocation(null);
+            setSelectedMenuItem(null);
             setShowEmployeePicker(false);
             setShowLocationPicker(false);
+            setShowMenuPicker(false);
             setShowCalendar(false);
-            setDurationDate(getDefaultDuration());
+
+            // Task form reset
+            setTaskTitle("");
+            setTaskDescription("");
+            setTaskDueDate(getDefaultDuration());
+            setTaskSelectedEmployee(null);
+            setTaskSelectedLocation(null);
+            setShowTaskEmployeePicker(false);
+            setShowTaskLocationPicker(false);
+            setShowTaskCalendar(false);
+
+            setActiveTab("quest");
             setIsSubmitting(false);
         }, []);
 
+        const handleOpen = useCallback(() => {
+            resetForm();
+        }, [resetForm]);
+
         const handleClose = useCallback(() => {
-            setQuestName("");
-            setAmount("");
-            setReward("");
-            setSelectedMenuItem(null);
-            setSelectedEmployee(null);
-            setSelectedLocation(null);
-            setShowEmployeePicker(false);
-            setShowLocationPicker(false);
-            setShowCalendar(false);
-            setDurationDate(getDefaultDuration());
-            setIsSubmitting(false);
+            resetForm();
             onCancel?.();
             modalRef.current?.close();
-        }, [onCancel]);
+        }, [resetForm, onCancel]);
 
-        const handleMenuItemSelect = (item: MenuItem) => {
+        const handleMenuItemSelect = useCallback((item: MenuItem) => {
             setSelectedMenuItem(item);
-        };
+        }, []);
 
-        const handleEmployeeSelect = useCallback((employee: Employee) => {
-            setSelectedEmployee(employee);
-            setShowEmployeePicker(false);
+        const handleEmployeeToggle = useCallback((employee: Employee) => {
+            setSelectedEmployees((prev) => {
+                const isSelected = prev.some((emp) => emp.id === employee.id);
+                return isSelected
+                    ? prev.filter((emp) => emp.id !== employee.id)
+                    : [...prev, employee];
+            });
+        }, []);
+
+        const handleEmployeeRemove = useCallback((employeeId: string) => {
+            setSelectedEmployees((prev) =>
+                prev.filter((emp) => emp.id !== employeeId),
+            );
         }, []);
 
         const handleLocationSelect = useCallback((location: Location) => {
@@ -142,10 +199,24 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setShowLocationPicker(false);
         }, []);
 
-        const handleSubmit = useCallback(async () => {
+        const handleTaskLocationSelect = useCallback((location: Location) => {
+            setTaskSelectedLocation(location);
+            setShowTaskLocationPicker(false);
+        }, []);
+
+        const handleTaskEmployeeSelect = useCallback((employee: Employee) => {
+            setTaskSelectedEmployee(employee);
+            setShowTaskEmployeePicker(false);
+        }, []);
+
+        // ====================================================================
+        // Validation
+        // ====================================================================
+
+        const validateQuestForm = useCallback((): boolean => {
             if (!questName.trim()) {
                 Alert.alert("Ошибка", "Пожалуйста, укажите название квеста");
-                return;
+                return false;
             }
             if (
                 !amount.trim() ||
@@ -156,7 +227,7 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     "Ошибка",
                     "Пожалуйста, укажите корректное количество",
                 );
-                return;
+                return false;
             }
             if (
                 !reward.trim() ||
@@ -167,302 +238,143 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     "Ошибка",
                     "Пожалуйста, укажите корректную сумму награды",
                 );
-                return;
+                return false;
             }
+            return true;
+        }, [questName, amount, reward]);
 
-            setIsSubmitting(true);
+        const validateTaskForm = useCallback((): boolean => {
+            if (!taskTitle.trim()) {
+                Alert.alert("Ошибка", "Пожалуйста, укажите название задачи");
+                return false;
+            }
+            if (!taskDescription.trim()) {
+                Alert.alert("Ошибка", "Пожалуйста, укажите описание задачи");
+                return false;
+            }
+            if (!taskSelectedEmployee) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите сотрудника");
+                return false;
+            }
+            if (!taskSelectedLocation) {
+                Alert.alert("Ошибка", "Пожалуйста, выберите локацию");
+                return false;
+            }
+            return true;
+        }, [
+            taskTitle,
+            taskDescription,
+            taskSelectedEmployee,
+            taskSelectedLocation,
+        ]);
 
-            try {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+        // ====================================================================
+        // Submit
+        // ====================================================================
 
-                onAddQuest?.({
-                    title: questName.trim(),
-                    amount: Number(amount),
-                    reward: Number(reward),
-                    unit: selectedMenuItem?.name?.trim() ?? "",
-                    durationDate,
-                    employeeId: selectedEmployee?.id,
-                    employeeName: selectedEmployee?.name,
-                    locationId: selectedLocation?.id,
-                    locationName: selectedLocation?.name,
-                });
+        const handleSubmit = useCallback(async () => {
+            if (activeTab === "quest") {
+                if (!validateQuestForm()) return;
 
-                handleClose();
+                setIsSubmitting(true);
+                try {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-                setTimeout(() => {
-                    Alert.alert("Успешно", "Квест успешно создан");
-                }, 300);
-            } catch (error) {
-                console.log(error);
-                Alert.alert("Ошибка", "Не удалось создать квест");
-            } finally {
-                setIsSubmitting(false);
+                    const formData: QuestFormData = {
+                        title: questName.trim(),
+                        description: questDescription.trim() || undefined,
+                        amount: Number(amount),
+                        reward: Number(reward),
+                        unit: selectedMenuItem?.name?.trim() ?? "",
+                        date: durationDate,
+                        employeeIds: selectedEmployees.map((emp) => emp.id),
+                        organization_id: selectedLocation?.id,
+                    };
+
+                    onAddQuest?.(formData);
+                    handleClose();
+                    setTimeout(
+                        () => Alert.alert("Успешно", "Квест успешно создан"),
+                        300,
+                    );
+                } catch (error) {
+                    console.error("Failed to create quest:", error);
+                    Alert.alert("Ошибка", "Не удалось создать квест");
+                } finally {
+                    setIsSubmitting(false);
+                }
+            } else {
+                if (!validateTaskForm()) return;
+
+                setIsSubmitting(true);
+                try {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+                    const formData: TaskFormData = {
+                        title: taskTitle.trim(),
+                        description: taskDescription.trim(),
+                        user_id: Number(taskSelectedEmployee!.id),
+                        organization_id: Number(taskSelectedLocation!.id),
+                        due_date: taskDueDate,
+                    };
+
+                    onAddTask?.(formData);
+                    handleClose();
+                    setTimeout(
+                        () => Alert.alert("Успешно", "Задача успешно создана"),
+                        300,
+                    );
+                } catch (error) {
+                    console.error("Failed to create task:", error);
+                    Alert.alert("Ошибка", "Не удалось создать задачу");
+                } finally {
+                    setIsSubmitting(false);
+                }
             }
         }, [
+            activeTab,
+            validateQuestForm,
+            validateTaskForm,
             questName,
+            questDescription,
             amount,
             reward,
-            durationDate,
-            selectedEmployee,
-            selectedLocation,
             selectedMenuItem,
+            durationDate,
+            selectedEmployees,
+            selectedLocation,
+            taskTitle,
+            taskDescription,
+            taskSelectedEmployee,
+            taskSelectedLocation,
+            taskDueDate,
             onAddQuest,
+            onAddTask,
             handleClose,
         ]);
 
         // ====================================================================
-        // Render Functions
+        // Render: Shared
         // ====================================================================
-
-        const renderCloseButton = () => (
-            <TouchableOpacity
-                style={styles.closeButton}
-                onPress={handleClose}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-        );
 
         const renderHeader = () => (
             <View style={styles.header}>
                 <View style={styles.headerContent}>
-                    <Text style={styles.title}>Создать квест</Text>
-                    {renderCloseButton()}
-                </View>
-            </View>
-        );
-
-        const renderEmployeePicker = () => {
-            if (employees.length === 0) return null;
-            return (
-                <View style={styles.inputSection}>
-                    <Text style={styles.inputLabel}>
-                        Сотрудник (опционально)
+                    <Text style={styles.title}>
+                        {activeTab === "quest"
+                            ? "Создать квест"
+                            : "Создать задачу"}
                     </Text>
                     <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => {
-                            setShowEmployeePicker(!showEmployeePicker);
-                            setShowLocationPicker(false);
-                        }}
+                        style={styles.closeButton}
+                        onPress={handleClose}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         activeOpacity={0.7}
+                        disabled={isSubmitting}
                     >
-                        <Text
-                            style={[
-                                styles.pickerButtonText,
-                                !selectedEmployee && styles.pickerPlaceholder,
-                            ]}
-                        >
-                            {selectedEmployee
-                                ? `${selectedEmployee.name} - ${selectedEmployee.role}`
-                                : "Выберите сотрудника"}
-                        </Text>
-                        <Text style={styles.pickerArrow}>
-                            {showEmployeePicker ? "▲" : "▼"}
-                        </Text>
+                        <Text style={styles.closeButtonText}>✕</Text>
                     </TouchableOpacity>
-                    {showEmployeePicker && (
-                        <View style={styles.pickerList}>
-                            <ScrollView
-                                style={styles.pickerScrollView}
-                                showsVerticalScrollIndicator={false}
-                            >
-                                {employees.map((employee) => (
-                                    <TouchableOpacity
-                                        key={employee.id}
-                                        style={styles.pickerItem}
-                                        onPress={() =>
-                                            handleEmployeeSelect(employee)
-                                        }
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.pickerItemName}>
-                                            {employee.name}
-                                        </Text>
-                                        <Text style={styles.pickerItemSubtext}>
-                                            {employee.role}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
                 </View>
-            );
-        };
-
-        const renderLocationPicker = () => {
-            if (locations.length === 0) return null;
-            return (
-                <View style={styles.inputSection}>
-                    <Text style={styles.inputLabel}>Локация (опционально)</Text>
-                    <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => {
-                            setShowLocationPicker(!showLocationPicker);
-                            setShowEmployeePicker(false);
-                        }}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            style={[
-                                styles.pickerButtonText,
-                                !selectedLocation && styles.pickerPlaceholder,
-                            ]}
-                        >
-                            {selectedLocation
-                                ? selectedLocation.name
-                                : "Выберите локацию"}
-                        </Text>
-                        <Text style={styles.pickerArrow}>
-                            {showLocationPicker ? "▲" : "▼"}
-                        </Text>
-                    </TouchableOpacity>
-                    {showLocationPicker && (
-                        <View style={styles.pickerList}>
-                            <ScrollView
-                                style={styles.pickerScrollView}
-                                showsVerticalScrollIndicator={false}
-                            >
-                                {locations.map((location) => (
-                                    <TouchableOpacity
-                                        key={location.id}
-                                        style={styles.pickerItem}
-                                        onPress={() =>
-                                            handleLocationSelect(location)
-                                        }
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={styles.pickerItemName}>
-                                            {location.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )}
-                </View>
-            );
-        };
-
-        const renderQuestNameInput = () => (
-            <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Название квеста</Text>
-                <TextInput
-                    style={styles.textInput}
-                    value={questName}
-                    onChangeText={setQuestName}
-                    placeholder="Введите название квеста..."
-                    placeholderTextColor="rgba(121, 122, 128, 1)"
-                    maxLength={100}
-                />
-                <Text style={styles.characterCount}>
-                    {questName.length}/100
-                </Text>
-            </View>
-        );
-
-        const renderMenuItemPickerButton = () => (
-            <TouchableOpacity
-                style={styles.inputSection}
-                onPress={() => setShowMenuPicker(true)}
-            >
-                <Text style={styles.inputLabel}>Товар</Text>
-                <View style={styles.textInput}>
-                    {selectedMenuItem ? (
-                        <View style={styles.selectedItemInfo}>
-                            <Text style={styles.inputLabel}>
-                                {selectedMenuItem.name}
-                            </Text>
-                            <Text style={styles.selectedItemPrice}>
-                                {selectedMenuItem.price.toLocaleString("ru-RU")}{" "}
-                                тг
-                            </Text>
-                        </View>
-                    ) : (
-                        <Text
-                            style={[
-                                styles.placeholderText,
-                                styles.selectedItemInfo,
-                            ]}
-                        >
-                            Нажмите для выбора товара
-                        </Text>
-                    )}
-                </View>
-            </TouchableOpacity>
-        );
-
-        const renderAmountInput = () => (
-            <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Количество</Text>
-                <View style={styles.amountInputContainer}>
-                    <TextInput
-                        style={styles.amountInput}
-                        value={amount}
-                        onChangeText={setAmount}
-                        placeholder="0"
-                        placeholderTextColor="rgba(121, 122, 128, 1)"
-                        keyboardType="numeric"
-                        maxLength={10}
-                    />
-                    <Text style={styles.currencyLabel}>ед</Text>
-                </View>
-            </View>
-        );
-
-        const renderRewardInput = () => (
-            <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Награда</Text>
-                <View style={styles.amountInputContainer}>
-                    <TextInput
-                        style={styles.amountInput}
-                        value={reward}
-                        onChangeText={(text) =>
-                            setReward(text.replace(/[^0-9]/g, ""))
-                        }
-                        placeholder="0"
-                        placeholderTextColor="rgba(121, 122, 128, 1)"
-                        keyboardType="numeric"
-                        maxLength={12}
-                    />
-                    <Text style={styles.currencyLabel}>тг</Text>
-                </View>
-            </View>
-        );
-
-        const renderDurationPicker = () => (
-            <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Дата активности</Text>
-                <TouchableOpacity
-                    style={styles.pickerButton}
-                    onPress={() => setShowCalendar(!showCalendar)}
-                    activeOpacity={0.7}
-                >
-                    <Text
-                        style={[
-                            styles.pickerButtonText,
-                            !durationDate && styles.pickerPlaceholder,
-                        ]}
-                    >
-                        {durationDate || "Выберите дату"}
-                    </Text>
-                    <Text style={styles.pickerArrow}>
-                        {showCalendar ? "▲" : "▼"}
-                    </Text>
-                </TouchableOpacity>
-                {showCalendar && (
-                    <ReportCalendar
-                        visible={showCalendar}
-                        onClose={() => setShowCalendar(false)}
-                        onDateSelect={(value) => {
-                            setDurationDate(value);
-                            setShowCalendar(false);
-                        }}
-                    />
-                )}
             </View>
         );
 
@@ -476,7 +388,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                 >
                     <Text style={styles.cancelButtonText}>Отмена</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                     style={[
                         styles.submitButton,
@@ -492,11 +403,597 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                             isSubmitting && styles.submitButtonTextDisabled,
                         ]}
                     >
-                        {isSubmitting ? "Создаем..." : "Создать квест"}
+                        {isSubmitting
+                            ? "Создаем..."
+                            : activeTab === "quest"
+                              ? "Создать квест"
+                              : "Создать задачу"}
                     </Text>
                 </TouchableOpacity>
             </View>
         );
+
+        // ====================================================================
+        // Render: Quest form
+        // ====================================================================
+
+        const renderSelectedEmployees = () => {
+            if (selectedEmployees.length === 0) return null;
+            return (
+                <View style={styles.selectedEmployeesContainer}>
+                    {selectedEmployees.map((employee) => (
+                        <View
+                            key={employee.id}
+                            style={styles.selectedEmployeeChip}
+                        >
+                            <View style={styles.selectedEmployeeInfo}>
+                                <Text style={styles.selectedEmployeeName}>
+                                    {employee.name}
+                                </Text>
+                                <Text style={styles.selectedEmployeeRole}>
+                                    {employee.role}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() =>
+                                    handleEmployeeRemove(employee.id)
+                                }
+                                hitSlop={{
+                                    top: 8,
+                                    bottom: 8,
+                                    left: 8,
+                                    right: 8,
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.removeEmployeeIcon}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+            );
+        };
+
+        const renderQuestForm = () => (
+            <View style={styles.formSection}>
+                {/* Quest Name */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Название квеста</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        value={questName}
+                        onChangeText={setQuestName}
+                        placeholder="Введите название квеста..."
+                        placeholderTextColor="rgba(121, 122, 128, 1)"
+                        maxLength={100}
+                        editable={!isSubmitting}
+                    />
+                    <Text style={styles.characterCount}>
+                        {questName.length}/100
+                    </Text>
+                </View>
+
+                {/* Employees */}
+                {employees.length > 0 && (
+                    <View style={styles.inputSection}>
+                        <Text style={styles.inputLabel}>
+                            Сотрудники (опционально)
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.pickerButton}
+                            onPress={() => {
+                                setShowEmployeePicker(!showEmployeePicker);
+                                setShowLocationPicker(false);
+                                setShowCalendar(false);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.pickerButtonText,
+                                    selectedEmployees.length === 0 &&
+                                        styles.pickerPlaceholder,
+                                ]}
+                            >
+                                {selectedEmployees.length > 0
+                                    ? `Выбрано: ${selectedEmployees.length}`
+                                    : "Выберите сотрудников"}
+                            </Text>
+                            <Text style={styles.pickerArrow}>
+                                {showEmployeePicker ? "▲" : "▼"}
+                            </Text>
+                        </TouchableOpacity>
+                        {renderSelectedEmployees()}
+                        {showEmployeePicker && (
+                            <View style={styles.pickerList}>
+                                <ScrollView
+                                    style={styles.pickerScrollView}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                >
+                                    {employees.map((employee) => {
+                                        const isSelected =
+                                            selectedEmployees.some(
+                                                (emp) => emp.id === employee.id,
+                                            );
+                                        return (
+                                            <TouchableOpacity
+                                                key={employee.id}
+                                                style={[
+                                                    styles.pickerItem,
+                                                    isSelected &&
+                                                        styles.pickerItemSelected,
+                                                ]}
+                                                onPress={() =>
+                                                    handleEmployeeToggle(
+                                                        employee,
+                                                    )
+                                                }
+                                                activeOpacity={0.7}
+                                            >
+                                                <View
+                                                    style={
+                                                        styles.pickerItemContent
+                                                    }
+                                                >
+                                                    <View
+                                                        style={styles.checkbox}
+                                                    >
+                                                        {isSelected && (
+                                                            <View
+                                                                style={
+                                                                    styles.checkboxChecked
+                                                                }
+                                                            />
+                                                        )}
+                                                    </View>
+                                                    <View
+                                                        style={
+                                                            styles.pickerItemTextContainer
+                                                        }
+                                                    >
+                                                        <Text
+                                                            style={
+                                                                styles.pickerItemName
+                                                            }
+                                                        >
+                                                            {employee.name}
+                                                        </Text>
+                                                        <Text
+                                                            style={
+                                                                styles.pickerItemSubtext
+                                                            }
+                                                        >
+                                                            {employee.role}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Location */}
+                {locations.length > 0 && (
+                    <View style={styles.inputSection}>
+                        <Text style={styles.inputLabel}>
+                            Локация (опционально)
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.pickerButton}
+                            onPress={() => {
+                                setShowLocationPicker(!showLocationPicker);
+                                setShowEmployeePicker(false);
+                                setShowCalendar(false);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.pickerButtonText,
+                                    !selectedLocation &&
+                                        styles.pickerPlaceholder,
+                                ]}
+                            >
+                                {selectedLocation?.name || "Выберите локацию"}
+                            </Text>
+                            <Text style={styles.pickerArrow}>
+                                {showLocationPicker ? "▲" : "▼"}
+                            </Text>
+                        </TouchableOpacity>
+                        {showLocationPicker && (
+                            <View style={styles.pickerList}>
+                                <ScrollView
+                                    style={styles.pickerScrollView}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                >
+                                    {locations.map((location) => (
+                                        <TouchableOpacity
+                                            key={location.id}
+                                            style={styles.pickerItem}
+                                            onPress={() =>
+                                                handleLocationSelect(location)
+                                            }
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={styles.pickerItemName}>
+                                                {location.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Amount */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Количество</Text>
+                    <View style={styles.amountInputContainer}>
+                        <TextInput
+                            style={styles.amountInput}
+                            value={amount}
+                            onChangeText={(text) =>
+                                setAmount(text.replace(/[^0-9]/g, ""))
+                            }
+                            placeholder="0"
+                            placeholderTextColor="rgba(121, 122, 128, 1)"
+                            keyboardType="numeric"
+                            maxLength={10}
+                            editable={!isSubmitting}
+                        />
+                        <Text style={styles.currencyLabel}>ед</Text>
+                    </View>
+                </View>
+
+                {/* Menu item */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Товар</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => setShowMenuPicker(true)}
+                        activeOpacity={0.7}
+                        disabled={isSubmitting}
+                    >
+                        {selectedMenuItem ? (
+                            <View style={styles.selectedItemInfo}>
+                                <Text style={styles.pickerButtonText}>
+                                    {selectedMenuItem.name}
+                                </Text>
+                                <Text style={styles.selectedItemPrice}>
+                                    {selectedMenuItem.price.toLocaleString(
+                                        "ru-RU",
+                                    )}{" "}
+                                    тг
+                                </Text>
+                            </View>
+                        ) : (
+                            <Text
+                                style={[
+                                    styles.pickerButtonText,
+                                    styles.pickerPlaceholder,
+                                ]}
+                            >
+                                Нажмите для выбора товара
+                            </Text>
+                        )}
+                        <Text style={styles.pickerArrow}>▼</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Reward */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Награда</Text>
+                    <View style={styles.amountInputContainer}>
+                        <TextInput
+                            style={styles.amountInput}
+                            value={reward}
+                            onChangeText={(text) =>
+                                setReward(text.replace(/[^0-9]/g, ""))
+                            }
+                            placeholder="0"
+                            placeholderTextColor="rgba(121, 122, 128, 1)"
+                            keyboardType="numeric"
+                            maxLength={12}
+                            editable={!isSubmitting}
+                        />
+                        <Text style={styles.currencyLabel}>тг</Text>
+                    </View>
+                </View>
+
+                {/* Duration */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Дата активности</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => {
+                            setShowCalendar(!showCalendar);
+                            setShowEmployeePicker(false);
+                            setShowLocationPicker(false);
+                        }}
+                        activeOpacity={0.7}
+                        disabled={isSubmitting}
+                    >
+                        <Text
+                            style={[
+                                styles.pickerButtonText,
+                                !durationDate && styles.pickerPlaceholder,
+                            ]}
+                        >
+                            {durationDate || "Выберите дату"}
+                        </Text>
+                        <Text style={styles.pickerArrow}>
+                            {showCalendar ? "▲" : "▼"}
+                        </Text>
+                    </TouchableOpacity>
+                    {showCalendar && (
+                        <ReportCalendar
+                            visible={showCalendar}
+                            onClose={() => setShowCalendar(false)}
+                            onDateSelect={(value) => {
+                                setDurationDate(value);
+                                setShowCalendar(false);
+                            }}
+                        />
+                    )}
+                </View>
+
+                {/* Description */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Описание</Text>
+                    <TextInput
+                        style={[styles.textInput, styles.textInputMultiline]}
+                        value={questDescription}
+                        onChangeText={setQuestDescription}
+                        placeholder="Введите описание квеста..."
+                        placeholderTextColor="rgba(121, 122, 128, 1)"
+                        maxLength={300}
+                        multiline
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                        editable={!isSubmitting}
+                    />
+                    <Text style={styles.characterCount}>
+                        {questDescription.length}/300
+                    </Text>
+                </View>
+            </View>
+        );
+
+        // ====================================================================
+        // Render: Task form
+        // ====================================================================
+
+        const renderTaskForm = () => (
+            <View style={styles.formSection}>
+                {/* Task Title */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Название задачи</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        value={taskTitle}
+                        onChangeText={setTaskTitle}
+                        placeholder="Введите название задачи..."
+                        placeholderTextColor="rgba(121, 122, 128, 1)"
+                        maxLength={100}
+                        editable={!isSubmitting}
+                    />
+                    <Text style={styles.characterCount}>
+                        {taskTitle.length}/100
+                    </Text>
+                </View>
+
+                {/* Task Description */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Описание</Text>
+                    <TextInput
+                        style={[styles.textInput, styles.textInputMultiline]}
+                        value={taskDescription}
+                        onChangeText={setTaskDescription}
+                        placeholder="Введите описание задачи..."
+                        placeholderTextColor="rgba(121, 122, 128, 1)"
+                        maxLength={300}
+                        multiline
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                        editable={!isSubmitting}
+                    />
+                    <Text style={styles.characterCount}>
+                        {taskDescription.length}/300
+                    </Text>
+                </View>
+
+                {/* Task Employee (single select) */}
+                {employees.length > 0 && (
+                    <View style={styles.inputSection}>
+                        <Text style={styles.inputLabel}>Сотрудник</Text>
+                        <TouchableOpacity
+                            style={styles.pickerButton}
+                            onPress={() => {
+                                setShowTaskEmployeePicker(
+                                    !showTaskEmployeePicker,
+                                );
+                                setShowTaskLocationPicker(false);
+                                setShowTaskCalendar(false);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.pickerButtonText,
+                                    !taskSelectedEmployee &&
+                                        styles.pickerPlaceholder,
+                                ]}
+                            >
+                                {taskSelectedEmployee?.name ||
+                                    "Выберите сотрудника"}
+                            </Text>
+                            <Text style={styles.pickerArrow}>
+                                {showTaskEmployeePicker ? "▲" : "▼"}
+                            </Text>
+                        </TouchableOpacity>
+                        {showTaskEmployeePicker && (
+                            <View style={styles.pickerList}>
+                                <ScrollView
+                                    style={styles.pickerScrollView}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                >
+                                    {employees.map((employee) => (
+                                        <TouchableOpacity
+                                            key={employee.id}
+                                            style={[
+                                                styles.pickerItem,
+                                                taskSelectedEmployee?.id ===
+                                                    employee.id &&
+                                                    styles.pickerItemSelected,
+                                            ]}
+                                            onPress={() =>
+                                                handleTaskEmployeeSelect(
+                                                    employee,
+                                                )
+                                            }
+                                            activeOpacity={0.7}
+                                        >
+                                            <View
+                                                style={
+                                                    styles.pickerItemTextContainer
+                                                }
+                                            >
+                                                <Text
+                                                    style={
+                                                        styles.pickerItemName
+                                                    }
+                                                >
+                                                    {employee.name}
+                                                </Text>
+                                                <Text
+                                                    style={
+                                                        styles.pickerItemSubtext
+                                                    }
+                                                >
+                                                    {employee.role}
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Task Location */}
+                {locations.length > 0 && (
+                    <View style={styles.inputSection}>
+                        <Text style={styles.inputLabel}>Локация</Text>
+                        <TouchableOpacity
+                            style={styles.pickerButton}
+                            onPress={() => {
+                                setShowTaskLocationPicker(
+                                    !showTaskLocationPicker,
+                                );
+                                setShowTaskEmployeePicker(false);
+                                setShowTaskCalendar(false);
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <Text
+                                style={[
+                                    styles.pickerButtonText,
+                                    !taskSelectedLocation &&
+                                        styles.pickerPlaceholder,
+                                ]}
+                            >
+                                {taskSelectedLocation?.name ||
+                                    "Выберите локацию"}
+                            </Text>
+                            <Text style={styles.pickerArrow}>
+                                {showTaskLocationPicker ? "▲" : "▼"}
+                            </Text>
+                        </TouchableOpacity>
+                        {showTaskLocationPicker && (
+                            <View style={styles.pickerList}>
+                                <ScrollView
+                                    style={styles.pickerScrollView}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                >
+                                    {locations.map((location) => (
+                                        <TouchableOpacity
+                                            key={location.id}
+                                            style={[
+                                                styles.pickerItem,
+                                                taskSelectedLocation?.id ===
+                                                    location.id &&
+                                                    styles.pickerItemSelected,
+                                            ]}
+                                            onPress={() =>
+                                                handleTaskLocationSelect(
+                                                    location,
+                                                )
+                                            }
+                                            activeOpacity={0.7}
+                                        >
+                                            <Text style={styles.pickerItemName}>
+                                                {location.name}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Task Due Date */}
+                <View style={styles.inputSection}>
+                    <Text style={styles.inputLabel}>Срок выполнения</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => {
+                            setShowTaskCalendar(!showTaskCalendar);
+                            setShowTaskEmployeePicker(false);
+                            setShowTaskLocationPicker(false);
+                        }}
+                        activeOpacity={0.7}
+                        disabled={isSubmitting}
+                    >
+                        <Text
+                            style={[
+                                styles.pickerButtonText,
+                                !taskDueDate && styles.pickerPlaceholder,
+                            ]}
+                        >
+                            {taskDueDate || "Выберите дату"}
+                        </Text>
+                        <Text style={styles.pickerArrow}>
+                            {showTaskCalendar ? "▲" : "▼"}
+                        </Text>
+                    </TouchableOpacity>
+                    {showTaskCalendar && (
+                        <ReportCalendar
+                            visible={showTaskCalendar}
+                            onClose={() => setShowTaskCalendar(false)}
+                            onDateSelect={(value) => {
+                                setTaskDueDate(value);
+                                setShowTaskCalendar(false);
+                            }}
+                        />
+                    )}
+                </View>
+            </View>
+        );
+
+        // ====================================================================
+        // Main render
+        // ====================================================================
 
         return (
             <ModalWrapper
@@ -513,15 +1010,16 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
                     keyboardShouldPersistTaps="handled"
                 >
                     {renderHeader()}
-                    <View style={styles.formSection}>
-                        {renderQuestNameInput()}
-                        {renderEmployeePicker()}
-                        {renderLocationPicker()}
-                        {renderAmountInput()}
-                        {renderMenuItemPickerButton()}
-                        {renderRewardInput()}
-                        {renderDurationPicker()}
-                    </View>
+                    <SegmentedControl
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={(value) =>
+                            setActiveTab(value as "quest" | "task")
+                        }
+                    />
+                    {activeTab === "quest"
+                        ? renderQuestForm()
+                        : renderTaskForm()}
                     {renderActions()}
                 </ScrollView>
                 <MenuPicker
@@ -555,8 +1053,6 @@ const styles = StyleSheet.create({
         padding: 20,
         gap: 24,
     },
-
-    // Header styles
     header: {
         gap: 8,
     },
@@ -586,8 +1082,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
     },
-
-    // Form section styles
     formSection: {
         gap: 20,
     },
@@ -600,8 +1094,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         lineHeight: 22,
     },
-
-    // Text input styles
     textInput: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -611,14 +1103,15 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         minHeight: 50,
     },
+    textInputMultiline: {
+        minHeight: 80,
+    },
     characterCount: {
         color: "rgba(121, 122, 128, 1)",
         fontSize: 12,
         textAlign: "right",
         marginTop: 4,
     },
-
-    // Amount input styles
     amountInputContainer: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -638,8 +1131,6 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginLeft: 8,
     },
-
-    // Picker styles (shared by employee, location, and duration)
     pickerButton: {
         backgroundColor: "rgba(43, 43, 44, 1)",
         borderRadius: 16,
@@ -676,6 +1167,17 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         marginVertical: 2,
     },
+    pickerItemSelected: {
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+    },
+    pickerItemContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    pickerItemTextContainer: {
+        flex: 1,
+    },
     pickerItemName: {
         color: "#ffffff",
         fontSize: 16,
@@ -688,8 +1190,65 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         marginTop: 2,
     },
-
-    // Actions styles
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: "rgba(255, 255, 255, 0.3)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    checkboxChecked: {
+        width: 12,
+        height: 12,
+        borderRadius: 3,
+        backgroundColor: "#ffffff",
+    },
+    selectedEmployeesContainer: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginTop: 4,
+    },
+    selectedEmployeeChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        borderRadius: 12,
+        paddingVertical: 6,
+        paddingLeft: 12,
+        paddingRight: 8,
+        gap: 8,
+    },
+    selectedEmployeeInfo: {
+        gap: 2,
+    },
+    selectedEmployeeName: {
+        color: "#ffffff",
+        fontSize: 14,
+        fontWeight: "500",
+        lineHeight: 18,
+    },
+    selectedEmployeeRole: {
+        color: "rgba(121, 122, 128, 1)",
+        fontSize: 12,
+        lineHeight: 16,
+    },
+    removeEmployeeIcon: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 14,
+        fontWeight: "600",
+        paddingHorizontal: 4,
+    },
+    selectedItemInfo: {
+        gap: 4,
+        flex: 1,
+    },
+    selectedItemPrice: {
+        color: "#797A80",
+        fontSize: 14,
+    },
     actions: {
         flexDirection: "row",
         gap: 12,
@@ -734,16 +1293,5 @@ const styles = StyleSheet.create({
     },
     submitButtonTextDisabled: {
         color: "rgba(255, 255, 255, 0.4)",
-    },
-    selectedItemInfo: {
-        gap: 4,
-    },
-    selectedItemPrice: {
-        color: "#797A80",
-        fontSize: 14,
-    },
-    placeholderText: {
-        color: "#797A80",
-        fontSize: 16,
     },
 });

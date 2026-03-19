@@ -27,7 +27,7 @@ import Loading from "@/src/client/components/Loading";
 export default function IndexScreen() {
     const router = useRouter();
 
-    // Get data from context instead of local state
+    // Get data from context instead of the local state
     const {
         employees,
         shifts,
@@ -128,7 +128,7 @@ export default function IndexScreen() {
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoValue}>
-                            {employees?.length} официанта
+                            Официантов: {employees?.length}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -208,39 +208,51 @@ export default function IndexScreen() {
     };
 
     // Render motivation section
-    const renderMotivationSection = () => (
-        <View style={styles.section}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={styles.sectionTitle}>Мотивация</Text>
-                <Text style={styles.countBadge}>
-                    {" "}
-                    ({shifts?.motivationCount || 0})
-                </Text>
+    const renderMotivationSection = () => {
+        const dateStr = new Date().toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        const label =
+            queryInputs.date === dateStr
+                ? "Задания на сегодня"
+                : "Задания на " + queryInputs.date;
+        const quest = "Заданий: " + quests.quests?.length.toString();
+        return (
+            <View style={styles.section}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Мотивация</Text>
+                    <Text style={styles.countBadge}>
+                        {" "}
+                        ({shifts?.motivationCount || 0})
+                    </Text>
+                </View>
+                <View style={styles.card}>
+                    <ListItemIcon
+                        label={label}
+                        value={quest}
+                        icon={
+                            <MaterialIcons
+                                name="task-alt"
+                                size={20}
+                                color="white"
+                            />
+                        }
+                        withChevron={true}
+                    />
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={handleMotivationPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonIcon}>+</Text>
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <View style={styles.card}>
-                <ListItemIcon
-                    label={"Квесты"}
-                    value={quests.quests?.length.toString()}
-                    icon={
-                        <MaterialIcons
-                            name="task-alt"
-                            size={20}
-                            color="white"
-                        />
-                    }
-                    withChevron={true}
-                />
-                <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handleMotivationPress}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.addButtonIcon}>+</Text>
-                    <Text style={styles.addButtonText}>Добавить</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+        );
+    };
 
     return (
         <SafeAreaView
@@ -257,7 +269,9 @@ export default function IndexScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <Loading text={"Загрузка данных"} />
+                    <View style={loadingStyles.loadingContainer}>
+                        <Loading text={"Загрузка данных"} />
+                    </View>
                 ) : (
                     <>
                         {renderHeader()}
@@ -282,7 +296,6 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 128,
-        gap: 28,
     },
 
     // Header Section
@@ -302,25 +315,6 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         letterSpacing: -0.24,
         flex: 1,
-    },
-    timerBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-        backgroundColor: "rgba(255, 158, 0, 0.08)",
-        paddingHorizontal: 8,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    timerIcon: {
-        fontSize: 16,
-    },
-    timerText: {
-        color: "#FF9E00",
-        fontSize: 16,
-        fontWeight: "600",
-        letterSpacing: -0.064,
-        lineHeight: 20,
     },
 
     // Section
@@ -362,6 +356,7 @@ const styles = StyleSheet.create({
     },
     iconText: {
         fontSize: 20,
+        color: "green",
     },
     infoContent: {
         flex: 1,

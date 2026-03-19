@@ -97,13 +97,7 @@ export default function CeoLayout() {
                         title: "Детали мотивации",
                     }}
                 />
-                <Tabs.Screen
-                    name="employees"
-                    options={{
-                        href: null,
-                        title: "Сотрудники",
-                    }}
-                />
+                <Tabs.Screen name="employees" options={{ href: null }} />
                 <Tabs.Screen
                     name="profile/changePassword"
                     options={{

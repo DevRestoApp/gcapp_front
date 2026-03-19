@@ -9,8 +9,9 @@
             "distribution": "internal"
         },
         "preview": {
+            "autoIncrement": true,
             "android": {
-                "buildType": "apk"
+                "buildType": "app-bundle"
             },
             "distribution": "internal",
             "env": {
@@ -19,12 +20,27 @@
         },
         "production": {
             "autoIncrement": true,
+            "distribution": "store",
+            "channel": "production",
             "env": {
                 "EXPO_PUBLIC_API_URL": "https://tsolution.kz"
+            },
+            "android": {
+                "buildType": "app-bundle"
             }
         }
     },
     "submit": {
-        "production": {}
+        "production": {
+            "ios": {
+                "appleId": "your@apple.com",
+                "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
+                "appleTeamId": "YOUR_TEAM_ID"
+            },
+            "android": {
+                "serviceAccountKeyPath": "./google-service-account.json",
+                "track": "internal"
+            }
+        }
     }
 }

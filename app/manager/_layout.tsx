@@ -1,5 +1,5 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { Stack, Tabs } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { CeoProvider } from "@/src/contexts/CeoProvider";
@@ -117,27 +117,9 @@ export default function ManagerLayout() {
                             title: "Детали мотивации",
                         }}
                     />
-                    <Tabs.Screen
-                        name="employees"
-                        options={{
-                            href: null,
-                            title: "Сотрудники",
-                        }}
-                    />
+                    <Tabs.Screen name="employees" options={{ href: null }} />
                     <Tabs.Screen
                         name="expenses/expense"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="expenses/income"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
-                        name="expenses/[id]"
                         options={{
                             href: null,
                         }}

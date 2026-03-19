@@ -15,12 +15,21 @@ import {
     getFines,
     getQuests,
     getShifts,
+    getTasks,
+    createTask,
+    completeTask,
 } from "@/src/server/ceo/generals";
 import {
     changeEmployeePassword,
     getEmployeesData,
 } from "@/src/server/general/employees";
-import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
+import type {
+    FineInputsType,
+    QuestInputsType,
+    TaskInputsType,
+    GetTaskType,
+    TaskType,
+} from "@/src/server/types/ceo";
 import type {
     AddExpensesInputType,
     ExpensesDataInputType,
@@ -147,6 +156,7 @@ interface ManagerContextType {
     payoutTypes: GetPayoutTypes[] | null;
     expenses: ExpensesDataType | null;
     suppliers: GetSupplierType | null;
+    tasks: GetTaskType["tasks"];
 
     refetch: () => Promise<void>;
     clearError: () => void;
@@ -175,6 +185,13 @@ interface ManagerContextType {
         employee_id: number;
         new_password: string;
     }) => Promise<void>;
+    fetchTasksWrapper: (inputs: {
+        user_id?: string;
+        due_date?: number;
+        organization_id?: number;
+    }) => Promise<GetTaskType>;
+    createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
+    completeTaskWrapper: (task_id: number) => Promise<TaskType>;
 }
 
 // ============================================================================
@@ -286,6 +303,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     const [accounts, setAccounts] = useState<
         WarehouseDocumentsAccountsType[] | null
     >(null);
+    const [tasks, setTasks] = useState<GetTaskType["tasks"]>([]);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -294,7 +312,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // ========================================================================
-    // Fetch actions (exposed via context)
+    // Fetch actions
     // ========================================================================
 
     const fetchEmployeesDataWrapper = useCallback(
@@ -409,6 +427,50 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     }, []);
+
+    const fetchTasksWrapper = useCallback(
+        async (inputs: {
+            user_id?: string;
+            due_date?: number;
+            organization_id?: number;
+        }): Promise<GetTaskType> => {
+            try {
+                const response = await getTasks(inputs);
+                setTasks(response.tasks);
+                return response;
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const createTaskWrapper = useCallback(
+        async (inputs: TaskInputsType): Promise<TaskType> => {
+            try {
+                const response = await createTask(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error creating task:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const completeTaskWrapper = useCallback(
+        async (task_id: number): Promise<TaskType> => {
+            try {
+                const response = await completeTask(task_id);
+                return response;
+            } catch (error) {
+                console.error("Error completing task:", error);
+                throw error;
+            }
+        },
+        [],
+    );
 
     // ========================================================================
     // Main fetch
@@ -537,6 +599,7 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         },
         [],
     );
+
     const changePasswordWrapper = useCallback(
         async (params: {
             employee_id: number;
@@ -591,6 +654,10 @@ export const ManagerProvider = ({ children }: { children: ReactNode }) => {
         deleteExpenseAction,
         fetchEmployeesDataWrapper,
         changePasswordWrapper,
+        tasks,
+        fetchTasksWrapper,
+        createTaskWrapper,
+        completeTaskWrapper,
     };
 
     return (

@@ -16,7 +16,7 @@ interface StatItem {
 interface EmployeeCardProps {
     name: string;
     amount?: string; // for simple variant
-    avatar: string;
+    avatar: string | undefined;
     role?: string; // for full variant
     stats?: StatItem[]; // Array of stats to display
     onPress?: () => void;

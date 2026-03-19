@@ -16,8 +16,11 @@ import {
     CreateOrdersInputType,
     PayOrderType,
     CreateOrdersType,
-    Dish,
+    UpdateOrdersInputType,
+    UpdateOrdersType,
 } from "@/src/server/types/waiter";
+
+import { Dish } from "@/src/client/types/waiter";
 
 import {
     createOrder,
@@ -29,15 +32,19 @@ import {
     getWaiterShiftStatus,
     payOrder,
     cancelOrder,
+    updateOrder,
 } from "@/src/server/waiter/general";
 
 import type { OrganizationIdType } from "@/src/server/types/waiter";
 
-// Import with different names to avoid conflicts
 import {
     startShift as startShiftAPI,
     endShift as endShiftAPI,
 } from "@/src/server/waiter/mutation";
+
+import { getTasks, completeTask } from "@/src/server/ceo/generals";
+
+import { GetTaskType, TaskType } from "@/src/server/types/ceo";
 
 export type SelectedTableContext = {
     id: string;
@@ -56,6 +63,7 @@ interface WaiterContextType {
     salary: WaiterSalaryType | null;
     shiftStatus: WaiterShiftStatusType | null;
     orders: OrderType | null;
+    tasks: GetTaskType["tasks"];
     fetchRooms: (inputs: RoomInputsType) => Promise<RoomsType[]>;
     fetchTables: (inputs: TablesInputsType) => Promise<TablesType[]>;
     fetchQuest: (
@@ -69,6 +77,10 @@ interface WaiterContextType {
     createOrderWrapper: (
         inputs: CreateOrdersInputType,
     ) => Promise<CreateOrdersType | null>;
+    updateOrderWrapper: (
+        order_id: number,
+        inputs: UpdateOrdersInputType,
+    ) => Promise<UpdateOrdersType | null>;
     payOrderWrapper: (order_id: number) => Promise<PayOrderType | null>;
     cancelOrderWrapper: (
         order_id: number,
@@ -87,12 +99,18 @@ interface WaiterContextType {
         organization_id?: OrganizationIdType,
     ) => Promise<void>;
     fetchOrders: (inputs: WaiterOrdersInputType) => Promise<void>;
+    fetchTasks: (inputs: {
+        user_id?: string;
+        date?: string;
+        organization_id?: number;
+    }) => Promise<GetTaskType>;
+    completeTaskWrapper: (task_id: number) => Promise<TaskType>;
     selectedTable: SelectedTableContext;
     setSelectedTable: (table: SelectedTableContext) => void;
     selectedRoom: SelectedRoomContext;
     setSelectedRoom: (room: SelectedRoomContext) => void;
     selectedDishes: Dish[];
-    setSelectedDishes: (dishes: Dish[]) => void;
+    setSelectedDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
     setSelectedOrderId: (id: number) => void;
     setSelectedOrder: (order: any) => void;
     selectedOrder: any;
@@ -110,12 +128,11 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const [shiftStatus, setShiftStatus] =
         useState<WaiterShiftStatusType | null>(null);
     const [selectedDishes, setSelectedDishes] = useState<Dish[]>([]);
+    const [tasks, setTasks] = useState<GetTaskType["tasks"]>([]);
 
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
-    console.log("selectedOrder aaaa", selectedOrder);
-    // NEW ORDER SELECTED tables
     const [selectedTable, setSelectedTable] =
         useState<SelectedTableContext>(null);
     const [selectedRoom, setSelectedRoom] = useState<SelectedRoomContext>(null);
@@ -185,13 +202,44 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     const fetchOrders = useCallback(
-        async (inputs: WaiterOrdersInputType): Promise<WaiterSalaryType> => {
+        async (inputs: WaiterOrdersInputType): Promise<OrderType> => {
             try {
                 const response = await getOrders(inputs);
                 setOrders(response.orders);
                 return response;
             } catch (error) {
                 console.error("Error fetching salary:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const fetchTasks = useCallback(
+        async (inputs: {
+            user_id?: string;
+            date?: number;
+            organization_id?: number;
+        }): Promise<GetTaskType> => {
+            try {
+                const response = await getTasks(inputs);
+                setTasks(response.tasks);
+                return response;
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const completeTaskWrapper = useCallback(
+        async (task_id: number): Promise<TaskType> => {
+            try {
+                const response = await completeTask(task_id);
+                return response;
+            } catch (error) {
+                console.error("Error completing task:", error);
                 throw error;
             }
         },
@@ -210,6 +258,23 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         },
         [],
     );
+
+    const updateOrderWrapper = useCallback(
+        async (
+            order_id: number,
+            inputs: UpdateOrdersInputType,
+        ): Promise<UpdateOrdersType> => {
+            try {
+                const response = await updateOrder(order_id, inputs);
+                return response;
+            } catch (error) {
+                console.error("Error update order:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     const payOrderWrapper = useCallback(
         async (order_id: number): Promise<PayOrderType> => {
             try {
@@ -222,6 +287,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
         },
         [],
     );
+
     const cancelOrderWrapper = useCallback(
         async (order_id: number, reason: string): Promise<PayOrderType> => {
             try {
@@ -256,9 +322,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
 
     const startShift = useCallback(
         async (waiter_id: number, organization_id?: OrganizationIdType) => {
-            console.log("startShift", waiter_id, organization_id);
             try {
-                // Call the API function, not itself!
                 await startShiftAPI(waiter_id, organization_id);
             } catch (e) {
                 console.error("Error starting shift", e);
@@ -271,10 +335,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const endShift = useCallback(
         async (waiter_id: number, organization_id?: OrganizationIdType) => {
             try {
-                // Call the API function, not itself!
                 await endShiftAPI(waiter_id, organization_id);
-
-                // Clear shift status after ending
                 setShiftStatus(null);
             } catch (e) {
                 console.error("Error ending shift", e);
@@ -293,15 +354,19 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
                 salary,
                 orders,
                 shiftStatus,
+                tasks,
                 fetchRooms,
                 fetchTables,
                 fetchQuest,
                 fetchSalary,
                 fetchShiftStatus,
                 fetchOrders,
+                fetchTasks,
+                completeTaskWrapper,
                 startShift,
                 endShift,
                 createOrderWrapper,
+                updateOrderWrapper,
                 payOrderWrapper,
                 cancelOrderWrapper,
                 selectedTable,

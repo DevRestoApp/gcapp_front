@@ -34,7 +34,7 @@ export default function EmployeesScreen() {
     const mappedEmployees = filteredEmployees?.map((employees) => {
         return {
             id: employees.id,
-            avatar: employees.avatarUrl,
+            avatar: employees.avatarUrl || undefined,
             name: employees.name,
             role: employees.role,
             data: [
@@ -70,7 +70,7 @@ export default function EmployeesScreen() {
                     setSelectedEmployee(employeeData);
                     // Navigate to employee detail page
                     router.push({
-                        pathname: `manager/employees/${employeeData.id}`,
+                        pathname: `/manager/employees/${employeeData.id}`,
                     });
                 }}
             />

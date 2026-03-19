@@ -15,7 +15,7 @@ import {
     Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import DishItem from "@/src/client/components/waiter/DishItem";
 import DishDetailModal, {
@@ -41,8 +41,12 @@ interface MenuItem {
     category: string;
 }
 
-interface MenuScreenProps {
-    restaurantId?: string;
+interface ApiOrderItem {
+    product_id: number;
+    dish_name: string;
+    dish_amount_int: number;
+    dish_discount_sum_int: number;
+    comment?: string;
 }
 
 type QuantitiesMap = Record<number, number>;
@@ -60,10 +64,9 @@ const MESSAGES = {
     LOADING_MENU: "Загрузка меню",
     SEARCH_PLACEHOLDER: "Искать блюда...",
     RETRY: "Попробовать снова",
-    ADDED_TO_ORDER: "Добавлено в заказ",
-    CART: "Корзина",
-    ITEMS: "Товаров",
-    TOTAL: "Сумма",
+    CART_CREATE: "Корзина",
+    // In edit mode the button just means "go back — order screen will auto-save"
+    CART_EDIT: "Готово",
     CLEAR_SEARCH: "Очистить поиск",
     NO_RESULTS: "По вашему запросу ничего не найдено",
     EMPTY_CATEGORY: "пока нет блюд",
@@ -111,16 +114,16 @@ const useMenuData = (restaurantId: string) => {
             const uniqueCategories = extractUniqueCategories(response.items);
             setDishes(response.items);
             setCategories(uniqueCategories);
-            if (!selectedCategory && uniqueCategories.length > 0) {
-                setSelectedCategory(uniqueCategories[0]);
-            }
+            setSelectedCategory((prev) =>
+                prev ? prev : (uniqueCategories[0] ?? ""),
+            );
         } catch (err: any) {
             setError(err.message || MESSAGES.ERROR_LOAD_MENU);
             Alert.alert(MESSAGES.ERROR_TITLE, MESSAGES.ERROR_LOAD_MENU);
         } finally {
             setLoading(false);
         }
-    }, [selectedCategory]);
+    }, []);
 
     useEffect(() => {
         fetchMenuData();
@@ -168,10 +171,15 @@ const useMenuFilters = (dishes: MenuItem[], selectedCategory: string) => {
 // Main Component
 // ============================================================================
 
-export default function MenuScreen({
-    restaurantId = DEFAULT_RESTAURANT_ID,
-}: MenuScreenProps = {}) {
+export default function MenuScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams<{
+        mode?: string;
+        orderId?: string;
+        orderItems?: string;
+    }>();
+
+    const isEditMode = params.mode === "edit";
 
     const {
         dishes,
@@ -181,12 +189,31 @@ export default function MenuScreen({
         selectedCategory,
         setSelectedCategory,
         refetch,
-    } = useMenuData(restaurantId);
+    } = useMenuData(DEFAULT_RESTAURANT_ID);
 
     const { searchQuery, setSearchQuery, clearSearch, filteredDishes } =
         useMenuFilters(dishes, selectedCategory);
 
     const { selectedDishes, setSelectedDishes } = useWaiter();
+
+    // Seed selectedDishes from existing order items when entering edit mode.
+    useEffect(() => {
+        if (!isEditMode || !params.orderItems) return;
+        try {
+            const rawItems: ApiOrderItem[] = JSON.parse(params.orderItems);
+            const seeded: DishItemType[] = rawItems.map((item) => ({
+                productId: item.product_id,
+                name: item.dish_name,
+                amount: item.dish_amount_int,
+                price: item.dish_discount_sum_int,
+                sum: item.dish_discount_sum_int * item.dish_amount_int,
+                comment: item.comment ?? undefined,
+            }));
+            setSelectedDishes(seeded);
+        } catch {
+            console.warn("menuNewOrder: failed to parse orderItems param");
+        }
+    }, []);
 
     const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
     const modalRef = useRef<DishDetailModalRef>(null);
@@ -199,14 +226,12 @@ export default function MenuScreen({
         [dishes],
     );
 
-    // Cart totals derived from context (source of truth)
     const { totalItems, totalPrice } = useMemo(() => {
         const items = selectedDishes.reduce((sum, d) => sum + d.amount, 0);
         const price = selectedDishes.reduce((sum, d) => sum + d.sum, 0);
         return { totalItems: items, totalPrice: price };
     }, [selectedDishes]);
 
-    // Per-dish quantities for badge display on cards
     const quantityMap = useMemo(() => {
         return selectedDishes.reduce<QuantitiesMap>((acc, d) => {
             acc[d.productId] = d.amount;
@@ -224,7 +249,6 @@ export default function MenuScreen({
         [setSelectedCategory, clearSearch],
     );
 
-    // Opens the modal — the only way to add/edit a dish
     const handleDishPress = useCallback((dish: MenuItem) => {
         setSelectedDish(dish);
         setTimeout(() => modalRef.current?.open(), 0);
@@ -234,17 +258,49 @@ export default function MenuScreen({
         setSelectedDish(null);
     }, []);
 
-    /**
-     * Called from DishDetailModal on confirm.
-     * Upserts the dish (with optional comment) into WaiterProvider.selectedDishes.
-     */
+    const handleQuantityChange = useCallback(
+        (dishId: string, newQuantity: number) => {
+            const productId = Number(dishId);
+            const menuDish = dishes.find((d) => d.id === productId);
+
+            setSelectedDishes((prev) => {
+                const idx = prev.findIndex((d) => d.productId === productId);
+
+                if (newQuantity <= 0) {
+                    return idx !== -1 ? prev.filter((_, i) => i !== idx) : prev;
+                }
+
+                const price = menuDish?.price ?? prev[idx]?.price ?? 0;
+                const name = menuDish?.name ?? prev[idx]?.name ?? "";
+
+                const updatedItem: DishItemType = {
+                    productId,
+                    name,
+                    amount: newQuantity,
+                    price,
+                    sum: price * newQuantity,
+                    comment: prev[idx]?.comment,
+                };
+
+                if (idx !== -1) {
+                    const updated = [...prev];
+                    updated[idx] = updatedItem;
+                    return updated;
+                }
+
+                return [...prev, updatedItem];
+            });
+        },
+        [dishes, setSelectedDishes],
+    );
+
     const handleAddToOrder = useCallback(
         (quantity: number, comment?: string) => {
             if (!selectedDish || quantity <= 0) return;
 
             const newItem: DishItemType = {
-                ...selectedDish,
                 productId: selectedDish.id,
+                name: selectedDish.name,
                 amount: quantity,
                 price: selectedDish.price,
                 sum: selectedDish.price * quantity,
@@ -256,6 +312,9 @@ export default function MenuScreen({
                     (d) => d.productId === selectedDish.id,
                 );
                 if (idx !== -1) {
+                    if (quantity === 0) {
+                        return prev.filter((_, i) => i !== idx);
+                    }
                     const updated = [...prev];
                     updated[idx] = newItem;
                     return updated;
@@ -263,22 +322,22 @@ export default function MenuScreen({
                 return [...prev, newItem];
             });
 
-            Alert.alert(
-                MESSAGES.ADDED_TO_ORDER,
-                `${selectedDish.name} (${quantity} шт.) — ${formatPrice(selectedDish.price * quantity)}`,
-                [{ text: "OK" }],
-                { cancelable: true },
-            );
-
             modalRef.current?.close();
             setSelectedDish(null);
         },
         [selectedDish, setSelectedDishes],
     );
 
+    // In edit mode: navigate back → order screen's useFocusEffect fires and
+    // auto-saves whatever is currently in selectedDishes. No manual save step.
+    // In create mode: navigate to newOrder so user can confirm and submit.
     const handleViewCart = useCallback(() => {
-        router.push("/waiter/newOrder");
-    }, [totalItems, totalPrice]);
+        if (isEditMode) {
+            router.back();
+        } else {
+            router.push("/waiter/newOrder");
+        }
+    }, [isEditMode, router]);
 
     // ── Render helpers ────────────────────────────────────────────────────────
 
@@ -377,7 +436,7 @@ export default function MenuScreen({
     };
 
     const renderDishItem = (dish: MenuItem) => {
-        const qty = quantityMap[dish.id] || 0;
+        const qty = quantityMap[dish.id] ?? 0;
         return (
             <DishItem
                 key={`dish-${dish.id}`}
@@ -389,8 +448,7 @@ export default function MenuScreen({
                 variant="informative"
                 initialQuantity={qty}
                 showQuantity={true}
-                // No-op: quantity can only be changed through the modal
-                onQuantityChange={() => {}}
+                onQuantityChange={handleQuantityChange}
                 onPress={() => handleDishPress(dish)}
             />
         );
@@ -442,16 +500,16 @@ export default function MenuScreen({
 
     const renderCartButton = () => {
         if (totalItems === 0) return null;
-        console.log(selectedDishes);
+        const label = isEditMode
+            ? `${MESSAGES.CART_EDIT} (${totalItems}) • ${formatPrice(totalPrice)}`
+            : `${MESSAGES.CART_CREATE} (${totalItems}) • ${formatPrice(totalPrice)}`;
         return (
             <TouchableOpacity
-                style={styles.cartButton}
+                style={[styles.cartButton, isEditMode && styles.cartButtonEdit]}
                 onPress={handleViewCart}
                 activeOpacity={0.8}
             >
-                <Text style={styles.cartButtonText}>
-                    {MESSAGES.CART} ({totalItems}) • {formatPrice(totalPrice)}
-                </Text>
+                <Text style={styles.cartButtonText}>{label}</Text>
             </TouchableOpacity>
         );
     };
@@ -647,6 +705,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
+    },
+    cartButtonEdit: {
+        backgroundColor: "#4CAF50",
     },
     cartButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
 });

@@ -9,13 +9,22 @@ import React, {
 
 import { getTodayFormatted } from "@/src/utils/utils";
 import { getEmployeesData } from "@/src/server/general/employees";
-import type { FineInputsType, QuestInputsType } from "@/src/server/types/ceo";
+import type {
+    FineInputsType,
+    QuestInputsType,
+    TaskInputsType,
+    GetTaskType,
+    TaskType,
+} from "@/src/server/types/ceo";
 import {
     getQuests,
     getShifts,
     createFine,
     getFines,
     createQuest,
+    getTasks,
+    createTask,
+    completeTask,
 } from "@/src/server/ceo/generals";
 import { getOrganizationsData } from "@/src/server/general/organizations";
 import { getAnalyticsData } from "@/src/server/ceo/analytics";
@@ -139,6 +148,7 @@ interface CeoContextType {
     loading: boolean;
     error: string | null;
     queryInputs: QueryInputs;
+    tasks: GetTaskType["tasks"];
 
     refetch: () => Promise<void>;
     clearError: () => void;
@@ -146,6 +156,13 @@ interface CeoContextType {
     createFineAction: (inputs: FineInputsType) => Promise<void>;
     createQuestAction: (inputs: QuestInputsType) => Promise<void>;
     fetchEmployeesDataWrapper: (inputs: QueryInputs) => Promise<void>;
+    fetchTasksWrapper: (inputs: {
+        user_id?: string;
+        due_date?: number;
+        organization_id?: number;
+    }) => Promise<GetTaskType>;
+    createTaskWrapper: (inputs: TaskInputsType) => Promise<TaskType>;
+    completeTaskWrapper: (task_id: number) => Promise<TaskType>;
 }
 
 // ============================================================================
@@ -254,6 +271,7 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
     const [locations, setLocations] = useState<any[]>([]);
     const [finesSummary, setFinesSummary] = useState<FinesSummary | null>(null);
     const [analytics, setAnalytics] = useState<AnalyticsInterface | null>(null);
+    const [tasks, setTasks] = useState<GetTaskType["tasks"]>([]);
 
     const [inputs, setInputs] = useState<QueryInputs>({
         date: getTodayFormatted(),
@@ -367,6 +385,50 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         [],
     );
 
+    const fetchTasksWrapper = useCallback(
+        async (inputs: {
+            user_id?: string;
+            due_date?: number;
+            organization_id?: number;
+        }): Promise<GetTaskType> => {
+            try {
+                const response = await getTasks(inputs);
+                setTasks(response.tasks);
+                return response;
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const createTaskWrapper = useCallback(
+        async (inputs: TaskInputsType): Promise<TaskType> => {
+            try {
+                const response = await createTask(inputs);
+                return response;
+            } catch (error) {
+                console.error("Error creating task:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
+    const completeTaskWrapper = useCallback(
+        async (task_id: number): Promise<TaskType> => {
+            try {
+                const response = await completeTask(task_id);
+                return response;
+            } catch (error) {
+                console.error("Error completing task:", error);
+                throw error;
+            }
+        },
+        [],
+    );
+
     // ========================================================================
     // Context value
     // ========================================================================
@@ -381,12 +443,16 @@ export const CeoProvider = ({ children }: { children: ReactNode }) => {
         loading,
         error,
         queryInputs: inputs,
+        tasks,
         createFineAction,
         createQuestAction,
         refetch,
         clearError,
         setDate,
         fetchEmployeesDataWrapper,
+        fetchTasksWrapper,
+        createTaskWrapper,
+        completeTaskWrapper,
     };
 
     return <CeoContext.Provider value={value}>{children}</CeoContext.Provider>;

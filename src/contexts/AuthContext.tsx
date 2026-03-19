@@ -35,9 +35,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null | undefined>(undefined);
     const [locations, setLocations] = useState<any[]>([]);
-    const [selectedLocation, setSelectedLocation] = useState<number | null>(
-        null,
-    );
+    const [selectedLocation, setSelectedLocation] = useState<
+        number | null | undefined
+    >(null);
 
     const fetchOrganizations = async (): Promise<any> => {
         try {

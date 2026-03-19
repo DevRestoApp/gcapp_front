@@ -111,6 +111,7 @@ export interface WaiterShiftStatusInputType {
     date?: string | null | undefined;
     organization_id?: number;
 }
+
 export interface WaiterShiftStatusType {
     isActive: boolean;
     shiftId: string;
@@ -121,8 +122,8 @@ export interface WaiterShiftStatusType {
 export type OrganizationIdType = number | null | undefined;
 
 export interface WaiterOrdersInputType {
-    organization_id?: number;
-    user_id?: number;
+    organization_id?: number | null | undefined;
+    user_id?: number | null | undefined;
     state?: string | null;
     date?: string;
     limit?: number;
@@ -136,6 +137,7 @@ type OrderItemsType = {
     sum: number;
     comment: string;
 };
+
 export interface createOrderInputType {
     organization_id: number;
     tableId: number;
@@ -157,7 +159,7 @@ export type CreateOrderItem = {
     amount: number;
     price: number;
     sum: number;
-    comment: string;
+    comment?: string;
 };
 
 export interface CreateOrdersInputType {
@@ -167,12 +169,26 @@ export interface CreateOrdersInputType {
     guests?: number;
     items: CreateOrderItem[];
 }
+export interface UpdateOrdersInputType {
+    organizationId?: number;
+    tableId?: number;
+    waiterId?: number;
+    guests?: number;
+    items?: CreateOrderItem[];
+    comment?: string;
+}
 
 export interface CreateOrdersType {
     success: boolean;
     message: string;
     order_id: number;
     iiko_id?: number;
+}
+
+export interface UpdateOrdersType {
+    success: boolean;
+    message: string;
+    order_id: number;
 }
 
 export interface PayOrderType {
