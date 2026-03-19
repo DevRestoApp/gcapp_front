@@ -128,7 +128,7 @@ export default function IndexScreen() {
                     </View>
                     <View style={styles.infoContent}>
                         <Text style={styles.infoValue}>
-                            {employees?.length} официанта
+                            Официантов: {employees?.length}
                         </Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -218,7 +218,7 @@ export default function IndexScreen() {
             queryInputs.date === dateStr
                 ? "Задания на сегодня"
                 : "Задания на " + queryInputs.date;
-        const quest = "Задании: " + quests.quests?.length.toString();
+        const quest = "Заданий: " + quests.quests?.length.toString();
         return (
             <View style={styles.section}>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
