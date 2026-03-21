@@ -59,8 +59,6 @@ export default function OrderSelection({
     onOrderUpdate,
     onAddDish,
     onDishPress,
-    onCancelOrder,
-    onCompleteOrder,
 }: OrderSelectionProps) {
     const router = useRouter();
 
@@ -71,6 +69,7 @@ export default function OrderSelection({
     const [selectedTable, setSelectedTable] = useState(order.table || "");
     const [selectedRoom, setSelectedRoom] = useState(order.room || "");
 
+    console.log("ORDERSELECTION", order);
     const updateOrder = useCallback(
         (updates: Partial<Order>) => {
             const updatedOrder = { ...order, ...updates };
@@ -112,6 +111,7 @@ export default function OrderSelection({
                     dishes={dishes}
                     onDishPress={handleDishPress}
                     onAddMoreDishes={handleAddMoreDishes}
+                    showAddMoreDishes={order.status === "draft"}
                 />
             )}
 

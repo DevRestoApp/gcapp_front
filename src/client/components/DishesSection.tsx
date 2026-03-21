@@ -13,6 +13,7 @@ interface DishesSectionProps {
     dishes: DishItemCreateOrderType[];
     onDishPress: (dishId: string) => void;
     onAddMoreDishes: () => void;
+    showAddMoreDishes?: boolean;
 }
 
 // ============================================================================
@@ -42,6 +43,7 @@ export default function DishesSection({
     dishes,
     onDishPress,
     onAddMoreDishes,
+    showAddMoreDishes = true,
 }: DishesSectionProps) {
     console.log("DISHESSECTION", dishes);
     const renderEmptyState = () => (
@@ -83,13 +85,17 @@ export default function DishesSection({
                 ))}
             </ScrollView>
 
-            <TouchableOpacity
-                style={styles.addDishButton}
-                onPress={onAddMoreDishes}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.addDishButtonText}>+ Добавить блюдо</Text>
-            </TouchableOpacity>
+            {showAddMoreDishes && (
+                <TouchableOpacity
+                    style={styles.addDishButton}
+                    onPress={onAddMoreDishes}
+                    activeOpacity={0.8}
+                >
+                    <Text style={styles.addDishButtonText}>
+                        + Добавить блюдо
+                    </Text>
+                </TouchableOpacity>
+            )}
         </>
     );
 

@@ -108,6 +108,7 @@ export default function OrderScreen() {
     }, [apiOrder]);
 
     const hasItems = (currentOrder?.items.length ?? 0) > 0;
+    console.log("parsed", currentOrder);
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -174,45 +175,46 @@ export default function OrderScreen() {
                     onRoomChange={() => {}}
                     onDishPress={() => {}}
                     onAddDish={handleEditDishes}
-                    onCancelOrder={handleCancelOrder}
-                    onCompleteOrder={handleCompleteOrder}
                 />
 
-                <View
-                    style={[
-                        styles.actionsSection,
-                        backgroundsStyles.generalBgTransparent,
-                    ]}
-                >
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        onPress={handleCancelOrder}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={styles.cancelButtonText}>
-                            Отменить заказ
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
+                {currentOrder.status === "draft" && (
+                    <View
                         style={[
-                            styles.completeButton,
-                            !hasItems && styles.completeButtonDisabled,
+                            styles.actionsSection,
+                            backgroundsStyles.generalBgTransparent,
                         ]}
-                        onPress={handleCompleteOrder}
-                        disabled={!hasItems}
-                        activeOpacity={0.8}
                     >
-                        <Text
-                            style={[
-                                styles.completeButtonText,
-                                !hasItems && styles.completeButtonTextDisabled,
-                            ]}
+                        <TouchableOpacity
+                            style={styles.cancelButton}
+                            onPress={handleCancelOrder}
+                            activeOpacity={0.8}
                         >
-                            Завершить
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                            <Text style={styles.cancelButtonText}>
+                                Отменить заказ
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.completeButton,
+                                !hasItems && styles.completeButtonDisabled,
+                            ]}
+                            onPress={handleCompleteOrder}
+                            disabled={!hasItems}
+                            activeOpacity={0.8}
+                        >
+                            <Text
+                                style={[
+                                    styles.completeButtonText,
+                                    !hasItems &&
+                                        styles.completeButtonTextDisabled,
+                                ]}
+                            >
+                                Завершить
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
         </SafeAreaView>
     );

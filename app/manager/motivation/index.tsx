@@ -49,7 +49,7 @@ export default function QuestManagementScreen() {
     } = useManager();
 
     const safeQuests = quests.quests || [];
-    const safeTasks = tasks.tasks || [];
+    const safeTasks = tasks || [];
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
 
@@ -162,10 +162,11 @@ export default function QuestManagementScreen() {
             due_date: string;
         }) => {
             try {
+                // TODO убрать user.id === 10 при релизе
                 await createTaskWrapper({
                     title: data.title,
                     description: data.description,
-                    user_id: data.user_id,
+                    employee_id: data.user_id === 10 ? 322256 : data.user_id,
                     organization_id: data.organization_id,
                     due_date: data.due_date,
                 });
@@ -182,14 +183,33 @@ export default function QuestManagementScreen() {
         ({ item }: { item: QuestEmployees }) => (
             <QuestCard
                 quest={item}
-                onPress={() => router.push(`/manager/motivation/${item.id}`)}
+                onPress={() =>
+                    router.push({
+                        pathname: `/manager/motivation/${item.id}`,
+                        params: {
+                            type: "quest",
+                        },
+                    })
+                }
             />
         ),
         [router],
     );
 
     const renderTaskItem = useCallback(
-        ({ item }: { item: Task }) => <TaskCard task={item} />,
+        ({ item }: { item: Task }) => (
+            <TaskCard
+                task={item}
+                onPress={() =>
+                    router.push({
+                        pathname: `/manager/motivation/${item.id}`,
+                        params: {
+                            type: "task",
+                        },
+                    })
+                }
+            />
+        ),
         [],
     );
 

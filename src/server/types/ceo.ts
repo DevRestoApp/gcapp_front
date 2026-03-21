@@ -14,7 +14,8 @@ export interface QuestInputsType {
 export interface TaskInputsType {
     title: string;
     description: string;
-    user_id: number;
+    user_id?: number;
+    employee_id?: number;
     organization_id: number;
     due_date: string;
 }
@@ -23,10 +24,10 @@ type Tasks = {
     id: number;
     title: string;
     description: string;
-    user_id: number;
-    user_name: string;
+    employee__id: number;
+    employee_name: string;
     organization_id: number;
-    is_completed: true;
+    is_completed: boolean;
     due_date: string;
     created_at: string;
 };

@@ -266,10 +266,12 @@ export default function NewOrder() {
 
     const handleCreateOrder = async () => {
         try {
+            console.log("tableId", selectedTableId, selectedTable);
+            // TODO убрать провверку на waiterId на релизе
             await createOrderWrapper({
                 organizationId: selectedLocation,
                 tableId: Number(selectedTable?.id),
-                waiterId: user?.id,
+                waiterId: user?.id === 10 ? 322256 : user?.id,
                 guests: 2,
                 items: selectedDishes.map((el) => ({
                     productId: el.productId,
