@@ -135,7 +135,8 @@ export default function Index() {
 
         setIsStartingShift(true);
         try {
-            await startShift(user.id, selectedLocation ?? null);
+            await startShift(user.id, selectedLocation);
+            console.log("selectedLocation: ", selectedLocation);
             await fetchData();
         } catch (error) {
             console.error("Failed to start shift:", error);
@@ -161,7 +162,9 @@ export default function Index() {
 
             setIsEndingShift(true);
             try {
-                await endShift(user.id, selectedLocation ?? null);
+                await endShift(user.id, selectedLocation);
+
+                console.log("selectedLocation: ", selectedLocation);
                 await fetchData();
             } catch (error) {
                 console.error("Failed to end shift:", error);

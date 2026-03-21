@@ -1,12 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 export interface Task {
     id: number | string;
     title: string;
     description: string;
-    user_id: number;
-    user_name: string;
+    employee_id: number;
+    employee_name: string;
     organization_id: number;
     is_completed: boolean;
     due_date: string;
@@ -15,13 +15,18 @@ export interface Task {
 
 interface TaskCardProps {
     task: Task;
+    onPress?: () => void;
 }
 
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task, onPress }: TaskCardProps) {
     const isCompleted = task.is_completed;
 
     return (
-        <View style={[styles.card, isCompleted && styles.cardCompleted]}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={onPress ? 0.7 : 1}
+            style={[styles.card, isCompleted && styles.cardCompleted]}
+        >
             {/* Header Row */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
@@ -59,7 +64,7 @@ export default function TaskCard({ task }: TaskCardProps) {
             {/* Meta info */}
             <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Исполнитель</Text>
-                <Text style={styles.metaValue}>{task.user_name}</Text>
+                <Text style={styles.metaValue}>{task.employee_name}</Text>
             </View>
             <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Срок</Text>
@@ -107,7 +112,7 @@ export default function TaskCard({ task }: TaskCardProps) {
                     />
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 

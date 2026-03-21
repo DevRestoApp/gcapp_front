@@ -97,7 +97,7 @@ const useMenuData = (_restaurantId: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await getMenu({});
+            const response = await getMenu({ limit: 0 });
             if (!response?.items || !Array.isArray(response.items)) {
                 throw new Error("Invalid menu data received");
             }
