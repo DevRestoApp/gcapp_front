@@ -59,8 +59,6 @@ export default function OrderSelection({
     onOrderUpdate,
     onAddDish,
     onDishPress,
-    onCancelOrder,
-    onCompleteOrder,
 }: OrderSelectionProps) {
     const router = useRouter();
 
@@ -112,6 +110,7 @@ export default function OrderSelection({
                     dishes={dishes}
                     onDishPress={handleDishPress}
                     onAddMoreDishes={handleAddMoreDishes}
+                    showAddMoreDishes={order.status === "draft"}
                 />
             )}
 
