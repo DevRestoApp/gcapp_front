@@ -54,7 +54,7 @@ export default function ManagerLayout() {
                     <Tabs.Screen
                         name="expenses/index"
                         options={{
-                            title: "Расходы",
+                            title: "Изъятие",
                             tabBarIcon: ({ color, size }) => (
                                 <MaterialCommunityIcons
                                     name="chart-line"

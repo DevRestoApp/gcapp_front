@@ -143,14 +143,6 @@ export default function ExpenseScreen() {
             alert("Пожалуйста, введите корректную сумму");
             return;
         }
-        if (!selectedSupplier) {
-            alert("Пожалуйста, выберите поставщика");
-            return;
-        }
-        if (!selectedAccount) {
-            alert("Пожалуйста, выберите счет");
-            return;
-        }
         if (!selectedPayoutType) {
             alert("Пожалуйста, выберите тип выплаты");
             return;
@@ -159,16 +151,19 @@ export default function ExpenseScreen() {
             alert("Пожалуйста, выберите организацию");
             return;
         }
+        const body = {
+            organization_id: selectedOrganization.id,
+            expense_type: selectedPayoutType.id,
+            amount: parseFloat(amount),
+            date: date,
+            comment: comment || "",
+        };
 
+        if (selectedAccount?.id) {
+            body.account_id = String(selectedAccount.id);
+        }
         try {
-            await addExpenseAction({
-                organization_id: selectedOrganization.id,
-                expense_type: selectedPayoutType.id,
-                amount: parseFloat(amount),
-                date: date,
-                comment: comment || "",
-                account_id: String(selectedAccount.id),
-            });
+            await addExpenseAction(body);
 
             router.push("/manager/expenses");
         } catch (error) {
@@ -180,7 +175,7 @@ export default function ExpenseScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Добавить расход"
+                title="Добавить изъятие"
                 date={""}
                 period={""}
                 location={""}
@@ -556,7 +551,7 @@ export default function ExpenseScreen() {
 
     const renderForm = () => (
         <FormContainer
-            title="Добавить расходы"
+            title="Добавить изъятия"
             description="Заполните нужную информацию"
             onSubmit={handleSubmit}
             submitText="Сохранить"
@@ -575,7 +570,7 @@ export default function ExpenseScreen() {
 
             <FormField label="Поставщик">{renderSupplierPicker()}</FormField>
 
-            <FormField label="Счет">{renderAccountPicker()}</FormField>
+            {/*<FormField label="Счет">{renderAccountPicker()}</FormField>*/}
 
             <FormField label="Тип выплаты">
                 {renderPayoutTypePicker()}
