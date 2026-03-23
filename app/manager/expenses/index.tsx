@@ -159,6 +159,13 @@ export default function ExpensesScreen() {
                 data: expenseData,
                 type: "negative",
             };
+            return (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
 
             return currentData.data && currentData.data.length > 0 ? (
                 <View style={styles.listContainer}>
@@ -190,23 +197,6 @@ export default function ExpensesScreen() {
                         )}
                         scrollEnabled={false}
                     />
-                    {/*{currentData.data.map((item, index) => {
-                        const formattedItem = formatDataItem(
-                            item,
-                            index,
-                            currentData.type,
-                        );
-                        return (
-                            <OrderHistoryCard
-                                key={formattedItem.id}
-                                tableNumber={formattedItem.tableNumber}
-                                amount={formattedItem.amount}
-                                time={formattedItem.time}
-                                icon={icons["writeoffs"]}
-                                type={currentData.type}
-                            />
-                        );
-                    })}*/}
                 </View>
             ) : (
                 <View style={styles.noDataContainer}>
