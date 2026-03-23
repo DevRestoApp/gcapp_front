@@ -102,7 +102,7 @@ export default function ExpensesScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Расходы"
+                title="Изъятие"
                 date={queryInputs.date}
                 period={queryInputs.period}
                 location={queryInputs.organization_id}
@@ -117,7 +117,7 @@ export default function ExpensesScreen() {
     );
 
     const renderTabs = () => {
-        const tabs = [{ label: "Расход", value: "expense" }];
+        const tabs = [{ label: "Изъятие", value: "expense" }];
 
         return (
             <View>
@@ -159,6 +159,13 @@ export default function ExpensesScreen() {
                 data: expenseData,
                 type: "negative",
             };
+            return (
+                <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                        Нет данных для отображения
+                    </Text>
+                </View>
+            );
 
             return currentData.data && currentData.data.length > 0 ? (
                 <View style={styles.listContainer}>
@@ -171,7 +178,7 @@ export default function ExpensesScreen() {
                             <DocumentCard
                                 documentNumber={`#${item.id}`}
                                 timestamp={formattedDate(item.date) || ""}
-                                category={"Расход"}
+                                category={"Изъятие"}
                                 onPress={() => {
                                     router.push(`/manager/expenses/${item.id}`);
                                 }}
@@ -190,23 +197,6 @@ export default function ExpensesScreen() {
                         )}
                         scrollEnabled={false}
                     />
-                    {/*{currentData.data.map((item, index) => {
-                        const formattedItem = formatDataItem(
-                            item,
-                            index,
-                            currentData.type,
-                        );
-                        return (
-                            <OrderHistoryCard
-                                key={formattedItem.id}
-                                tableNumber={formattedItem.tableNumber}
-                                amount={formattedItem.amount}
-                                time={formattedItem.time}
-                                icon={icons["writeoffs"]}
-                                type={currentData.type}
-                            />
-                        );
-                    })}*/}
                 </View>
             ) : (
                 <View style={styles.noDataContainer}>

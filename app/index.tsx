@@ -62,12 +62,6 @@ interface RolePickerProps {
 // Constants
 // ============================================================================
 
-const DEFAULT_ROLES: Role[] = [
-    { id: "admin", title: "Админ", IconComponent: AdminIcon },
-    { id: "owner", title: "Владелец", IconComponent: CEOIcon },
-    { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
-];
-
 const NAVIGATION_ROUTES = {
     admin: "/manager",
     owner: "/ceo",
@@ -107,13 +101,38 @@ function getDistanceMeters(
 
 export default function RolePicker({
     onRoleSelect,
-    availableRoles = DEFAULT_ROLES,
     skipLocationCheck = true, // ← set true in dev builds via app config
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
-    const { token, fetchOrganizations, selectedLocation, setSelectedLocation } =
-        useAuth();
+    const {
+        user,
+        token,
+        fetchOrganizations,
+        selectedLocation,
+        setSelectedLocation,
+    } = useAuth();
+
+    const ALL_ROLES: Role[] = [
+        { id: "admin", title: "Админ", IconComponent: AdminIcon },
+        { id: "owner", title: "Владелец", IconComponent: CEOIcon },
+        { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
+    ];
+    const userRole = "Владелец";
+    const availableRoles = useMemo(() => {
+        const role = userRole; /*user?.role;*/
+        switch (role) {
+            case "Официант":
+                return ALL_ROLES.filter((r) => r.id === "waiter");
+            case "Менеджер":
+                return ALL_ROLES.filter(
+                    (r) => r.id === "admin" || r.id === "waiter",
+                );
+            case "Владелец":
+            default:
+                return ALL_ROLES;
+        }
+    }, [userRole, ALL_ROLES]);
 
     const [screen, setScreen] = useState<"enter" | "rolePicker">(
         token ? "rolePicker" : "enter",
