@@ -41,7 +41,7 @@ export default function ExpensesReports() {
         const expensesGeneral = [
             {
                 id: 1,
-                title: "Итого расходы",
+                title: "Итого изъятие",
                 value: total_expenses.toFixed(2),
                 date: filters.date.slice(0, 5) ?? "",
                 type: "expense",
@@ -96,7 +96,7 @@ export default function ExpensesReports() {
 
         return (
             <View style={styles.card}>
-                <Text style={cardStyles.subsectionTitle}>Детали расходов</Text>
+                <Text style={cardStyles.subsectionTitle}>Детали изъятия</Text>
                 <View style={cardStyles.reportsContainer}>
                     {expensesList.map((item) => (
                         <React.Fragment key={item.id}>
@@ -182,7 +182,7 @@ export default function ExpensesReports() {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Расходы и прибыль"
+                    title="Изъятие и прибыль"
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
@@ -207,7 +207,7 @@ export default function ExpensesReports() {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
                 <ReportHeader
-                    title="Расходы и прибыль"
+                    title="Изъятие и прибыль"
                     date={filters.date}
                     period={filters.period}
                     location={filters.organization_id}
@@ -227,7 +227,7 @@ export default function ExpensesReports() {
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeader
-                title="Расходы и прибыль"
+                title="Изъятие и прибыль"
                 date={filters.date}
                 period={filters.period}
                 location={filters.organization_id}

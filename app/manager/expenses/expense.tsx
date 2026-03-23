@@ -175,7 +175,7 @@ export default function ExpenseScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Добавить расход"
+                title="Добавить изъятие"
                 date={""}
                 period={""}
                 location={""}
@@ -551,7 +551,7 @@ export default function ExpenseScreen() {
 
     const renderForm = () => (
         <FormContainer
-            title="Добавить расходы"
+            title="Добавить изъятия"
             description="Заполните нужную информацию"
             onSubmit={handleSubmit}
             submitText="Сохранить"

@@ -102,7 +102,7 @@ export default function ExpensesScreen() {
     const renderHeader = () => (
         <View style={styles.headerSection}>
             <ReportHeader
-                title="Расходы"
+                title="Изъятие"
                 date={queryInputs.date}
                 period={queryInputs.period}
                 location={queryInputs.organization_id}
@@ -117,7 +117,7 @@ export default function ExpensesScreen() {
     );
 
     const renderTabs = () => {
-        const tabs = [{ label: "Расход", value: "expense" }];
+        const tabs = [{ label: "Изъятие", value: "expense" }];
 
         return (
             <View>
@@ -178,7 +178,7 @@ export default function ExpensesScreen() {
                             <DocumentCard
                                 documentNumber={`#${item.id}`}
                                 timestamp={formattedDate(item.date) || ""}
-                                category={"Расход"}
+                                category={"Изъятие"}
                                 onPress={() => {
                                     router.push(`/manager/expenses/${item.id}`);
                                 }}

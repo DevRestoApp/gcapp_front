@@ -118,8 +118,10 @@ export default function RolePicker({
         { id: "owner", title: "Владелец", IconComponent: CEOIcon },
         { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
     ];
+    const userRole = "Владелец";
     const availableRoles = useMemo(() => {
-        switch (user?.role) {
+        const role = userRole; /*user?.role;*/
+        switch (role) {
             case "Официант":
                 return ALL_ROLES.filter((r) => r.id === "waiter");
             case "Менеджер":
@@ -130,7 +132,7 @@ export default function RolePicker({
             default:
                 return ALL_ROLES;
         }
-    }, [user?.role, ALL_ROLES]);
+    }, [userRole, ALL_ROLES]);
 
     const [screen, setScreen] = useState<"enter" | "rolePicker">(
         token ? "rolePicker" : "enter",
