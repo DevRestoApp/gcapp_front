@@ -46,7 +46,6 @@ export default function ExpenseScreen() {
         fetchPayoutTypesData,
         addExpenseAction,
     } = useManager();
-    console.log("accounts", accounts);
 
     useEffect(() => {
         // Fetch all required data on mount

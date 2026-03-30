@@ -59,6 +59,6 @@ export async function createWarehouseDocumentIncomingInvoice(
 
         return res.data;
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 }

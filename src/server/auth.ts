@@ -35,7 +35,6 @@ export async function login({
 }) {
     try {
         const res = await api.post("/login", { login, password });
-        console.log("auth", res.data);
         const { access_token, user } = res.data;
 
         await storage.setItem("access_token", access_token);

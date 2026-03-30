@@ -35,7 +35,6 @@ export default function QuestDetailScreen() {
         useManager();
 
     const isTask = type === "task";
-    console.log("type", type);
     const questId = Array.isArray(id) ? id[0] : id;
     const taskId = Array.isArray(id) ? Number(id[0]) : Number(id);
 

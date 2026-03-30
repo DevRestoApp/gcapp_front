@@ -45,7 +45,6 @@ export default function DishesSection({
     onAddMoreDishes,
     showAddMoreDishes = true,
 }: DishesSectionProps) {
-    console.log("DISHESSECTION", dishes);
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>🍽️</Text>

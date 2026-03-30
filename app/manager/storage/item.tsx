@@ -47,7 +47,6 @@ export default function StorageScreen() {
         updateWarehouseDocumentWrapper,
     } = useStorage();
     const router = useRouter();
-    console.log("doc", document);
 
     const type =
         document?.document_type === "RECEIPT"

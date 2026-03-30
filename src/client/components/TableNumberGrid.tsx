@@ -24,16 +24,6 @@ export default function TableNumberGrid({
 }: TableNumberGridProps) {
     const [selected, setSelected] = useState<number | null>(selectedTable);
 
-    const handleTableChange = (table: string) => {
-        console.log("Table changed to:", table);
-        // Additional logic if needed beyond the order update
-    };
-
-    const handleRoomChange = (room: string) => {
-        console.log("Room changed to:", room);
-        // Additional logic if needed beyond the order update
-    };
-
     const handleTablePress = (tableNumber: number) => {
         if (disabledTables.includes(tableNumber)) return;
 

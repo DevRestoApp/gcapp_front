@@ -45,7 +45,6 @@ const INITIAL_FORM_DATA: LoginFormData = {
 // ============================================================================
 
 export default function Login() {
-    console.log("Login screen rendered");
     const router = useRouter();
     const { login, token } = useAuth();
 
@@ -60,12 +59,7 @@ export default function Login() {
     // ========================================================================
 
     useEffect(() => {
-        console.log("Login screen mounted token: ", token);
         if (token) {
-            console.log("tok", token);
-            console.log(
-                "User is already logged in, redirecting to home screen",
-            );
             router.replace("/");
         }
     }, [token, router]);
@@ -110,10 +104,8 @@ export default function Login() {
                     role: response.role,
                     name: response.name,
                 };
-                console.log("LOGIN REQUEST");
 
                 await login(userObj, response.access_token);
-                console.log("LOGIN REQUEST");
 
                 router.replace("/");
             } else {

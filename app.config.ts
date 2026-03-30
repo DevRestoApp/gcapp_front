@@ -18,7 +18,7 @@ const getValidUrl = (url: string | undefined, fallback: string): string => {
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
-    scheme: "com.gcapp.mobile",
+    scheme: "com.gcapp.mobile2",
     version: "1.0.1",
     runtimeVersion: "1.0.1",
     orientation: "portrait",
@@ -41,7 +41,7 @@ const config: ExpoConfig = {
     },
     android: {
         icon: "./assets/logo.png",
-        package: "com.gcapp.mobile",
+        package: "com.gcapp.mobile2",
         permissions: [
             "INTERNET",
             "ACCESS_NETWORK_STATE",
@@ -55,7 +55,7 @@ const config: ExpoConfig = {
         },
     },
     ios: {
-        bundleIdentifier: "com.gcapp.mobile",
+        bundleIdentifier: "com.gcapp.mobile2",
         buildNumber: "1",
         supportsTablet: true,
         infoPlist: {

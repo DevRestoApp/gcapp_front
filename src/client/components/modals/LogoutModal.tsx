@@ -63,10 +63,6 @@ const AccountActionsModal = React.forwardRef<
 
                 onChangeRole?.();
 
-                console.log("Смена роли", "Переход к выбору роли", [
-                    { text: "OK" },
-                ]);
-
                 handleClose();
             } catch (error) {
                 console.log(

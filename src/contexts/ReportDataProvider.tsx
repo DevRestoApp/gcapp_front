@@ -280,7 +280,6 @@ const fetchMoneyflowData = async (
         const response = await getMoneyflowData(filters);
         return response;
     } catch (e) {
-        console.log(`Error fetching moneyflow data: ${e}`);
         return {
             dishes: [],
             writeoffs: [],
@@ -297,7 +296,7 @@ const fetchAnalyticsData = async (
         const response = await getAnalyticsData(filters);
         return response;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return {
             employees: [],
             financial: [],
@@ -314,7 +313,7 @@ const fetchGoodsData = async (filters: ReportFilters): Promise<any> => {
         const response = await getGoodsData(filters);
         return response;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return null;
     }
 };
@@ -324,7 +323,7 @@ const fetchSalesDynamicsData = async (filters: ReportFilters): Promise<any> => {
         const response = await getSalesDynamicsData(filters);
         return response;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return null;
     }
 };
@@ -333,7 +332,7 @@ const fetchOrganizations = async (): Promise<any> => {
         const response = await getOrganizationsData();
         return response.organizations;
     } catch (e) {
-        console.log(e);
+        console.error(e);
         return null;
     }
 };

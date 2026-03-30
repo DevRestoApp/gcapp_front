@@ -124,7 +124,7 @@ const ShiftCloseModal = React.forwardRef<
 
                 handleClose();
             } catch (error) {
-                console.log(error);
+                console.error(error);
             } finally {
                 setIsClosing(false);
             }

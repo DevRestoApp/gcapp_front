@@ -82,7 +82,6 @@ export default function StorageForm() {
     };
 
     const renderFormIncomingInvoice = () => {
-        console.log("renderFormIncomingInvoice");
         const handleSubmit = () => {
             // Validate required fields
             if (!formData.date) {
@@ -159,7 +158,6 @@ export default function StorageForm() {
     };
 
     const renderFormOutgoingInvoice = () => {
-        console.log("renderFormOutgoingInvoice");
         const handleSubmit = () => {
             // Validate required fields
             if (!formData.date) {
@@ -396,7 +394,6 @@ export default function StorageForm() {
     };
 
     const renderFormWriteoffs = () => {
-        console.log("RENDERED WRITEOFFS");
         const handleSubmit = () => {
             // Validate required fields
             if (!formData.date) {
