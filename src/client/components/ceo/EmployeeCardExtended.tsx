@@ -49,7 +49,7 @@ export default function EmployeeCardExtended({
                         <View style={styles.textContainer}>
                             <Text style={styles.name}>{name}</Text>
 
-                            {questPercentage && (
+                            {!!questPercentage && (
                                 <View style={styles.amountContainer}>
                                     <MaterialCommunityIcons
                                         name="lightning-bolt"
