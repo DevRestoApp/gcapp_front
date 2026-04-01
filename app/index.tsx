@@ -101,7 +101,7 @@ function getDistanceMeters(
 
 export default function RolePicker({
     onRoleSelect,
-    skipLocationCheck = true, // ← set true in dev builds via app config
+    skipLocationCheck = false, // ← set true in dev builds via app config
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
@@ -118,9 +118,8 @@ export default function RolePicker({
         { id: "owner", title: "Владелец", IconComponent: CEOIcon },
         { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
     ];
-    const userRole = "Владелец";
     const availableRoles = useMemo(() => {
-        const role = userRole; /*user?.role;*/
+        const role = user?.role;
         switch (role) {
             case "Официант":
                 return ALL_ROLES.filter((r) => r.id === "waiter");
@@ -132,7 +131,7 @@ export default function RolePicker({
             default:
                 return ALL_ROLES;
         }
-    }, [userRole, ALL_ROLES]);
+    }, [user?.role, ALL_ROLES]);
 
     const [screen, setScreen] = useState<"enter" | "rolePicker">(
         token ? "rolePicker" : "enter",
@@ -143,7 +142,6 @@ export default function RolePicker({
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    console.log("organizations", organizations);
 
     // Geo state
     const [isCheckingLocation, setIsCheckingLocation] = useState(false);
@@ -211,7 +209,6 @@ export default function RolePicker({
     const verifyUserLocation = useCallback(async (): Promise<boolean> => {
         // Dev bypass
         if (skipLocationCheck) {
-            console.log("[GeoCheck] Skipped (skipLocationCheck=true)");
             return true;
         }
 
@@ -234,7 +231,6 @@ export default function RolePicker({
             // Request permission
             const { status } =
                 await Location.requestForegroundPermissionsAsync();
-            console.log("[GeoCheck] Location permission status:", status);
             if (status !== "granted") {
                 setLocationError(
                     "Нет доступа к геолокации. Разрешите доступ в настройках.",
@@ -252,10 +248,6 @@ export default function RolePicker({
                 position.coords.longitude,
                 selectedOrg.latitude,
                 selectedOrg.longitude,
-            );
-
-            console.log(
-                `[GeoCheck] Distance to org: ${Math.round(distance)}m (limit: ${allowedRadiusMeters}m)`,
             );
 
             if (distance > allowedRadiusMeters) {
@@ -307,11 +299,8 @@ export default function RolePicker({
         if (needsLocationSelection && !selectedLocation) return;
 
         // Run geo check for waiters
-        console.log("here1");
         if (needsLocationSelection) {
-            console.log("here");
             const locationOk = await verifyUserLocation();
-            console.log("locationOk", locationOk);
             if (!locationOk) return; // Error already set in state — shown in UI
         }
 
@@ -570,7 +559,6 @@ export default function RolePicker({
 
     const renderLoginButton = () => {
         const busy = isLoading || isCheckingLocation;
-        console.log("isCheckingLocation", isCheckingLocation);
         const buttonLabel = isCheckingLocation
             ? "Проверка локации..."
             : "Войти";

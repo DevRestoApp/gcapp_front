@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLocations(response.organizations);
             return response.organizations;
         } catch (e) {
-            console.log(e);
             return null;
         }
     };

@@ -266,8 +266,6 @@ export default function NewOrder() {
 
     const handleCreateOrder = async () => {
         try {
-            console.log("tableId", selectedTableId, selectedTable);
-            // TODO убрать провверку на waiterId на релизе
             await createOrderWrapper({
                 organizationId: selectedLocation,
                 tableId: Number(selectedTable?.id),
@@ -289,7 +287,7 @@ export default function NewOrder() {
                 organization_id: selectedLocation,
             });
         } catch (e) {
-            console.log(`Error creating order: ${e.message} \n ${e.stack}`);
+            console.error(`Error creating order: ${e.message} \n ${e.stack}`);
         } finally {
             router.push("/waiter");
         }

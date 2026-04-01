@@ -94,7 +94,6 @@ export default function OrderScreen() {
     const apiOrder = useMemo<ApiOrder | null>(() => {
         if (params.orderId && params.orderData) {
             try {
-                console.log("try in params orderdata", params.orderData);
                 return JSON.parse(params.orderData);
             } catch {
                 console.warn("order: failed to parse orderData param");
@@ -108,7 +107,6 @@ export default function OrderScreen() {
     }, [apiOrder]);
 
     const hasItems = (currentOrder?.items.length ?? 0) > 0;
-    console.log("parsed", currentOrder);
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 

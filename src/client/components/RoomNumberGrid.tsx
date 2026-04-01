@@ -14,11 +14,6 @@ export default function RoomNumberGrid({
 }: TableNumberGridProps) {
     const [selected, setSelected] = useState<string | null>(selectedRoom);
 
-    const handleRoomChange = (room: string) => {
-        console.log("Room changed to:", room);
-        // Additional logic if needed beyond the order update
-    };
-
     return (
         <View style={RoomNumberGridStyles.roomsContainer}>
             {rooms.map((room) => {

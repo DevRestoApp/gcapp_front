@@ -75,7 +75,6 @@ export default function EmployeeOrderDetailScreen() {
         orderId: string;
         orderData: string;
     }>();
-    console.log(JSON.parse(orderData));
 
     const order = useMemo<ApiOrder | null>(() => {
         if (!orderData) return null;

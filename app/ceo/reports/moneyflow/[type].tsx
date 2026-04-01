@@ -40,14 +40,11 @@ export default function MoneyFlowDetail() {
     const { type } = useLocalSearchParams<{ type: string }>();
     const moneyFlowData = useMoneyFlow();
 
-    console.log("moneyFlowData", moneyFlowData);
-
     // Get the appropriate data based on the type parameter
     const data = moneyFlowData[type as keyof typeof moneyFlowData];
 
     // Filter out the setMoneyFlowData function
     const currentData = typeof data === "function" ? null : data;
-    console.log("currentData", currentData);
 
     const handleGoBack = () => {
         router.back();

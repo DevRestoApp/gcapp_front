@@ -18,8 +18,6 @@ export default function StorageForm() {
     const { selectedStorageTab } = useManager();
     const { document, setDocument } = useStorage();
     const router = useRouter();
-    console.log("DOC", document);
-    console.log("selectedStorageTab", selectedStorageTab);
 
     const [showMenuPicker, setShowMenuPicker] = useState(false);
     const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
@@ -55,7 +53,6 @@ export default function StorageForm() {
     // Handle menu item selection
     const handleMenuItemSelect = (item: MenuItem) => {
         setSelectedMenuItem(item);
-        console.log("ITEM", item);
         setFormDataItems((prev) => ({
             ...prev,
             item_id: item.id,

@@ -162,7 +162,6 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchRooms = useCallback(
         async (inputs: RoomInputsType): Promise<RoomsType[]> => {
             try {
-                console.log("fetchRooms", inputs);
                 const response = await getRooms(inputs);
                 setRooms(response);
                 return response;
@@ -194,7 +193,6 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
             inputs: WaiterQuestsInputType,
         ): Promise<WaiterQuestsType[]> => {
             try {
-                console.log("fetchQuest", waiter_id, inputs);
                 const response = await getWaiterQuests(waiter_id, inputs);
                 setQuests(response);
                 return response;
@@ -329,9 +327,7 @@ export const WaiterProvider = ({ children }: { children: React.ReactNode }) => {
             inputs: WaiterShiftStatusInputType,
         ): Promise<WaiterShiftStatusType> => {
             try {
-                console.log("fetchShiftStatus", waiter_id, inputs);
                 const response = await getWaiterShiftStatus(waiter_id, inputs);
-                console.log("res", response);
                 setShiftStatus(response);
                 return response;
             } catch (error) {

@@ -136,7 +136,7 @@ export default function ExpensesReports() {
                 showsVerticalScrollIndicator={false}
             >
                 {/*// DATA HERE*/}
-                {employees.map((emp) => (
+                {employees?.map((emp) => (
                     <RenderEmployeeCard key={emp.id} {...emp} />
                 ))}
             </ScrollView>

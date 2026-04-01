@@ -69,7 +69,6 @@ export default function OrderSelection({
     const [selectedTable, setSelectedTable] = useState(order.table || "");
     const [selectedRoom, setSelectedRoom] = useState(order.room || "");
 
-    console.log("ORDERSELECTION", order);
     const updateOrder = useCallback(
         (updates: Partial<Order>) => {
             const updatedOrder = { ...order, ...updates };

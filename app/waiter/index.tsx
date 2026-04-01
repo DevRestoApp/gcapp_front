@@ -69,7 +69,6 @@ export default function Index() {
         setSelectedOrderId,
         setSelectedOrder,
     } = useWaiter();
-    console.log("quests: ", quests);
 
     const [days, setDays] = useState<Day[]>(() => buildWeekDays());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -136,7 +135,6 @@ export default function Index() {
         setIsStartingShift(true);
         try {
             await startShift(user.id, selectedLocation);
-            console.log("selectedLocation: ", selectedLocation);
             await fetchData();
         } catch (error) {
             console.error("Failed to start shift:", error);
@@ -164,7 +162,6 @@ export default function Index() {
             try {
                 await endShift(user.id, selectedLocation);
 
-                console.log("selectedLocation: ", selectedLocation);
                 await fetchData();
             } catch (error) {
                 console.error("Failed to end shift:", error);

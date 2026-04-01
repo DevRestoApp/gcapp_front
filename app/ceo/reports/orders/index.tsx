@@ -49,7 +49,6 @@ export default function OrderReports() {
 
     const renderAverages = () => {
         const { averages } = orders;
-        console.log("orders", orders);
         return (
             <View style={cardStyles.section}>
                 <Text style={cardStyles.sectionTitle}>Общие показатели</Text>
