@@ -34,6 +34,7 @@ export interface AddExpensesInputType {
     date: string;
     comment?: string;
     account_id?: string;
+    counteragent_id?: string;
 }
 
 export interface AddExpensesType {

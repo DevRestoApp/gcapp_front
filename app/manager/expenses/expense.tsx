@@ -24,7 +24,6 @@ import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
 import { Ionicons } from "@expo/vector-icons";
 
-import type { Supplier } from "@/src/server/types/expenses";
 import type {
     GetPayoutTypes,
     WarehouseDocumentsAccountsType,
@@ -41,9 +40,11 @@ export default function ExpenseScreen() {
         suppliers,
         accounts,
         payoutTypes,
+        employees,
         fetchSuppliersData,
         fetchAccountsData,
         fetchPayoutTypesData,
+        fetchEmployeesDataWrapper,
         addExpenseAction,
     } = useManager();
 
@@ -54,6 +55,7 @@ export default function ExpenseScreen() {
                 fetchSuppliersData(),
                 fetchAccountsData(),
                 fetchPayoutTypesData(),
+                fetchEmployeesDataWrapper({}),
             ]);
         };
         fetchData();
@@ -62,9 +64,10 @@ export default function ExpenseScreen() {
     const [amount, setAmount] = useState("");
     const [comment, setComment] = useState("");
     const [date, setDate] = useState("");
-    const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-        null,
-    );
+    const [selectedCounteragent, setSelectedCounteragent] = useState<{
+        id: string | number;
+        name: string;
+    } | null>(null);
     const [selectedAccount, setSelectedAccount] =
         useState<WarehouseDocumentsAccountsType | null>(null);
     const [selectedPayoutType, setSelectedPayoutType] =
@@ -72,7 +75,7 @@ export default function ExpenseScreen() {
     const [selectedOrganization, setSelectedOrganization] = useState<any>(null);
 
     // Modal states
-    const [showSupplierModal, setShowSupplierModal] = useState(false);
+    const [showCounteragentModal, setShowCounteragentModal] = useState(false);
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showOrganizationModal, setShowOrganizationModal] = useState(false);
     const [showPayoutTypeModal, setShowPayoutTypeModal] = useState(false);
@@ -85,9 +88,12 @@ export default function ExpenseScreen() {
     const organizationsList = locations;
 
     // Handlers
-    const handleSupplierSelect = (supplier: Supplier) => {
-        setSelectedSupplier(supplier);
-        setShowSupplierModal(false);
+    const handleCounteragentSelect = (item: {
+        id: string | number;
+        name: string;
+    }) => {
+        setSelectedCounteragent(item);
+        setShowCounteragentModal(false);
     };
 
     const handleAccountSelect = (account: WarehouseDocumentsAccountsType) => {
@@ -98,6 +104,7 @@ export default function ExpenseScreen() {
     const handlePayoutTypeSelect = (payoutType: GetPayoutTypes) => {
         setSelectedPayoutType(payoutType);
         setShowPayoutTypeModal(false);
+        setSelectedCounteragent(null);
     };
 
     const handleDateSelect = (selectedDate: string) => {
@@ -112,9 +119,13 @@ export default function ExpenseScreen() {
     };
 
     // Label getters
-    const getSupplierLabel = () => {
-        if (!selectedSupplier) return "Выбрать поставщика...";
-        return selectedSupplier.name;
+    const getCounteragentLabel = () => {
+        if (!selectedCounteragent) {
+            return selectedPayoutType?.counteragentType === "EMPLOYEE"
+                ? "Выбрать сотрудника..."
+                : "Выбрать поставщика...";
+        }
+        return selectedCounteragent.name;
     };
 
     const getAccountLabel = () => {
@@ -150,6 +161,7 @@ export default function ExpenseScreen() {
             alert("Пожалуйста, выберите организацию");
             return;
         }
+
         const body = {
             organization_id: selectedOrganization.id,
             expense_type: selectedPayoutType.id,
@@ -160,6 +172,10 @@ export default function ExpenseScreen() {
 
         if (selectedAccount?.id) {
             body.account_id = String(selectedAccount.id);
+        }
+
+        if (selectedCounteragent) {
+            body.counteragent_id = String(selectedCounteragent.id);
         }
         try {
             await addExpenseAction(body);
@@ -190,21 +206,21 @@ export default function ExpenseScreen() {
         </View>
     );
 
-    // Supplier Picker
-    const renderSupplierPicker = () => (
+    // Counteragent Picker
+    const renderCounteragentPicker = () => (
         <TouchableOpacity
             style={styles.pickerButton}
-            onPress={() => setShowSupplierModal(true)}
+            onPress={() => setShowCounteragentModal(true)}
             disabled={loading}
         >
             <Text
                 style={[
                     styles.pickerText,
-                    !selectedSupplier && styles.pickerPlaceholder,
+                    !selectedCounteragent && styles.pickerPlaceholder,
                 ]}
                 numberOfLines={1}
             >
-                {getSupplierLabel()}
+                {getCounteragentLabel()}
             </Text>
             <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
         </TouchableOpacity>
@@ -270,54 +286,72 @@ export default function ExpenseScreen() {
         </TouchableOpacity>
     );
 
-    // Supplier Modal
-    const renderSupplierModal = () => (
+    // Counteragent Modal
+    const counteragentType = selectedPayoutType?.counteragentType;
+    const counteragentList =
+        counteragentType === "EMPLOYEE"
+            ? (employees || []).map((e) => ({
+                  id: e.id,
+                  name: e.name,
+              }))
+            : counteragentType === "SUPPLIER"
+              ? suppliersList.map((s) => ({
+                    id: s.id,
+                    name: s.name,
+                    code: s.code,
+                }))
+              : [];
+
+    const renderCounteragentModal = () => (
         <Modal
-            visible={showSupplierModal}
+            visible={showCounteragentModal}
             transparent
             animationType="fade"
-            onRequestClose={() => setShowSupplierModal(false)}
+            onRequestClose={() => setShowCounteragentModal(false)}
         >
             <TouchableOpacity
                 style={styles.modalOverlay}
                 activeOpacity={1}
-                onPress={() => setShowSupplierModal(false)}
+                onPress={() => setShowCounteragentModal(false)}
             >
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>
-                            Выберите поставщика
+                            {counteragentType === "EMPLOYEE"
+                                ? "Выберите сотрудника"
+                                : "Выберите поставщика"}
                         </Text>
                     </View>
                     <FlatList
-                        data={suppliersList}
+                        data={counteragentList}
                         keyExtractor={(item) => item.id.toString()}
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
                                     styles.modalItem,
-                                    item.id === selectedSupplier?.id &&
+                                    item.id === selectedCounteragent?.id &&
                                         styles.modalItemSelected,
                                 ]}
-                                onPress={() => handleSupplierSelect(item)}
+                                onPress={() => handleCounteragentSelect(item)}
                             >
                                 <View style={styles.modalItemContent}>
                                     <Text
                                         style={[
                                             styles.modalItemText,
-                                            item.id === selectedSupplier?.id &&
+                                            item.id ===
+                                                selectedCounteragent?.id &&
                                                 styles.modalItemTextSelected,
                                         ]}
                                     >
                                         {item.name}
                                     </Text>
-                                    {item.code && (
+                                    {"code" in item && item.code && (
                                         <Text style={styles.modalItemSubtext}>
                                             Код: {item.code}
                                         </Text>
                                     )}
                                 </View>
-                                {item.id === selectedSupplier?.id && (
+                                {item.id === selectedCounteragent?.id && (
                                     <Ionicons
                                         name="checkmark"
                                         size={20}
@@ -329,7 +363,9 @@ export default function ExpenseScreen() {
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={styles.emptyText}>
-                                    Нет доступных поставщиков
+                                    {counteragentType === "EMPLOYEE"
+                                        ? "Нет доступных сотрудников"
+                                        : "Нет доступных поставщиков"}
                                 </Text>
                             </View>
                         }
@@ -567,13 +603,24 @@ export default function ExpenseScreen() {
                 {renderOrganizationPicker()}
             </FormField>
 
-            <FormField label="Поставщик">{renderSupplierPicker()}</FormField>
-
-            {/*<FormField label="Счет">{renderAccountPicker()}</FormField>*/}
-
             <FormField label="Тип выплаты">
                 {renderPayoutTypePicker()}
             </FormField>
+
+            {(counteragentType === "EMPLOYEE" ||
+                counteragentType === "SUPPLIER") && (
+                <FormField
+                    label={
+                        counteragentType === "EMPLOYEE"
+                            ? "Сотрудник"
+                            : "Поставщик"
+                    }
+                >
+                    {renderCounteragentPicker()}
+                </FormField>
+            )}
+
+            {/*<FormField label="Счет">{renderAccountPicker()}</FormField>*/}
 
             <FormField label="Сумма">
                 <NumberInput
@@ -618,7 +665,7 @@ export default function ExpenseScreen() {
             </ScrollView>
 
             {/* Modals */}
-            {renderSupplierModal()}
+            {renderCounteragentModal()}
             {renderAccountModal()}
             {renderPayoutTypeModal()}
             {renderOrganizationModal()}
