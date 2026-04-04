@@ -15,7 +15,8 @@
             },
             "distribution": "internal",
             "env": {
-                "EXPO_PUBLIC_API_URL": "https://tsolution.kz"
+                "EXPO_PUBLIC_API_URL": "https://tsolution.kz",
+                "EXPO_PUBLIC_SKIP_LOCATION_CHECK": "true"
             }
         },
         "production": {
@@ -23,7 +24,8 @@
             "distribution": "store",
             "channel": "production",
             "env": {
-                "EXPO_PUBLIC_API_URL": "https://tsolution.kz"
+                "EXPO_PUBLIC_API_URL": "https://tsolution.kz",
+                "EXPO_PUBLIC_SKIP_LOCATION_CHECK": "false"
             },
             "android": {
                 "buildType": "app-bundle"

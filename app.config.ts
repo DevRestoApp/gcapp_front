@@ -39,6 +39,8 @@ const config: ExpoConfig = {
             process.env.EXPO_PUBLIC_TELEGRAM_BOT_TOKEN || "",
         EXPO_PUBLIC_TELEGRAM_CHAT_ID:
             process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID || "",
+        EXPO_PUBLIC_SKIP_LOCATION_CHECK:
+            process.env.EXPO_PUBLIC_SKIP_LOCATION_CHECK || "false",
         eas: {
             projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
         },
