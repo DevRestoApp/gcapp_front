@@ -14,6 +14,7 @@ interface DishesSectionProps {
     onDishPress: (dishId: string) => void;
     onAddMoreDishes: () => void;
     showAddMoreDishes?: boolean;
+    isEditOrder?: boolean;
 }
 
 // ============================================================================
@@ -44,6 +45,7 @@ export default function DishesSection({
     onDishPress,
     onAddMoreDishes,
     showAddMoreDishes = true,
+    isEditOrder = false,
 }: DishesSectionProps) {
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
@@ -91,7 +93,9 @@ export default function DishesSection({
                     activeOpacity={0.8}
                 >
                     <Text style={styles.addDishButtonText}>
-                        + Добавить блюдо
+                        {isEditOrder
+                            ? "Редактировать заказ"
+                            : "+ Добавить блюдо"}
                     </Text>
                 </TouchableOpacity>
             )}

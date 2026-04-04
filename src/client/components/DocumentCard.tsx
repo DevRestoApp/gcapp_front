@@ -36,7 +36,7 @@ export default function DocumentCard({
             <View style={styles.divider} />
 
             {/* Custom Content */}
-            {children && <View style={styles.content}>{children}</View>}
+            {children ? <View style={styles.content}>{children}</View> : null}
         </TouchableOpacity>
     );
 }

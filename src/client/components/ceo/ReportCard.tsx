@@ -25,7 +25,7 @@ export default function ReportCard({
         <View style={styles.reportCard}>
             <View style={styles.reportContent}>
                 <View style={styles.reportMain}>
-                    {type && (
+                    {type ? (
                         <View
                             style={[
                                 styles.reportIcon,
@@ -48,7 +48,7 @@ export default function ReportCard({
                                 />
                             )}
                         </View>
-                    )}
+                    ) : null}
                     <View style={styles.reportText}>
                         <Text style={styles.reportTitle} numberOfLines={1}>
                             {title}

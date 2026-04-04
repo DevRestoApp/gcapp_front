@@ -434,9 +434,9 @@ export default function MenuScreen() {
                     )}
                     {filteredDishes.length > 0 ? (
                         <View style={styles.dishesList}>
-                            {filteredDishes.map((dish) => (
+                            {filteredDishes.map((dish, index) => (
                                 <DishItem
-                                    key={`dish-${dish.id}`}
+                                    key={`dish-${dish.id ?? index}`}
                                     id={String(dish.id)}
                                     name={dish.name}
                                     description={dish.description || ""}

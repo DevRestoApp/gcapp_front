@@ -27,7 +27,7 @@ export default function MetricCard({
                 <Text style={styles.metricLabel}>{label}</Text>
                 <Text style={styles.metricValue}>{value}</Text>
             </View>
-            {change && (
+            {change ? (
                 <View style={styles.changeContainer}>
                     <Text
                         style={[
@@ -62,7 +62,7 @@ export default function MetricCard({
                         )}
                     </View>
                 </View>
-            )}
+            ) : null}
         </View>
     );
 }

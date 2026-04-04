@@ -65,7 +65,7 @@ export default function EmployeeCardExtended({
                     </View>
 
                     {/* Правая часть: роль */}
-                    {role && <Text style={styles.role}>{role}</Text>}
+                    {role ? <Text style={styles.role}>{role}</Text> : null}
                 </View>
             </View>
 

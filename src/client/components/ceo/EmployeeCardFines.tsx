@@ -28,9 +28,9 @@ export default function EmployeeCardFines({
             disabled={!onPress}
         >
             <View style={styles.employeeContent}>
-                {avatar && (
+                {avatar ? (
                     <Image source={{ uri: avatar }} style={styles.avatar} />
-                )}
+                ) : null}
                 <View style={styles.employeeText}>
                     <Text style={styles.employeeName}>{name}</Text>
                     <Text style={styles.employeeReason} numberOfLines={1}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import {
     View,
@@ -172,6 +172,15 @@ export default function NewOrder() {
     const { selectedLocation, user } = useAuth();
     const { selectedDishes, createOrderWrapper, setSelectedDishes } =
         useWaiter();
+
+    // Очистить блюда при первом маунте (начало нового заказа)
+    const didClear = useRef(false);
+    useEffect(() => {
+        if (!didClear.current) {
+            didClear.current = true;
+            setSelectedDishes([]);
+        }
+    }, [setSelectedDishes]);
 
     const [selectedRoomId, setSelectedRoomId] = useState("");
     const [selectedTableId, setSelectedTableId] = useState("");

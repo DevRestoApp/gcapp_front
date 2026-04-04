@@ -18,7 +18,9 @@ export default function ListItemIcon({
         <View style={styles.listItem}>
             <View style={styles.listContent}>
                 <View style={styles.listContentLeft}>
-                    {icon && <IconCard type={iconType} icon={icon}></IconCard>}
+                    {icon ? (
+                        <IconCard type={iconType} icon={icon}></IconCard>
+                    ) : null}
 
                     <View style={{ gap: 6 }}>
                         <Text style={styles.listLabel} numberOfLines={1}>
