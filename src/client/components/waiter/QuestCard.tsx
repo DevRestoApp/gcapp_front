@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 export interface Quest {
     id: string;
@@ -14,9 +14,10 @@ export interface Quest {
 
 interface QuestCardProps {
     quest: Quest;
+    onPress?: () => void;
 }
 
-export default function QuestCard({ quest }: QuestCardProps) {
+export default function QuestCard({ quest, onPress }: QuestCardProps) {
     const getProgressPercentage = () => {
         return Math.min((quest.current / quest.target) * 100, 100);
     };
@@ -24,7 +25,11 @@ export default function QuestCard({ quest }: QuestCardProps) {
     const isCompleted = quest.completed || quest.current >= quest.target;
 
     return (
-        <View style={[styles.card, isCompleted && styles.cardCompleted]}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={onPress ? 0.7 : 1}
+            style={[styles.card, isCompleted && styles.cardCompleted]}
+        >
             {/* Header Row */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
@@ -86,7 +91,7 @@ export default function QuestCard({ quest }: QuestCardProps) {
                     />
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 

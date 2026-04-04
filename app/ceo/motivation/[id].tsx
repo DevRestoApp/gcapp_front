@@ -52,7 +52,7 @@ export default function QuestDetailScreen() {
             console.error("Error fetching quest detail:", err);
             setError(err?.message ?? "Не удалось загрузить квест");
             Alert.alert("Ошибка", "Не удалось загрузить данные квеста", [
-                { text: "OK", onPress: () => router.back() },
+                { text: "OK", onPress: () => router.push("ceo/motivation")() },
             ]);
         } finally {
             setLoading(false);
@@ -92,7 +92,7 @@ export default function QuestDetailScreen() {
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
-                onPress={() => router.back()}
+                onPress={() => router.push("ceo/motivation")()}
                 style={styles.backButton}
                 activeOpacity={0.7}
             >

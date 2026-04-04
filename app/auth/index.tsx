@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import Constants from "expo-constants";
 import {
     View,
     Text,
@@ -8,7 +7,6 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -19,7 +17,6 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
 
-const { API_URL, EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 // ============================================================================
 // Types
 // ============================================================================
@@ -81,9 +78,12 @@ export default function Login() {
 
     const validateForm = useCallback((): boolean => {
         if (!formData.email || !formData.password) {
-            Alert.alert("Ошибка", "Введите логин и пароль");
+            setError(true);
+            setErrorMessages("Введите логин и пароль");
             return false;
         }
+        setError(false);
+        setErrorMessages("");
         return true;
     }, [formData]);
 
@@ -109,23 +109,47 @@ export default function Login() {
 
                 router.replace("/");
             } else {
-                Alert.alert("Ошибка", "Неверные данные");
+                setError(true);
+                setErrorMessages("Неверный логин или пароль");
             }
-        } catch (err) {
-            Alert.alert("Ошибка входа", "Проверьте данные и попробуйте снова");
-
+        } catch (err: any) {
+            let errorName: string;
+            switch (err?.code) {
+                case "ERR_NETWORK":
+                    errorName = "Проблема с сетью, попробуйте снова";
+                    break;
+                case "ECONNABORTED":
+                    errorName = "Время ожидания истекло, попробуйте снова";
+                    break;
+                case "ERR_BAD_REQUEST":
+                    errorName = "Неверный логин или пароль";
+                    break;
+                case "ERR_BAD_RESPONSE":
+                    errorName = "Ошибка сервера, попробуйте позже";
+                    break;
+                default:
+                    if (err?.response?.status === 401) {
+                        errorName = "Неверный логин или пароль";
+                    } else if (err?.response?.status === 403) {
+                        errorName = "Доступ запрещён";
+                    } else if (err?.response?.status === 429) {
+                        errorName = "Слишком много попыток, подождите немного";
+                    } else if (err?.response?.status >= 500) {
+                        errorName = "Ошибка сервера, попробуйте позже";
+                    } else {
+                        errorName = "Произошла ошибка, попробуйте снова";
+                    }
+            }
             setError(true);
-            setErrorMessages(JSON.stringify(err));
-            console.error(err);
+            setErrorMessages(errorName);
         } finally {
             setLoading(false);
         }
     }, [formData, validateForm, login, router]);
 
     const handleForgotPassword = useCallback(() => {
-        // Navigate to forgot password screen
-        Alert.alert("Обратитесь к своему админу для изменения пароля");
-        // router.push("/forgot-password");
+        setError(true);
+        setErrorMessages("Обратитесь к своему админу для изменения пароля");
     }, []);
 
     // ========================================================================
@@ -230,17 +254,12 @@ export default function Login() {
         </TouchableOpacity>
     );
 
-    const renderErrorMessage = () => {
-        const url = API_URL;
-        const expoUrl = EXPO_PUBLIC_API_URL;
-        return (
-            <View>
-                <Text>url{url}</Text>
-                <Text>expoUrl{expoUrl}</Text>
-                <Text style={{ color: "red" }}>{errorMessage}</Text>
-            </View>
-        );
-    };
+    const renderErrorMessage = () => (
+        <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={18} color="#FF453A" />
+            <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
+    );
 
     const renderBottomSection = () => (
         <View style={styles.bottomSection}>{renderLoginButton()}</View>
@@ -361,6 +380,26 @@ const styles = StyleSheet.create({
         lineHeight: 16,
         letterSpacing: -0.08,
         textAlign: "right",
+    },
+
+    // Error
+    errorContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginHorizontal: 16,
+        marginTop: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        borderRadius: 10,
+        backgroundColor: "rgba(255, 69, 58, 0.12)",
+    },
+    errorText: {
+        flex: 1,
+        color: "#FF453A",
+        fontSize: 14,
+        fontWeight: "400",
+        lineHeight: 18,
     },
 
     // Bottom Section

@@ -167,12 +167,12 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         {formatPriceStr(dish.price)}
                     </Text>
                 </View>
-                {totalPrice && (
+                {totalPrice ? (
                     <View style={styles.totalSection}>
                         <Text style={styles.totalLabel}>Общая стоимость:</Text>
                         <Text style={styles.totalPrice}>{totalPrice}</Text>
                     </View>
-                )}
+                ) : null}
             </View>
         );
 

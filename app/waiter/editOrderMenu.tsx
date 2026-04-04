@@ -196,8 +196,19 @@ export default function EditOrderMenuScreen() {
     const [isSaving, setIsSaving] = useState(false);
     const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
     const modalRef = useRef<DishDetailModalRef>(null);
+    const hasSaved = useRef(false);
+
+    // Очистить selectedDishes при размонтировании, если не сохранили (Отмена/back)
+    useEffect(() => {
+        return () => {
+            if (!hasSaved.current) {
+                setSelectedDishes([]);
+            }
+        };
+    }, [setSelectedDishes]);
 
     // Seed selectedDishes из текущих позиций заказа при открытии экрана
+    // orderItems в зависимостях — чтобы пересидить при переходе между заказами
     useEffect(() => {
         if (!orderItems) return;
         try {
@@ -214,9 +225,7 @@ export default function EditOrderMenuScreen() {
         } catch {
             console.warn("editOrderMenu: failed to parse orderItems param");
         }
-        // Намеренно только при маунте — orderItems не меняется
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [orderItems]);
 
     // ── Computed ─────────────────────────────────────────────────────────────
 
@@ -328,10 +337,11 @@ export default function EditOrderMenuScreen() {
         [selectedDish, setSelectedDishes],
     );
 
-    // Явное сохранение — никакого useFocusEffect авто-сейва
+    // Явное сохран��ние — никакого useFocusEffect авто-сейва
     const handleSave = useCallback(async () => {
         if (!orderId) return;
 
+        hasSaved.current = true;
         setIsSaving(true);
         try {
             await updateOrderWrapper(Number(orderId), {
@@ -530,9 +540,9 @@ export default function EditOrderMenuScreen() {
                     )}
                     {filteredDishes.length > 0 ? (
                         <View style={styles.dishesList}>
-                            {filteredDishes.map((dish) => (
+                            {filteredDishes.map((dish, index) => (
                                 <DishItem
-                                    key={`dish-${dish.id}`}
+                                    key={`dish-${dish.id ?? index}`}
                                     id={String(dish.id)}
                                     name={dish.name}
                                     description={dish.description || ""}

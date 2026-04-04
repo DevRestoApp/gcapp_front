@@ -21,6 +21,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Ellipse, Path } from "react-native-svg";
 import * as Location from "expo-location";
+import Constants from "expo-constants";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import Loading from "@/src/client/components/Loading";
@@ -99,9 +100,11 @@ function getDistanceMeters(
 // Main Component
 // ============================================================================
 
+const SKIP_LOCATION_CHECK =
+    Constants.expoConfig?.extra?.EXPO_PUBLIC_SKIP_LOCATION_CHECK === "true";
 export default function RolePicker({
     onRoleSelect,
-    skipLocationCheck = false, // ← set true in dev builds via app config
+    skipLocationCheck = SKIP_LOCATION_CHECK,
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();

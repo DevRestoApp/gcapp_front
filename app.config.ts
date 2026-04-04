@@ -18,9 +18,13 @@ const getValidUrl = (url: string | undefined, fallback: string): string => {
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
     slug: "gcapp_front",
+    owner: "qoqosyk",
     scheme: "com.gcapp.mobile2",
     version: "1.0.1",
     runtimeVersion: "1.0.1",
+    updates: {
+        url: "https://u.expo.dev/33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
+    },
     orientation: "portrait",
     icon: "./assets/logo.png",
     userInterfaceStyle: "light",
@@ -35,6 +39,8 @@ const config: ExpoConfig = {
             process.env.EXPO_PUBLIC_TELEGRAM_BOT_TOKEN || "",
         EXPO_PUBLIC_TELEGRAM_CHAT_ID:
             process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID || "",
+        EXPO_PUBLIC_SKIP_LOCATION_CHECK:
+            process.env.EXPO_PUBLIC_SKIP_LOCATION_CHECK || "false",
         eas: {
             projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
         },

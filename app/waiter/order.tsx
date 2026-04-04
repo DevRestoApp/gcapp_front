@@ -173,6 +173,7 @@ export default function OrderScreen() {
                     onRoomChange={() => {}}
                     onDishPress={() => {}}
                     onAddDish={handleEditDishes}
+                    isEditOrder={true}
                 />
 
                 {currentOrder.status === "draft" && (

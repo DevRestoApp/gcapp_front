@@ -7,7 +7,6 @@ import {
     StatusBar,
     TouchableOpacity,
     Alert,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -31,8 +30,7 @@ export default function QuestDetailScreen() {
         id: string;
         type: "quest" | "task";
     }>();
-    const { fetchQuestDetailWrapper, queryInputs, tasks, completeTaskWrapper } =
-        useManager();
+    const { fetchQuestDetailWrapper, queryInputs, tasks } = useManager();
 
     const isTask = type === "task";
     const questId = Array.isArray(id) ? id[0] : id;
@@ -42,9 +40,6 @@ export default function QuestDetailScreen() {
     const [quest, setQuest] = useState<QuestDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // ── Task state ────────────────────────────────────────────────────────────
-    const [completing, setCompleting] = useState(false);
 
     // ── Derived: selected task from context ───────────────────────────────────
     const selectedTask: Tasks | null = useMemo(
@@ -69,7 +64,10 @@ export default function QuestDetailScreen() {
             console.error("Error fetching quest detail:", err);
             setError(err?.message ?? "Не удалось загрузить квест");
             Alert.alert("Ошибка", "Не удалось загрузить данные квеста", [
-                { text: "OK", onPress: () => router.back() },
+                {
+                    text: "OK",
+                    onPress: () => router.push("manager/motivation"),
+                },
             ]);
         } finally {
             setLoading(false);
@@ -84,21 +82,6 @@ export default function QuestDetailScreen() {
             loadQuestDetail();
         }
     }, [isTask, loadQuestDetail]);
-
-    // ── Complete task handler ─────────────────────────────────────────────────
-    const handleCompleteTask = useCallback(async () => {
-        if (!selectedTask) return;
-
-        setCompleting(true);
-        try {
-            await completeTaskWrapper(selectedTask.id);
-        } catch (err: any) {
-            console.error("Error completing task:", err);
-        } finally {
-            setCompleting(false);
-            router.push(`/manager/motivation/`);
-        }
-    }, [selectedTask, completeTaskWrapper, router]);
 
     // ── Sorted leaderboard ────────────────────────────────────────────────────
     const sortedProgress = useMemo(
@@ -142,7 +125,7 @@ export default function QuestDetailScreen() {
         return (
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => router.back()}
+                    onPress={() => router.push("manager/motivation")}
                     style={styles.backButton}
                     activeOpacity={0.7}
                 >
@@ -310,33 +293,6 @@ export default function QuestDetailScreen() {
         );
     }, [quest, sortedProgress.length]);
 
-    // ── Render: bottom complete button (task only) ────────────────────────────
-    const renderCompleteButton = () => {
-        if (!isTask || !selectedTask || selectedTask.is_completed) return null;
-
-        return (
-            <View style={styles.bottomBar}>
-                <TouchableOpacity
-                    style={[
-                        styles.completeButton,
-                        completing && styles.completeButtonDisabled,
-                    ]}
-                    onPress={handleCompleteTask}
-                    activeOpacity={0.8}
-                    disabled={completing}
-                >
-                    {completing ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                        <Text style={styles.completeButtonText}>
-                            ✓ Завершить задачу
-                        </Text>
-                    )}
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
     // ── States ────────────────────────────────────────────────────────────────
     if (loading) {
         return (
@@ -402,7 +358,6 @@ export default function QuestDetailScreen() {
                     contentContainerStyle={styles.listContentPadding}
                     showsVerticalScrollIndicator={false}
                 />
-                {renderCompleteButton()}
             </SafeAreaView>
         );
     }
@@ -552,33 +507,5 @@ const styles = StyleSheet.create({
     },
     progressFillCompleted: {
         backgroundColor: "#34C759",
-    },
-
-    // Complete button
-    bottomBar: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 16,
-        paddingBottom: 36,
-        paddingTop: 12,
-        backgroundColor: "rgba(25, 25, 26, 0.95)",
-    },
-    completeButton: {
-        backgroundColor: "#34C759",
-        borderRadius: 16,
-        height: 56,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    completeButtonDisabled: {
-        opacity: 0.6,
-    },
-    completeButtonText: {
-        color: "#fff",
-        fontSize: 17,
-        fontWeight: "600",
-        letterSpacing: -0.2,
     },
 });

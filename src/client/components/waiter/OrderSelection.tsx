@@ -47,6 +47,7 @@ interface OrderSelectionProps {
     onDishPress?: (dish: Dish) => void;
     onCancelOrder?: () => void;
     onCompleteOrder?: () => void;
+    isEditOrder?: boolean;
 }
 
 // ============================================================================
@@ -59,6 +60,7 @@ export default function OrderSelection({
     onOrderUpdate,
     onAddDish,
     onDishPress,
+    isEditOrder,
 }: OrderSelectionProps) {
     const router = useRouter();
 
@@ -111,6 +113,7 @@ export default function OrderSelection({
                     onDishPress={handleDishPress}
                     onAddMoreDishes={handleAddMoreDishes}
                     showAddMoreDishes={order.status === "draft"}
+                    isEditOrder={isEditOrder}
                 />
             )}
 

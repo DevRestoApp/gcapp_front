@@ -36,9 +36,9 @@ export default function EmployeeCard({
                 disabled={!onPress}
             >
                 <View style={styles.employeeContent}>
-                    {avatar && (
+                    {avatar ? (
                         <Image source={{ uri: avatar }} style={styles.avatar} />
-                    )}
+                    ) : null}
                     <View style={styles.employeeText}>
                         <Text style={styles.employeeName}>{name}</Text>
                         <Text style={styles.employeeAmount} numberOfLines={1}>
@@ -47,7 +47,7 @@ export default function EmployeeCard({
                         </Text>
                     </View>
                 </View>
-                {onPress && (
+                {onPress ? (
                     <View style={styles.chevronContainer}>
                         <Entypo
                             name="chevron-right"
@@ -55,7 +55,7 @@ export default function EmployeeCard({
                             color="#FFFFFF"
                         />
                     </View>
-                )}
+                ) : null}
             </TouchableOpacity>
         );
     }
@@ -71,26 +71,26 @@ export default function EmployeeCard({
             {/* Employee Info Row */}
             <View style={styles.employeeInfo}>
                 <View style={styles.employeeDetails}>
-                    {avatar && (
+                    {avatar ? (
                         <Image source={{ uri: avatar }} style={styles.avatar} />
-                    )}
+                    ) : null}
                     <View style={styles.textContainer}>
                         <Text style={styles.name}>{name}</Text>
-                        {role && <Text style={styles.role}>{role}</Text>}
+                        {role ? <Text style={styles.role}>{role}</Text> : null}
                     </View>
                 </View>
-                {onPress && (
+                {onPress ? (
                     <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <Path
                             d="M15.7799 11.2799C15.9206 11.4204 15.9997 11.611 15.9999 11.8099V12.1899C15.9976 12.3883 15.9188 12.5781 15.7799 12.7199L10.6399 17.8499C10.546 17.9445 10.4182 17.9978 10.2849 17.9978C10.1516 17.9978 10.0238 17.9445 9.92992 17.8499L9.21992 17.1399C9.12586 17.0477 9.07285 16.9215 9.07285 16.7899C9.07285 16.6582 9.12586 16.532 9.21992 16.4399L13.6699 11.9999L9.21992 7.55985C9.12526 7.46597 9.07202 7.33817 9.07202 7.20485C9.07202 7.07153 9.12526 6.94374 9.21992 6.84985L9.92992 6.14985C10.0238 6.0552 10.1516 6.00195 10.2849 6.00195C10.4182 6.00195 10.546 6.0552 10.6399 6.14985L15.7799 11.2799Z"
                             fill="white"
                         />
                     </Svg>
-                )}
+                ) : null}
             </View>
 
             {/* Stats Section - only shown if showStats is true */}
-            {showStats && totalAmount && shiftTime && (
+            {showStats && totalAmount && shiftTime ? (
                 <View style={styles.statsSection}>
                     {/* Total Amount */}
                     <View style={styles.statItem}>
@@ -134,7 +134,7 @@ export default function EmployeeCard({
                         <Text style={styles.statValue}>{shiftTime}</Text>
                     </View>
                 </View>
-            )}
+            ) : null}
         </TouchableOpacity>
     );
 }

@@ -129,7 +129,9 @@ const DishCommentsModal = React.forwardRef<
                 <Text style={styles.title}>Комментарии к еде</Text>
                 {renderCloseButton()}
             </View>
-            {dishName && <Text style={styles.subtitle}>Блюдо: {dishName}</Text>}
+            {dishName ? (
+                <Text style={styles.subtitle}>Блюдо: {dishName}</Text>
+            ) : null}
         </View>
     );
 

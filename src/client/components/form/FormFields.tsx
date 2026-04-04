@@ -12,7 +12,7 @@ export function FormField({ label, children, error }: FormFieldProps) {
         <View style={fieldStyles.container}>
             <Text style={fieldStyles.label}>{label}</Text>
             {children}
-            {error && <Text style={fieldStyles.error}>{error}</Text>}
+            {error ? <Text style={fieldStyles.error}>{error}</Text> : null}
         </View>
     );
 }

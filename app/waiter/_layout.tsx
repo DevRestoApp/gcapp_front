@@ -48,7 +48,7 @@ export default function WaiterLayout() {
                     }}
                 />
                 <Tabs.Screen
-                    name="motivation"
+                    name="motivation/index"
                     options={{
                         title: "Мотивация",
                         tabBarIcon: ({ color, size }) => (
@@ -72,6 +72,7 @@ export default function WaiterLayout() {
                 <Tabs.Screen name="payment" options={{ href: null }} />
                 <Tabs.Screen name="cancel" options={{ href: null }} />
                 <Tabs.Screen name="editOrderMenu" options={{ href: null }} />
+                <Tabs.Screen name="motivation/[id]" options={{ href: null }} />
             </Tabs>
         </WaiterProvider>
     );
