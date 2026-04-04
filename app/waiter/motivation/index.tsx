@@ -9,6 +9,7 @@ import {
     ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import Calendar from "@/src/client/components/Calendar";
 import { Day } from "@/src/client/types/waiter";
@@ -22,6 +23,7 @@ import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
 export default function MotivationScreen() {
+    const router = useRouter();
     const { quests, fetchQuest, fetchTasks, tasks } = useWaiter();
     const { user, selectedLocation } = useAuth();
     const waiterId = user?.id;
@@ -98,13 +100,33 @@ export default function MotivationScreen() {
     );
 
     const renderQuestItem = useCallback(
-        ({ item }: { item: Quest }) => <QuestCard quest={item} />,
-        [],
+        ({ item }: { item: Quest }) => (
+            <QuestCard
+                quest={item}
+                onPress={() =>
+                    router.push({
+                        pathname: `/waiter/motivation/${item.id}`,
+                        params: { type: "quest" },
+                    })
+                }
+            />
+        ),
+        [router],
     );
 
     const renderTaskItem = useCallback(
-        ({ item }: { item: Task }) => <TaskCard task={item} />,
-        [],
+        ({ item }: { item: Task }) => (
+            <TaskCard
+                task={item}
+                onPress={() =>
+                    router.push({
+                        pathname: `/waiter/motivation/${item.id}`,
+                        params: { type: "task" },
+                    })
+                }
+            />
+        ),
+        [router],
     );
 
     const questKeyExtractor = useCallback((item: Quest) => item.id, []);
