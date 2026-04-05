@@ -28,11 +28,13 @@
                 "EXPO_PUBLIC_SKIP_LOCATION_CHECK": "false"
             },
             "android": {
-                "buildType": "app-bundle"
+                "buildType": "app-bundle",
+                "image": "latest"
             },
             "ios": {
                 "autoIncrement": true,
-                "image": "latest"
+                "image": "latest",
+                "credentialsSource": "local"
             }
         }
     },

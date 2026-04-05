@@ -41,3 +41,6 @@ app-example
 
 # android
 /android
+
+.credentials.json
+credentials.json

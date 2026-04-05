@@ -54,7 +54,7 @@ interface RolePickerProps {
     onRoleSelect?: (roleId: string) => void;
     availableRoles?: Role[];
     /** Skip geo check — set true in dev/staging builds */
-    skipLocationCheck?: boolean;
+    skipLocationCheck?: boolean; // also auto-skipped for test emails
     /** Allowed radius in meters (default: 200m) */
     allowedRadiusMeters?: number;
 }
@@ -100,11 +100,13 @@ function getDistanceMeters(
 // Main Component
 // ============================================================================
 
+const TEST_EMAILS = ["admin", "manager"];
+
 const SKIP_LOCATION_CHECK =
     Constants.expoConfig?.extra?.EXPO_PUBLIC_SKIP_LOCATION_CHECK === "true";
 export default function RolePicker({
     onRoleSelect,
-    skipLocationCheck = SKIP_LOCATION_CHECK,
+    skipLocationCheck: skipLocationCheckProp = SKIP_LOCATION_CHECK,
     allowedRadiusMeters = DEFAULT_RADIUS_METERS,
 }: RolePickerProps = {}) {
     const router = useRouter();
@@ -115,6 +117,9 @@ export default function RolePicker({
         selectedLocation,
         setSelectedLocation,
     } = useAuth();
+
+    const skipLocationCheck =
+        skipLocationCheckProp || TEST_EMAILS.includes(user?.email ?? "");
 
     const ALL_ROLES: Role[] = [
         { id: "admin", title: "Админ", IconComponent: AdminIcon },
@@ -137,7 +142,7 @@ export default function RolePicker({
     }, [user?.role, ALL_ROLES]);
 
     const [screen, setScreen] = useState<"enter" | "rolePicker">(
-        token ? "rolePicker" : "enter",
+        token && user ? "rolePicker" : "enter",
     );
 
     const [selectedRole, setSelectedRole] = useState<string | null>(null);
