@@ -100,7 +100,7 @@ function getDistanceMeters(
 // Main Component
 // ============================================================================
 
-const TEST_EMAILS = ["admin", "manager"];
+const TEST_EMAILS = ["admin", "manager", "integrator"];
 
 const SKIP_LOCATION_CHECK =
     Constants.expoConfig?.extra?.EXPO_PUBLIC_SKIP_LOCATION_CHECK === "true";
