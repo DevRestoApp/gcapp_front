@@ -68,11 +68,14 @@ const config: ExpoConfig = {
             "com.apple.developer.game-center": true,
         },
         infoPlist: {
+            ITSAppUsesNonExemptEncryption: false,
             NSLocationWhenInUseUsageDescription:
                 "Приложению нужна геолокация для проверки того, что вы находитесь на рабочем месте.",
         },
     },
     plugins: [
+        "expo-font",
+        "expo-router",
         "expo-secure-store",
         [
             "expo-location",
@@ -88,9 +91,10 @@ const config: ExpoConfig = {
                     privacyManifestAggregationEnabled: true,
                 },
                 android: {
-                    targetSdkVersion: 35,
+                    targetSdkVersion: 36,
                     usesCleartextTraffic: true,
                     networkInspector: true,
+                    useLegacyPackaging: false,
                 },
             },
         ],

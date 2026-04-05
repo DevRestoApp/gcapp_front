@@ -17,7 +17,7 @@ const SCREEN_OPTIONS = {
     tabBarInactiveTintColor: "#8E8E93",
     tabBarLabelStyle: {
         fontSize: 12,
-        fontWeight: "600",
+        fontWeight: "600" as const,
     },
 };
 
