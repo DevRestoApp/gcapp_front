@@ -137,7 +137,7 @@ export default function RolePicker({
     }, [user?.role, ALL_ROLES]);
 
     const [screen, setScreen] = useState<"enter" | "rolePicker">(
-        token ? "rolePicker" : "enter",
+        token && user ? "rolePicker" : "enter",
     );
 
     const [selectedRole, setSelectedRole] = useState<string | null>(null);

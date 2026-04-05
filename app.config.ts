@@ -64,6 +64,9 @@ const config: ExpoConfig = {
         bundleIdentifier: "com.gcapp.mobile2",
         buildNumber: "1",
         supportsTablet: true,
+        entitlements: {
+            "com.apple.developer.game-center": true,
+        },
         infoPlist: {
             NSLocationWhenInUseUsageDescription:
                 "Приложению нужна геолокация для проверки того, что вы находитесь на рабочем месте.",
