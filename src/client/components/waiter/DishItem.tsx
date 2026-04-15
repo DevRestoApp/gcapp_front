@@ -83,11 +83,11 @@ export default function DishItem({
                     </View>
                 )}
             </View>
-            {description && (
+            {description ? (
                 <Text style={styles.description} numberOfLines={maxLines}>
                     {description}
                 </Text>
-            )}
+            ) : null}
             {variant === "informative" && (
                 <View style={styles.informativeBottom}>
                     <Text style={styles.priceInline}>{formatPrice(price)}</Text>

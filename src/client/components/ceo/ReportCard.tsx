@@ -67,10 +67,9 @@ export default function ReportCard({
                         </Text>
                     </View>
                 </View>
-                {/* Fixed: Only render if date exists and is not empty */}
-                {date && date.trim() !== "" && (
+                {date && date.trim() !== "" ? (
                     <Text style={styles.dateText}>{date}</Text>
-                )}
+                ) : null}
             </View>
         </View>
     );

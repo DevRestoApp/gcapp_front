@@ -10,7 +10,7 @@ import {
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { ReportHeader } from "@/src/client/components/reports/header";
+import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -32,8 +32,8 @@ export default function OrderReports() {
         orders,
         organizations,
         filters,
-        setDate,
-        setPeriod,
+        setDateRange,
+        setPeriodRange,
         setLocation,
         loading,
         error,
@@ -146,14 +146,15 @@ export default function OrderReports() {
             <View
                 style={{ ...styles.container, ...backgroundsStyles.generalBg }}
             >
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Общие показатели"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
@@ -165,14 +166,15 @@ export default function OrderReports() {
 
     return (
         <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
-            <ReportHeader
+            <ReportHeaderPeriod
                 title="Отчет по заказам"
-                date={filters.date}
-                period={filters.period}
+                dateFrom={filters.date_from}
+                dateTo={filters.date_to}
+                activePeriod={filters.period}
                 location={filters.organization_id}
                 onBack={() => router.push("/ceo/reports")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
+                onDateRangeChange={setDateRange}
+                onPeriodChange={setPeriodRange}
                 onLocationChange={setLocation}
                 organizations={organizations}
             />

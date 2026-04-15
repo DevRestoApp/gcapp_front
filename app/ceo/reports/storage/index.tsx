@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { ReportHeader } from "@/src/client/components/reports/header";
+import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import ListItemIcon from "@/src/client/components/ceo/ListItemIcon";
 import ListItem from "@/src/client/components/ceo/ListItem";
@@ -98,8 +98,8 @@ export default function Warehouse() {
         analytics,
         organizations,
         filters,
-        setDate,
-        setPeriod,
+        setDateRange,
+        setPeriodRange,
         setLocation,
         loading,
         error,
@@ -120,14 +120,15 @@ export default function Warehouse() {
     if (loading) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Общие показатели"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View>
@@ -141,14 +142,15 @@ export default function Warehouse() {
     if (error) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Общие показатели"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
@@ -160,14 +162,15 @@ export default function Warehouse() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ReportHeader
+            <ReportHeaderPeriod
                 title="Складские отчеты"
-                date={filters.date}
-                period={filters.period}
+                dateFrom={filters.date_from}
+                dateTo={filters.date_to}
+                activePeriod={filters.period}
                 location={filters.organization_id}
                 onBack={() => router.push("/ceo/reports")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
+                onDateRangeChange={setDateRange}
+                onPeriodChange={setPeriodRange}
                 onLocationChange={setLocation}
                 organizations={organizations}
             />

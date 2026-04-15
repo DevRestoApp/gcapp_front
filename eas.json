@@ -11,7 +11,8 @@
         "preview": {
             "autoIncrement": true,
             "android": {
-                "buildType": "app-bundle"
+                "buildType": "app-bundle",
+                "image": "latest"
             },
             "distribution": "internal",
             "env": {

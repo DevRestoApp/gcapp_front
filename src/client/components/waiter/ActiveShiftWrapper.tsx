@@ -20,8 +20,8 @@ export default function ActiveShiftWrapper() {
     const handleCloseShift = (data: {
         startTime: string;
         endTime: string;
-        totalOrdersSold: number;
-        totalRevenue: number;
+        sales_total: number;
+        sales_number: number;
         duration: string;
     }) => {
         console.log("Shift closed:", data);
@@ -65,8 +65,9 @@ export default function ActiveShiftWrapper() {
                 <ShiftCloseModal
                     ref={shiftCloseModalRef}
                     startTime="09:00"
-                    totalOrdersSold={45}
-                    totalRevenue={456000}
+                    elapsedTime="00:00:00"
+                    sales_total="0"
+                    sales_number="0"
                     onCloseShift={(data) => {
                         console.log("Shift closed:", data);
                         // Navigate to login or generate report
@@ -85,8 +86,9 @@ export default function ActiveShiftWrapper() {
                 <ShiftCloseModal
                     ref={shiftCloseModalRef}
                     startTime="09:00"
-                    totalOrdersSold={42}
-                    totalRevenue={123456}
+                    elapsedTime="00:00:00"
+                    sales_total="0"
+                    sales_number="0"
                     onCloseShift={handleCloseShift}
                     onCancel={handleCancel}
                 />

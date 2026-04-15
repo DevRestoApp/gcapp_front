@@ -75,7 +75,7 @@ export default function DishesSection({
                         id={String(dish.productId)}
                         name={dish.name}
                         description={dish.description || ""}
-                        initialQuantity={dish.quantity}
+                        initialQuantity={dish.amount}
                         price={formatPrice(dish.price)}
                         image={dish.image || ""}
                         variant="informative"

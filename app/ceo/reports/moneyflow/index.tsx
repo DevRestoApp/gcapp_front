@@ -10,7 +10,7 @@ import {
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { ReportHeader } from "@/src/client/components/reports/header";
+import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import { useReports } from "@/src/contexts/ReportDataProvider";
 import { useMoneyFlow } from "./_layout";
 
@@ -28,8 +28,8 @@ export default function MoneyflowReports() {
         moneyflow,
         organizations,
         filters,
-        setDate,
-        setPeriod,
+        setDateRange,
+        setPeriodRange,
         setLocation,
         loading,
         error,
@@ -214,14 +214,15 @@ export default function MoneyflowReports() {
     if (loading) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Денежные отчеты"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
@@ -236,14 +237,15 @@ export default function MoneyflowReports() {
     if (error) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Денежные отчеты"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
@@ -256,14 +258,15 @@ export default function MoneyflowReports() {
     // Main content
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
-            <ReportHeader
+            <ReportHeaderPeriod
                 title="Денежные отчеты"
-                date={filters.date}
-                period={filters.period}
+                dateFrom={filters.date_from}
+                dateTo={filters.date_to}
+                activePeriod={filters.period}
                 location={filters.organization_id}
                 onBack={() => router.push("/ceo/reports")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
+                onDateRangeChange={setDateRange}
+                onPeriodChange={setPeriodRange}
                 onLocationChange={setLocation}
                 organizations={organizations}
             />
