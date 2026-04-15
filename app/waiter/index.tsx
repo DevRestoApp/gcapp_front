@@ -152,8 +152,8 @@ export default function Index() {
         async (data: {
             startTime: string;
             endTime: string;
-            totalOrdersSold: number;
-            totalRevenue: number;
+            sales_total: number;
+            sales_number: number;
             duration: string;
         }) => {
             if (!user?.id) return;
@@ -309,8 +309,9 @@ export default function Index() {
                     <ShiftCloseModal
                         ref={shiftCloseModalRef}
                         startTime={shiftStatus?.startTime || "09:00"}
-                        totalOrdersSold={shiftStatus?.totalOrders || 0}
-                        totalRevenue={shiftStatus?.totalEarnings || 0}
+                        elapsedTime={shiftStatus?.elapsedTime || "00:00:00"}
+                        sales_total={shiftStatus?.totalOrders || 0}
+                        sales_number={shiftStatus?.totalEarnings || 0}
                         onCloseShift={handleCloseShift}
                         onCancel={() => {}}
                     />

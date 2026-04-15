@@ -4,13 +4,14 @@ import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
 
 interface ShiftCloseModalProps {
     startTime: string; // Format: "HH:MM" in UTC
-    totalOrdersSold: number;
-    totalRevenue: number;
+    elapsedTime: string; // Format: "HH:MM:SS" from API, hours can exceed 24
+    sales_total: string;
+    sales_number: string;
     onCloseShift?: (data: {
         startTime: string;
         endTime: string;
-        totalOrdersSold: number;
-        totalRevenue: number;
+        sales_total: number;
+        sales_number: number;
         duration: string;
     }) => void;
     onCancel?: () => void;
@@ -27,7 +28,14 @@ const ShiftCloseModal = React.forwardRef<
     ShiftCloseModalProps
 >(
     (
-        { startTime, totalOrdersSold, totalRevenue, onCloseShift, onCancel },
+        {
+            startTime,
+            elapsedTime,
+            sales_total,
+            sales_number,
+            onCloseShift,
+            onCancel,
+        },
         ref,
     ) => {
         const modalRef = useRef<ModalWrapperRef>(null);
@@ -63,28 +71,18 @@ const ShiftCloseModal = React.forwardRef<
             return `${hours}:${minutes}`;
         };
 
-        // Calculate shift duration using local start time
+        // Parse elapsedTime "HH:MM:SS" (hours can exceed 24) into "X д Y ч Z мин"
         const calculateDuration = (): string => {
-            const localStartTime = utcTimeToLocal(startTime);
-            const [startHours, startMinutes] = localStartTime
-                .split(":")
-                .map(Number);
-            const now = new Date();
-            const currentHours = now.getHours();
-            const currentMinutes = now.getMinutes();
+            const [totalHours, minutes] = elapsedTime.split(":").map(Number);
+            const days = Math.floor(totalHours / 24);
+            const hours = totalHours % 24;
 
-            let durationMinutes =
-                (currentHours - startHours) * 60 +
-                (currentMinutes - startMinutes);
+            const parts: string[] = [];
+            if (days > 0) parts.push(`${days} д`);
+            if (hours > 0) parts.push(`${hours} ч`);
+            parts.push(`${minutes} мин`);
 
-            if (durationMinutes < 0) {
-                durationMinutes += 24 * 60;
-            }
-
-            const hours = Math.floor(durationMinutes / 60);
-            const minutes = durationMinutes % 60;
-
-            return `${hours} ч ${minutes} мин`;
+            return parts.join(" ");
         };
 
         React.useImperativeHandle(ref, () => ({
@@ -111,8 +109,8 @@ const ShiftCloseModal = React.forwardRef<
                 onCloseShift?.({
                     startTime,
                     endTime,
-                    totalOrdersSold,
-                    totalRevenue,
+                    sales_total: Number(sales_total),
+                    sales_number: Number(sales_number),
                     duration,
                 });
 
@@ -128,13 +126,7 @@ const ShiftCloseModal = React.forwardRef<
             } finally {
                 setIsClosing(false);
             }
-        }, [
-            startTime,
-            totalOrdersSold,
-            totalRevenue,
-            onCloseShift,
-            handleClose,
-        ]);
+        }, [startTime, sales_total, sales_number, onCloseShift, handleClose]);
 
         const renderCloseButton = () => (
             <TouchableOpacity
@@ -186,7 +178,7 @@ const ShiftCloseModal = React.forwardRef<
                 <View style={styles.statsCard}>
                     <View style={styles.statItem}>
                         <Text style={styles.statLabel}>Заказов продано</Text>
-                        <Text style={styles.statValue}>{totalOrdersSold}</Text>
+                        <Text style={styles.statValue}>{sales_total}</Text>
                     </View>
 
                     <View style={styles.statsVerticalDivider} />
@@ -194,7 +186,7 @@ const ShiftCloseModal = React.forwardRef<
                     <View style={styles.statItem}>
                         <Text style={styles.statLabel}>Общая выручка</Text>
                         <Text style={styles.statValue}>
-                            {totalRevenue.toLocaleString()} тг
+                            {Number(sales_number).toLocaleString()} тг
                         </Text>
                     </View>
                 </View>

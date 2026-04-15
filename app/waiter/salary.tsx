@@ -126,7 +126,7 @@ export default function SalaryScreen() {
                         </View>
                     </View>
                     <Text style={styles.cardAmount}>
-                        {salary.totalRevenue.toLocaleString()} тг
+                        {salary.sales_number.toLocaleString()} тг
                     </Text>
                 </View>
 

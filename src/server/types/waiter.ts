@@ -58,7 +58,7 @@ export interface WaiterSalaryInputType {
 export interface WaiterSalaryType {
     date: string;
     tablesCompleted: number;
-    totalRevenue: number;
+    sales_number: number;
     salary: number;
     salaryPercentage: number;
     bonuses: number;

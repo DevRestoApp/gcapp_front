@@ -91,10 +91,19 @@ const config: ExpoConfig = {
                     privacyManifestAggregationEnabled: true,
                 },
                 android: {
+                    compileSdkVersion: 36,
                     targetSdkVersion: 36,
+                    buildToolsVersion: "36.0.0",
+                    androidGradlePluginVersion: "8.10.0",
+                    ndkVersion: "28.0.13004108",
                     usesCleartextTraffic: true,
                     networkInspector: true,
                     useLegacyPackaging: false,
+                    packagingOptions: {
+                        jniLibs: {
+                            useLegacyPackaging: false,
+                        },
+                    },
                 },
             },
         ],
