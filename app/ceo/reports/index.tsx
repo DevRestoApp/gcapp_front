@@ -19,7 +19,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { useRouter } from "expo-router";
 import { useReports } from "@/src/contexts/ReportDataProvider";
-import { ReportHeader } from "@/src/client/components/reports/header";
+import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 
 export default function AnalyticsScreen() {
     const router = useRouter();
@@ -30,8 +30,8 @@ export default function AnalyticsScreen() {
         profitloss,
         organizations,
         filters,
-        setDate,
-        setPeriod,
+        setDateRange,
+        setPeriodRange,
         setLocation,
         loading,
         error,
@@ -77,18 +77,16 @@ export default function AnalyticsScreen() {
     if (loading) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Аналитика"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
-                    showPeriodSelector={true}
-                    showDateSelector={true}
-                    showLocationSelector={true}
                 />
                 <Loading />
             </View>
@@ -99,18 +97,16 @@ export default function AnalyticsScreen() {
     if (error) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Аналитика"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
-                    showPeriodSelector={true}
-                    showDateSelector={true}
-                    showLocationSelector={true}
                 />
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
@@ -121,19 +117,17 @@ export default function AnalyticsScreen() {
 
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
-            <ReportHeader
+            <ReportHeaderPeriod
                 title="Аналитика"
-                date={filters.date}
-                period={filters.period}
+                dateFrom={filters.date_from}
+                dateTo={filters.date_to}
+                activePeriod={filters.period}
                 location={filters.organization_id}
                 onBack={() => router.push("/ceo")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
+                onDateRangeChange={setDateRange}
+                onPeriodChange={setPeriodRange}
                 onLocationChange={setLocation}
                 organizations={organizations}
-                showPeriodSelector={true}
-                showDateSelector={true}
-                showLocationSelector={true}
             />
 
             <ScrollView

@@ -119,9 +119,11 @@ interface AnalyticsInterface {
 }
 
 interface ReportFilters {
-    date: string; // Format: "DD.MM.YYYY"
+    date?: string; // Format: "DD.MM.YYYY"
     period?: string;
     organization_id?: string;
+    date_from?: string; // Format: "DD.MM.YYYY"
+    date_to?: string; // Format: "DD.MM.YYYY"
 }
 
 interface OrganizationsInterface {
@@ -153,6 +155,8 @@ interface ReportsContextType {
     setDate: (date: string) => void; // Takes formatted string "DD.MM.YYYY"
     setPeriod: (period: string) => void;
     setLocation: (organization_id: string) => void;
+    setDateRange: (dateFrom: string, dateTo: string) => void;
+    setPeriodRange: (period: string, dateFrom: string, dateTo: string) => void;
 
     // State
     loading: boolean;
@@ -364,6 +368,8 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
         date: getTodayFormatted(),
         period: "",
         organization_id: "",
+        date_from: "",
+        date_to: "",
     });
 
     const [loading, setLoading] = useState(true);
@@ -428,11 +434,40 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const setPeriod = (period: string) => {
-        setFilters((prev) => ({ ...prev, period }));
+        setFilters((prev) => ({
+            ...prev,
+            period,
+            date_from: "",
+            date_to: "",
+        }));
     };
 
     const setLocation = (organization_id: string) => {
         setFilters((prev) => ({ ...prev, organization_id }));
+    };
+
+    const setDateRange = (dateFrom: string, dateTo: string) => {
+        setFilters((prev) => ({
+            ...prev,
+            date: "",
+            period: "",
+            date_from: dateFrom,
+            date_to: dateTo,
+        }));
+    };
+
+    const setPeriodRange = (
+        period: string,
+        dateFrom: string,
+        dateTo: string,
+    ) => {
+        setFilters((prev) => ({
+            ...prev,
+            date: "",
+            period,
+            date_from: dateFrom,
+            date_to: dateTo,
+        }));
     };
 
     const refetch = async () => {
@@ -458,6 +493,8 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
                 setDate,
                 setPeriod,
                 setLocation,
+                setDateRange,
+                setPeriodRange,
                 loading,
                 error,
                 refetch,

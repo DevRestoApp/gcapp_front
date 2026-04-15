@@ -7,7 +7,7 @@ import {
     Text,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ReportHeader } from "@/src/client/components/reports/header";
+import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
 
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -37,8 +37,8 @@ export default function ExpensesReports() {
         analytics,
         organizations,
         filters,
-        setDate,
-        setPeriod,
+        setDateRange,
+        setPeriodRange,
         setLocation,
         loading,
         error,
@@ -48,14 +48,15 @@ export default function ExpensesReports() {
     if (loading) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Отчёты по персоналу"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.loadingContainer}>
@@ -69,14 +70,15 @@ export default function ExpensesReports() {
     if (error) {
         return (
             <View style={[styles.container, backgroundsStyles.generalBg]}>
-                <ReportHeader
+                <ReportHeaderPeriod
                     title="Отчёты по персоналу"
-                    date={filters.date}
-                    period={filters.period}
+                    dateFrom={filters.date_from}
+                    dateTo={filters.date_to}
+                    activePeriod={filters.period}
                     location={filters.organization_id}
                     onBack={() => router.push("/ceo/reports")}
-                    onDateChange={setDate}
-                    onPeriodChange={setPeriod}
+                    onDateRangeChange={setDateRange}
+                    onPeriodChange={setPeriodRange}
                     onLocationChange={setLocation}
                 />
                 <View style={styles.errorContainer}>
@@ -118,14 +120,15 @@ export default function ExpensesReports() {
     // Main content
     return (
         <View style={[styles.container, backgroundsStyles.generalBg]}>
-            <ReportHeader
+            <ReportHeaderPeriod
                 title="Отчёты по персоналу"
-                date={filters.date}
-                period={filters.period}
+                dateFrom={filters.date_from}
+                dateTo={filters.date_to}
+                activePeriod={filters.period}
                 location={filters.organization_id}
                 onBack={() => router.push("/ceo/reports")}
-                onDateChange={setDate}
-                onPeriodChange={setPeriod}
+                onDateRangeChange={setDateRange}
+                onPeriodChange={setPeriodRange}
                 onLocationChange={setLocation}
                 organizations={organizations}
             />
