@@ -69,7 +69,6 @@ export default function ActiveShiftWrapper() {
                     sales_total="0"
                     sales_number="0"
                     onCloseShift={(data) => {
-                        console.log("Shift closed:", data);
                         // Navigate to login or generate report
                     }}
                     onCancel={() => console.log("Cancelled")}

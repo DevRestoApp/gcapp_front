@@ -16,16 +16,15 @@ export default function OrderHistory({
     location,
     room,
 }: OrderHistoryProps) {
-    console.log("asd", items);
     const calculateTotal = () => {
         return items.reduce(
-            (total, item) => total + item.price * item.quantity,
+            (total, item) => total + item.price * item.amount,
             0,
         );
     };
 
     const getTotalItemsCount = () => {
-        return items.reduce((total, item) => total + item.quantity, 0);
+        return items.reduce((total, item) => total + item.amount, 0);
     };
 
     const formatPrice = (price: number) => {
@@ -87,7 +86,7 @@ export default function OrderHistory({
                                                 styles.historyItemTextRemoved,
                                         ]}
                                     >
-                                        Количество: {item.quantity}
+                                        Количество: {item.amount}
                                     </Text>
                                 </View>
                             </View>

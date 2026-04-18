@@ -17,7 +17,7 @@ export interface Dish {
 
 export interface OrderItem {
     dishId: string;
-    quantity: number;
+    amount: number;
     price: number;
 }
 

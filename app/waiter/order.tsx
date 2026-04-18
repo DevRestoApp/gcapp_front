@@ -21,7 +21,7 @@ import Loading from "@/src/client/components/Loading";
 
 interface OrderItem {
     dishId: string;
-    quantity: number;
+    amount: number;
     price: number;
     name?: string;
 }
@@ -68,7 +68,7 @@ const parseApiOrder = (raw: ApiOrder): Order => ({
     room: raw.room,
     items: raw.items.map((item, index) => ({
         dishId: index.toString(),
-        quantity: item.dish_amount_int || 1,
+        amount: item.dish_amount_int || 1,
         price: item.dish_discount_sum_int || 0,
         name: item.dish_name || "Неизвестное блюдо",
     })),
