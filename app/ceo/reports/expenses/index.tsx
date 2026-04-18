@@ -5,6 +5,7 @@ import {
     StyleSheet,
     ActivityIndicator,
     Text,
+    TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
@@ -31,6 +32,19 @@ export default function ExpensesReports() {
         loading,
         error,
     } = useReports();
+
+    const navigateToDetails = (itemId: string, itemType: string) => {
+        router.push({
+            pathname: "/ceo/reports/expenses/details",
+            params: {
+                item_id: itemId,
+                item_type: itemType,
+                date_from: filters.date_from || "",
+                date_to: filters.date_to || "",
+                organization_id: filters.organization_id || "",
+            },
+        });
+    };
 
     // get data from context provider
     const renderGeneralCard = () => {
@@ -81,16 +95,7 @@ export default function ExpensesReports() {
     };
 
     const renderItemListExpenses = (items) => {
-        // { title, value, date, type }
-        const expensesList = items.map((item) => {
-            return {
-                title: item.transaction_name,
-                value: item.amount,
-                date: filters.date.slice(0, 5) ?? "",
-                type: "expense",
-            };
-        });
-        if (!expensesList || expensesList.length === 0) {
+        if (!items || items.length === 0) {
             return null;
         }
 
@@ -98,25 +103,28 @@ export default function ExpensesReports() {
             <View style={styles.card}>
                 <Text style={cardStyles.subsectionTitle}>Детали изъятия</Text>
                 <View style={cardStyles.reportsContainer}>
-                    {expensesList.map((item) => (
-                        <React.Fragment key={item.id}>
-                            <ReportCard {...item} />
-                        </React.Fragment>
+                    {items.map((item, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() =>
+                                navigateToDetails(item.id, "expense")
+                            }
+                            activeOpacity={0.7}
+                        >
+                            <ReportCard
+                                title={item.transaction_name}
+                                value={String(item.amount)}
+                                date={filters.date.slice(0, 5) ?? ""}
+                                type="expense"
+                            />
+                        </TouchableOpacity>
                     ))}
                 </View>
             </View>
         );
     };
     const renderItemListRevenues = (items) => {
-        const incomeList = items.map((item) => {
-            return {
-                title: item.category,
-                value: item.amount,
-                date: filters.date.slice(0, 5) ?? "",
-                type: "income",
-            };
-        });
-        if (!incomeList || incomeList.length === 0) {
+        if (!items || items.length === 0) {
             return null;
         }
 
@@ -124,10 +132,21 @@ export default function ExpensesReports() {
             <View style={styles.card}>
                 <Text style={cardStyles.subsectionTitle}>Детали доходов</Text>
                 <View style={cardStyles.reportsContainer}>
-                    {incomeList.map((item) => (
-                        <React.Fragment key={item.id}>
-                            <ReportCard {...item} />
-                        </React.Fragment>
+                    {items.map((item, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() =>
+                                navigateToDetails(item.category, "revenue")
+                            }
+                            activeOpacity={0.7}
+                        >
+                            <ReportCard
+                                title={item.category}
+                                value={String(item.amount)}
+                                date={filters.date.slice(0, 5) ?? ""}
+                                type="income"
+                            />
+                        </TouchableOpacity>
                     ))}
                 </View>
             </View>
