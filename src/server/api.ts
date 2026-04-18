@@ -9,8 +9,6 @@ const { EXPO_PUBLIC_API_URL } = Constants.expoConfig?.extra || {};
 
 const baseURL = EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL;
 
-console.log("🔍 API baseURL:", baseURL); // temporary debug log
-
 const api = axios.create({
     baseURL,
     timeout: 30000,
