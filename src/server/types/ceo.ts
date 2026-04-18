@@ -37,7 +37,7 @@ export interface GetTaskType {
 }
 
 export interface TaskType {
-    success: true;
+    success: boolean;
     message: string;
     task: Tasks;
 }
@@ -71,4 +71,32 @@ export interface QuestDetail {
 
 export interface GetQuestDetailType {
     quest: QuestDetail;
+}
+
+export interface getProfitlossDetailsInputType {
+    item_id: string;
+    item_type: string;
+    date_from: string;
+    date_to: string;
+    organization_id?: number | null;
+}
+type ProfitlossDetail = {
+    comment: string;
+    date: string;
+    amount: number;
+    name: string;
+};
+type ProfitlossOrganization = {
+    organization_id: number;
+    organization_name: string;
+    amount: number;
+    details: ProfitlossDetail[];
+};
+export interface getProfitlossDetailsType {
+    success: boolean;
+    item_id: string;
+    item_type: string;
+    item_name: string;
+    total: number;
+    by_organization: ProfitlossOrganization[];
 }
