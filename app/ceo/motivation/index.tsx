@@ -196,11 +196,10 @@ export default function QuestManagementScreen() {
             due_date: string;
         }) => {
             try {
-                // TODO убрать user.id === 10 при релизе
                 await createTaskWrapper({
                     title: data.title,
                     description: data.description,
-                    employee_id: data.user_id === 10 ? 322256 : data.user_id,
+                    employee_id: data.user_id,
                     organization_id: data.organization_id,
                     due_date: data.due_date,
                 });
