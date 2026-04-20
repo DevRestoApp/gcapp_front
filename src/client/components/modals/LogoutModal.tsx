@@ -80,13 +80,7 @@ const AccountActionsModal = React.forwardRef<
             setIsProcessing(true);
 
             try {
-                console.log("a");
                 onLogout?.();
-                console.log("b");
-
-                console.log("Выход выполнен", "Вы успешно вышли из системы", [
-                    { text: "OK" },
-                ]);
 
                 handleClose();
             } catch (error) {

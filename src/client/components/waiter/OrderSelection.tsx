@@ -22,7 +22,7 @@ interface Dish {
 
 interface OrderItem {
     dishId: string;
-    quantity: number;
+    amount: number;
     price: number;
     name?: string;
 }

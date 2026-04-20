@@ -41,7 +41,6 @@ export function OrderHistoryCard({
             bgStyle = backgroundsStyles.generalBg;
             break;
     }
-    console.log(type);
     return (
         <View
             style={{

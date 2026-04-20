@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, {
+    useState,
+    useCallback,
+    useRef,
+    useMemo,
+    useEffect,
+} from "react";
 import {
     View,
     Text,
@@ -10,7 +16,7 @@ import {
     TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Entypo } from "@expo/vector-icons";
 
 import { QuestHeader } from "@/src/client/components/reports/QuestHeader";
@@ -22,6 +28,7 @@ import AddQuestModal, {
     AddQuestModalRef,
 } from "@/src/client/components/modals/AddQuestModal";
 import Loading from "@/src/client/components/Loading";
+import SegmentedControl from "@/src/client/components/Tabs";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -30,6 +37,7 @@ import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
     const router = useRouter();
+    const { openModal } = useLocalSearchParams<{ openModal?: string }>();
     const {
         quests,
         tasks,
@@ -51,12 +59,30 @@ export default function QuestManagementScreen() {
     const safeEmployees = employees || [];
     const safeShifts = shifts || { questsCount: 0 };
 
-    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [selectedDate, setSelectedDate] = useState<string>(() =>
+        new Date().toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        }),
+    );
     const [selectedEmployee, setSelectedEmployee] = useState<string>("");
     const [selectedCompleted, setSelectedCompleted] = useState<string>("");
     const [questsLoading, setQuestsLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<"quest" | "task">("quest");
+
+    const tabs = [
+        { label: "Квесты", value: "quest" },
+        { label: "Задачи", value: "task" },
+    ];
 
     const addQuestModalRef = useRef<AddQuestModalRef>(null);
+
+    useEffect(() => {
+        if (openModal === "true") {
+            setTimeout(() => addQuestModalRef.current?.open(activeTab), 300);
+        }
+    }, [openModal]);
 
     const handleDateChange = useCallback(
         async (dateStr: string) => {
@@ -287,73 +313,89 @@ export default function QuestManagementScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                 >
-                    {/* Quests section */}
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>
-                            Квесты{selectedDate ? ` на ${selectedDate}` : ""}
-                        </Text>
-                        <Text style={styles.sectionSubtitle}>
-                            {filteredQuests.length}{" "}
-                            {filteredQuests.length === 1 ? "квест" : "квестов"}
-                        </Text>
-                    </View>
-                    <FlatList
-                        data={filteredQuests}
-                        renderItem={renderQuestItem}
-                        keyExtractor={questKeyExtractor}
-                        ItemSeparatorComponent={ItemSeparator}
-                        ListEmptyComponent={
-                            <View style={styles.emptyState}>
-                                <Text style={styles.emptyIcon}>🎯</Text>
-                                <Text style={styles.emptyText}>
-                                    Нет квестов на выбранную дату
-                                </Text>
-                                <Text style={styles.emptySubtext}>
-                                    Создайте новый квест, нажав на кнопку "+"
-                                </Text>
-                            </View>
+                    <SegmentedControl
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={(value) =>
+                            setActiveTab(value as "quest" | "task")
                         }
-                        scrollEnabled={false}
+                        containerStyle={styles.segmentedControl}
                     />
 
-                    {/* Tasks section */}
-                    <View
-                        style={[
-                            styles.sectionHeader,
-                            styles.sectionHeaderTasks,
-                        ]}
-                    >
-                        <Text style={styles.sectionTitle}>
-                            Задачи{selectedDate ? ` на ${selectedDate}` : ""}
-                        </Text>
-                        <Text style={styles.sectionSubtitle}>
-                            {filteredTasks.length}{" "}
-                            {filteredTasks.length === 1 ? "задача" : "задач"}
-                        </Text>
-                    </View>
-                    <FlatList
-                        data={filteredTasks}
-                        renderItem={renderTaskItem}
-                        keyExtractor={taskKeyExtractor}
-                        ItemSeparatorComponent={ItemSeparator}
-                        ListEmptyComponent={
-                            <View style={styles.emptyState}>
-                                <Text style={styles.emptyIcon}>📋</Text>
-                                <Text style={styles.emptyText}>
-                                    Нет задач на выбранную дату
+                    {activeTab === "quest" ? (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>
+                                    Квесты
+                                    {selectedDate ? ` на ${selectedDate}` : ""}
                                 </Text>
-                                <Text style={styles.emptySubtext}>
-                                    Создайте новую задачу, нажав на кнопку "+"
+                                <Text style={styles.sectionSubtitle}>
+                                    {filteredQuests.length}{" "}
+                                    {filteredQuests.length === 1
+                                        ? "квест"
+                                        : "квестов"}
                                 </Text>
                             </View>
-                        }
-                        scrollEnabled={false}
-                    />
+                            <FlatList
+                                data={filteredQuests}
+                                renderItem={renderQuestItem}
+                                keyExtractor={questKeyExtractor}
+                                ItemSeparatorComponent={ItemSeparator}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyIcon}>🎯</Text>
+                                        <Text style={styles.emptyText}>
+                                            Нет квестов на выбранную дату
+                                        </Text>
+                                        <Text style={styles.emptySubtext}>
+                                            Создайте новый квест, нажав на
+                                            кнопку "+"
+                                        </Text>
+                                    </View>
+                                }
+                                scrollEnabled={false}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>
+                                    Задачи
+                                    {selectedDate ? ` на ${selectedDate}` : ""}
+                                </Text>
+                                <Text style={styles.sectionSubtitle}>
+                                    {filteredTasks.length}{" "}
+                                    {filteredTasks.length === 1
+                                        ? "задача"
+                                        : "задач"}
+                                </Text>
+                            </View>
+                            <FlatList
+                                data={filteredTasks}
+                                renderItem={renderTaskItem}
+                                keyExtractor={taskKeyExtractor}
+                                ItemSeparatorComponent={ItemSeparator}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyIcon}>📋</Text>
+                                        <Text style={styles.emptyText}>
+                                            Нет задач на выбранную дату
+                                        </Text>
+                                        <Text style={styles.emptySubtext}>
+                                            Создайте новую задачу, нажав на
+                                            кнопку "+"
+                                        </Text>
+                                    </View>
+                                }
+                                scrollEnabled={false}
+                            />
+                        </>
+                    )}
                 </ScrollView>
             )}
 
             <TouchableOpacity
-                onPress={() => addQuestModalRef.current?.open()}
+                onPress={() => addQuestModalRef.current?.open(activeTab)}
                 style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
@@ -379,12 +421,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 170,
     },
+    segmentedControl: {
+        paddingHorizontal: 0,
+        paddingTop: 0,
+        paddingBottom: 16,
+    },
     sectionHeader: {
         marginBottom: 12,
         gap: 4,
-    },
-    sectionHeaderTasks: {
-        marginTop: 24,
     },
     sectionTitle: {
         color: "#fff",

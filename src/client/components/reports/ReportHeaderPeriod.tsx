@@ -65,6 +65,7 @@ export function ReportHeaderPeriod({
     organizations,
 }: ReportHeaderPeriodProps) {
     const [showCalendar, setShowCalendar] = useState(false);
+    const [showPeriodModal, setShowPeriodModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
 
     const LOCATIONS = useMemo(() => {
@@ -83,6 +84,18 @@ export function ReportHeaderPeriod({
     const handlePeriodPress = (period: (typeof PERIODS)[number]) => {
         const { dateFrom: from, dateTo: to } = calcPeriodRange(period.days);
         onPeriodChange?.(period.value, from, to);
+    };
+
+    const handlePeriodSelect = (selectedValue: string) => {
+        const period = PERIODS.find((p) => p.value === selectedValue);
+        if (period) handlePeriodPress(period);
+        setShowPeriodModal(false);
+    };
+
+    const getPeriodLabel = (value: string) => {
+        if (!value) return "Выбрать...";
+        const item = PERIODS.find((p) => p.value === value);
+        return item ? item.label : "Выбрать...";
     };
 
     const handleRangeSelect = (from: string, to: string) => {
@@ -186,62 +199,37 @@ export function ReportHeaderPeriod({
                 <View style={styles.placeholder} />
             </View>
 
-            {/* Period buttons row */}
+            {/* Filters row */}
             <View style={styles.filtersContainer}>
-                {PERIODS.map((period) => (
-                    <TouchableOpacity
-                        key={period.value}
-                        style={[
-                            styles.periodButton,
-                            activePeriod === period.value &&
-                                styles.periodButtonActive,
-                        ]}
-                        onPress={() => handlePeriodPress(period)}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            style={[
-                                styles.periodButtonText,
-                                activePeriod === period.value &&
-                                    styles.periodButtonTextActive,
-                            ]}
-                        >
-                            {period.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-
-                {/* Custom range button */}
                 <TouchableOpacity
-                    style={[
-                        styles.rangeButton,
-                        isCustomRange && styles.rangeButtonActive,
-                    ]}
+                    style={styles.filterButton}
+                    onPress={() => setShowPeriodModal(true)}
+                >
+                    <Text style={styles.filterText}>
+                        {getPeriodLabel(activePeriod)}
+                    </Text>
+                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.filterButton}
                     onPress={() => setShowCalendar(true)}
                     activeOpacity={0.7}
                 >
                     <Ionicons
                         name="calendar-outline"
                         size={18}
-                        color={isCustomRange ? "#000" : "#FFFFFF"}
+                        color="#FFFFFF"
                     />
-                    <Text
-                        style={[
-                            styles.rangeButtonText,
-                            isCustomRange && styles.rangeButtonTextActive,
-                        ]}
-                        numberOfLines={1}
-                    >
+                    <Text style={styles.filterText} numberOfLines={1}>
                         {isCustomRange ? rangeLabel : "Период"}
                     </Text>
+                    <Ionicons name="chevron-down" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
-            </View>
 
-            {/* Location row */}
-            {organizations && organizations.length > 0 && (
-                <View style={styles.locationContainer}>
+                {organizations && organizations.length > 0 && (
                     <TouchableOpacity
-                        style={styles.locationButton}
+                        style={styles.filterButton}
                         onPress={() => setShowLocationModal(true)}
                     >
                         <Ionicons
@@ -249,10 +237,7 @@ export function ReportHeaderPeriod({
                             size={18}
                             color="#FFFFFF"
                         />
-                        <Text
-                            style={styles.locationButtonText}
-                            numberOfLines={1}
-                        >
+                        <Text style={styles.filterText} numberOfLines={1}>
                             {getLocationLabel(location)}
                         </Text>
                         <Ionicons
@@ -261,8 +246,8 @@ export function ReportHeaderPeriod({
                             color="#FFFFFF"
                         />
                     </TouchableOpacity>
-                </View>
-            )}
+                )}
+            </View>
 
             <ReportCalendarRange
                 visible={showCalendar}
@@ -271,6 +256,14 @@ export function ReportHeaderPeriod({
                 initialStartDate={dateFrom}
                 initialEndDate={dateTo}
             />
+
+            {renderModal(
+                showPeriodModal,
+                () => setShowPeriodModal(false),
+                PERIODS,
+                activePeriod,
+                handlePeriodSelect,
+            )}
 
             {renderModal(
                 showLocationModal,
@@ -311,70 +304,24 @@ const styles = StyleSheet.create({
     placeholder: { width: 28, height: 28 },
     filtersContainer: {
         flexDirection: "row",
+        flexWrap: "wrap",
         paddingHorizontal: 16,
         gap: 8,
-        paddingBottom: 8,
-    },
-    periodButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 16,
-        backgroundColor: "#1C1C1E",
-    },
-    periodButtonActive: {
-        backgroundColor: "#FFFFFF",
-    },
-    periodButtonText: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontWeight: "500",
-    },
-    periodButtonTextActive: {
-        color: "#000000",
-        fontWeight: "600",
-    },
-    rangeButton: {
-        flex: 1,
-        flexDirection: "row",
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        alignItems: "center",
-        gap: 6,
-        borderRadius: 16,
-        backgroundColor: "#1C1C1E",
-    },
-    rangeButtonActive: {
-        backgroundColor: "#FFFFFF",
-    },
-    rangeButtonText: {
-        color: "#FFFFFF",
-        fontSize: 14,
-        fontWeight: "500",
-        flex: 1,
-    },
-    rangeButtonTextActive: {
-        color: "#000000",
-        fontWeight: "600",
-    },
-    locationContainer: {
-        paddingHorizontal: 16,
         paddingBottom: 12,
     },
-    locationButton: {
+    filterButton: {
         flexDirection: "row",
         paddingHorizontal: 12,
         paddingVertical: 10,
         alignItems: "center",
-        gap: 6,
+        gap: 4,
         borderRadius: 16,
         backgroundColor: "#1C1C1E",
-        alignSelf: "flex-start",
     },
-    locationButtonText: {
+    filterText: {
         color: "#FFFFFF",
         fontSize: 14,
         lineHeight: 20,
-        maxWidth: 200,
     },
     modalOverlay: {
         flex: 1,

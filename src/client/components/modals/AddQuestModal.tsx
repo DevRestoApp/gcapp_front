@@ -56,7 +56,7 @@ interface AddQuestModalProps {
 }
 
 export type AddQuestModalRef = {
-    open: () => void;
+    open: (initialTab?: "quest" | "task") => void;
     close: () => void;
     isVisible: () => boolean;
 };
@@ -131,7 +131,12 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
         const [showTaskCalendar, setShowTaskCalendar] = useState(false);
 
         React.useImperativeHandle(ref, () => ({
-            open: () => modalRef.current?.open(),
+            open: (initialTab?: "quest" | "task") => {
+                if (initialTab) {
+                    setActiveTab(initialTab);
+                }
+                modalRef.current?.open();
+            },
             close: () => modalRef.current?.close(),
             isVisible: () => modalRef.current?.isVisible() || false,
         }));
@@ -161,7 +166,6 @@ const AddQuestModal = React.forwardRef<AddQuestModalRef, AddQuestModalProps>(
             setShowTaskLocationPicker(false);
             setShowTaskCalendar(false);
 
-            setActiveTab("quest");
             setIsSubmitting(false);
         }, []);
 

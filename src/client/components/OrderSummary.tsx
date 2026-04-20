@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 
 interface OrderItem {
     dishId: string;
-    quantity: number;
+    amount: number;
     price: number;
 }
 
@@ -22,13 +22,13 @@ export default function OrderSummary({
 }: OrderSummaryProps) {
     const calculateTotal = () => {
         return items.reduce(
-            (total, item) => total + item.price * item.quantity,
+            (total, item) => total + item.price * item.amount,
             0,
         );
     };
 
     const getTotalItemsCount = () => {
-        return items.reduce((total, item) => total + item.quantity, 0);
+        return items.reduce((total, item) => total + item.amount, 0);
     };
 
     const formatPrice = (price: number) => {
