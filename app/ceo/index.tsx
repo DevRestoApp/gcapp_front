@@ -7,7 +7,6 @@ import {
     StyleSheet,
     StatusBar,
     Image,
-    ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -243,11 +242,25 @@ export default function IndexScreen() {
                     />
                     <TouchableOpacity
                         style={styles.addButton}
-                        onPress={handleMotivationPress}
+                        onPress={() =>
+                            router.push({
+                                pathname: "/ceo/motivation",
+                                params: { openModal: "true" },
+                            })
+                        }
                         activeOpacity={0.8}
                     >
                         <Text style={styles.addButtonIcon}>+</Text>
                         <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.viewButton}
+                        onPress={handleMotivationPress}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.viewButtonText}>
+                            Посмотреть квесты
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -418,6 +431,22 @@ const styles = StyleSheet.create({
     },
     addButtonText: {
         color: "#2C2D2E",
+        fontSize: 16,
+        fontWeight: "600",
+        textAlign: "center",
+        lineHeight: 24,
+    },
+    viewButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 44,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    viewButtonText: {
+        color: "#fff",
         fontSize: 16,
         fontWeight: "600",
         textAlign: "center",

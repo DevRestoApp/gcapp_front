@@ -21,6 +21,7 @@ import { useAuth } from "@/src/contexts/AuthContext";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import SegmentedControl from "@/src/client/components/Tabs";
 
 export default function MotivationScreen() {
     const router = useRouter();
@@ -31,6 +32,12 @@ export default function MotivationScreen() {
     const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [loading, setLoading] = useState(false);
+
+    const tabs = [
+        { label: "Квест", value: "quest" },
+        { label: "Задача", value: "task" },
+    ];
+    const [activeTab, setActiveTab] = useState<"quest" | "task">("task");
 
     const loadData = useCallback(
         async (date: string) => {
@@ -191,29 +198,40 @@ export default function MotivationScreen() {
                 >
                     <Text style={styles.dateTitle}>{selectedDate}</Text>
 
-                    <Text style={styles.sectionTitle}>Квесты</Text>
-                    <FlatList
-                        data={quests}
-                        renderItem={renderQuestItem}
-                        keyExtractor={questKeyExtractor}
-                        ListEmptyComponent={renderEmptyQuests}
-                        ItemSeparatorComponent={ItemSeparator}
-                        scrollEnabled={false}
+                    <SegmentedControl
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={(value) => {
+                            setActiveTab(value as "quest" | "task");
+                        }}
+                        containerStyle={styles.segmentedControl}
                     />
 
-                    <Text
-                        style={[styles.sectionTitle, styles.sectionTitleTasks]}
-                    >
-                        Задачи
-                    </Text>
-                    <FlatList
-                        data={tasks}
-                        renderItem={renderTaskItem}
-                        keyExtractor={taskKeyExtractor}
-                        ListEmptyComponent={renderEmptyTasks}
-                        ItemSeparatorComponent={ItemSeparator}
-                        scrollEnabled={false}
-                    />
+                    {activeTab === "quest" ? (
+                        <>
+                            <Text style={styles.sectionTitle}>Квесты</Text>
+                            <FlatList
+                                data={quests}
+                                renderItem={renderQuestItem}
+                                keyExtractor={questKeyExtractor}
+                                ListEmptyComponent={renderEmptyQuests}
+                                ItemSeparatorComponent={ItemSeparator}
+                                scrollEnabled={false}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <Text style={styles.sectionTitle}>Задачи</Text>
+                            <FlatList
+                                data={tasks}
+                                renderItem={renderTaskItem}
+                                keyExtractor={taskKeyExtractor}
+                                ListEmptyComponent={renderEmptyTasks}
+                                ItemSeparatorComponent={ItemSeparator}
+                                scrollEnabled={false}
+                            />
+                        </>
+                    )}
                 </ScrollView>
             )}
         </SafeAreaView>
@@ -249,15 +267,17 @@ const styles = StyleSheet.create({
         lineHeight: 28,
         paddingBottom: 20,
     },
+    segmentedControl: {
+        paddingHorizontal: 0,
+        paddingTop: 0,
+        paddingBottom: 16,
+    },
     sectionTitle: {
         color: "#fff",
         fontSize: 20,
         fontWeight: "bold",
         lineHeight: 24,
         marginBottom: 12,
-    },
-    sectionTitleTasks: {
-        marginTop: 24,
     },
     itemSeparator: {
         height: 12,
