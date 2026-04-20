@@ -56,7 +56,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             setToken(savedToken ?? null); // undefined → null
             if (savedUser && savedUser !== "undefined") {
-                setUser(JSON.parse(savedUser));
+                try {
+                    setUser(JSON.parse(savedUser));
+                } catch {
+                    await storage.removeItem("user");
+                    await storage.removeItem("access_token");
+                    setToken(null);
+                }
             }
         };
         load();

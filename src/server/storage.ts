@@ -9,7 +9,7 @@ export const storage = {
             if (isMobile) {
                 await SecureStore.setItemAsync(key, value);
             } else {
-                localStorage.setItem(key, value);
+                sessionStorage.setItem(key, value);
             }
         } catch (e) {
             console.error(e);
@@ -19,14 +19,14 @@ export const storage = {
         if (isMobile) {
             return await SecureStore.getItemAsync(key);
         } else {
-            return localStorage.getItem(key);
+            return sessionStorage.getItem(key);
         }
     },
     async removeItem(key: string) {
         if (isMobile) {
             await SecureStore.deleteItemAsync(key);
         } else {
-            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
         }
     },
 };

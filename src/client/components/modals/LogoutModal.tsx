@@ -1,5 +1,3 @@
-import * as Updates from "expo-updates";
-
 import React, { useRef, useCallback, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import ModalWrapper, { ModalWrapperRef } from "./ModalWrapper";
@@ -87,7 +85,6 @@ const AccountActionsModal = React.forwardRef<
                 console.log(
                     "Ошибка",
                     "Не удалось выполнить выход. Попробуйте снова.",
-                    [{ text: "OK" }],
                 );
             } finally {
                 setIsProcessing(false);

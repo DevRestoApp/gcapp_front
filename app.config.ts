@@ -4,14 +4,17 @@ import { ExpoConfig } from "@expo/config-types";
 declare const process: any;
 
 // Helper to validate URL
-const getValidUrl = (url: string | undefined, fallback: string): string => {
-    if (!url) return fallback;
+const getValidUrl = (url: string | undefined): string => {
+    if (!url) {
+        console.error("Missing required URL environment variable");
+        return "";
+    }
     try {
         new URL(url);
         return url;
     } catch {
-        console.warn(`Invalid URL: ${url}, using fallback: ${fallback}`);
-        return fallback;
+        console.error(`Invalid URL: ${url}`);
+        return "";
     }
 };
 
@@ -30,15 +33,10 @@ const config: ExpoConfig = {
     userInterfaceStyle: "light",
     extra: {
         IIKO_API: process.env.IIKO_API || "IIKOTOKEN",
-        API_URL: getValidUrl(process.env.API_URL, "http://localhost:8008"),
-        EXPO_PUBLIC_API_URL: getValidUrl(
-            process.env.EXPO_PUBLIC_API_URL,
-            "http://localhost:8008",
-        ),
-        EXPO_PUBLIC_TELEGRAM_BOT_TOKEN:
-            process.env.EXPO_PUBLIC_TELEGRAM_BOT_TOKEN || "",
-        EXPO_PUBLIC_TELEGRAM_CHAT_ID:
-            process.env.EXPO_PUBLIC_TELEGRAM_CHAT_ID || "",
+        API_URL: getValidUrl(process.env.API_URL),
+        EXPO_PUBLIC_API_URL: getValidUrl(process.env.EXPO_PUBLIC_API_URL),
+        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || "",
+        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || "",
         EXPO_PUBLIC_SKIP_LOCATION_CHECK:
             process.env.EXPO_PUBLIC_SKIP_LOCATION_CHECK || "false",
         eas: {
@@ -96,7 +94,7 @@ const config: ExpoConfig = {
                     buildToolsVersion: "36.0.0",
                     androidGradlePluginVersion: "8.10.0",
                     ndkVersion: "28.0.13004108",
-                    usesCleartextTraffic: true,
+                    usesCleartextTraffic: false,
                     networkInspector: true,
                     useLegacyPackaging: false,
                     packagingOptions: {
