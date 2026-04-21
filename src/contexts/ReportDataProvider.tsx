@@ -364,12 +364,23 @@ export const ReportsProvider = ({ children }: { children: ReactNode }) => {
     const [organizations, setOrganizations] = useState<any | null>(null);
 
     // Filter state - shared across ALL report screens
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+
+    const formatDate = (d: Date) => {
+        const day = d.getDate().toString().padStart(2, "0");
+        const month = (d.getMonth() + 1).toString().padStart(2, "0");
+        const year = d.getFullYear();
+        return `${day}.${month}.${year}`;
+    };
+
     const [filters, setFilters] = useState<ReportFilters>({
         date: getTodayFormatted(),
-        period: "",
+        period: "week",
         organization_id: "",
-        date_from: "",
-        date_to: "",
+        date_from: formatDate(weekAgo),
+        date_to: formatDate(today),
     });
 
     const [loading, setLoading] = useState(true);
