@@ -120,7 +120,7 @@ export default function ExpensesDetails() {
                     {org.amount.toFixed(2)}
                 </Text>
             </View>
-            {org.details.map((detail, index) => (
+            {(org.details || []).map((detail, index) => (
                 <View key={index}>{renderDetailItem({ item: detail })}</View>
             ))}
         </View>
@@ -147,11 +147,11 @@ export default function ExpensesDetails() {
         if (!data) return null;
 
         // Case 1: specific organization — show only its details
-        if (hasOrganizationId && data.by_organization.length === 1) {
+        if (hasOrganizationId && data.by_organization?.length === 1) {
             const org = data.by_organization[0];
             return (
                 <FlatList
-                    data={org.details}
+                    data={org.details || []}
                     keyExtractor={(_, index) => index.toString()}
                     renderItem={renderDetailItem}
                     contentContainerStyle={styles.listContent}
@@ -170,7 +170,7 @@ export default function ExpensesDetails() {
         // Case 2: all locations — grouped by organization
         return (
             <FlatList
-                data={data.by_organization}
+                data={data.by_organization || []}
                 keyExtractor={(item) => item.organization_id.toString()}
                 renderItem={renderOrgSection}
                 contentContainerStyle={styles.listContent}
