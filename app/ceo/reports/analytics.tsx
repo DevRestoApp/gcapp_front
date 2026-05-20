@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     Text,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import { ReportSalesChart } from "@/src/client/components/reports/salesBarChart";
@@ -128,7 +129,9 @@ export default function Reports() {
     // Loading state
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Общие показатели"
                     dateFrom={filters.date_from}
@@ -145,14 +148,16 @@ export default function Reports() {
                     <ActivityIndicator size="large" color="#3C82FD" />
                     <Text style={styles.loadingText}>Загрузка отчетов...</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Error state
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Общие показатели"
                     dateFrom={filters.date_from}
@@ -168,13 +173,13 @@ export default function Reports() {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Main content
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeaderPeriod
                 title="Общие показатели"
                 dateFrom={filters.date_from}
@@ -219,7 +224,7 @@ export default function Reports() {
                         />
                     )}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 
