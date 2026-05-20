@@ -20,13 +20,13 @@ const getValidUrl = (url: string | undefined): string => {
 
 const config: ExpoConfig = {
     name: process.env.APP_NAME || "GCApp",
-    slug: "gcapp_front",
+    slug: "gcappprod",
     owner: "qoqosyk",
-    scheme: "com.gcapp.mobile2",
+    scheme: "com.gcappprod.mobile",
     version: "1.0.1",
     runtimeVersion: "1.0.1",
     updates: {
-        url: "https://u.expo.dev/33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
+        url: "https://u.expo.dev/1005e280-27da-4377-940f-5432cddf9411",
     },
     orientation: "portrait",
     icon: "./assets/logo.png",
@@ -40,12 +40,12 @@ const config: ExpoConfig = {
         EXPO_PUBLIC_SKIP_LOCATION_CHECK:
             process.env.EXPO_PUBLIC_SKIP_LOCATION_CHECK || "false",
         eas: {
-            projectId: "33d9dc6a-69d6-409d-bfe2-efbc0c9f7345",
+            projectId: "1005e280-27da-4377-940f-5432cddf9411",
         },
     },
     android: {
         icon: "./assets/logo.png",
-        package: "com.gcapp.mobile2",
+        package: "com.gcappprod.mobile",
         permissions: [
             "INTERNET",
             "ACCESS_NETWORK_STATE",
@@ -59,12 +59,9 @@ const config: ExpoConfig = {
         },
     },
     ios: {
-        bundleIdentifier: "com.gcapp.mobile2",
+        bundleIdentifier: "com.gcappprod.mobile",
         buildNumber: "1",
         supportsTablet: true,
-        entitlements: {
-            "com.apple.developer.game-center": true,
-        },
         infoPlist: {
             ITSAppUsesNonExemptEncryption: false,
             NSLocationWhenInUseUsageDescription:
