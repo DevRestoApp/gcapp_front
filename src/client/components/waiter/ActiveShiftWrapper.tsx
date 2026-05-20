@@ -36,7 +36,7 @@ export default function ActiveShiftWrapper() {
             {/* Top row */}
             <View style={styles.row}>
                 <View style={styles.half}>
-                    {<TimerCard timeElapsed={"00:00:00"}></TimerCard>}
+                    {<TimerCard startTime={"09:00"}></TimerCard>}
                 </View>
                 <View style={styles.half}>
                     {<EarningsCard amount={"15000"}></EarningsCard>}

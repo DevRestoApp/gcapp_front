@@ -565,7 +565,7 @@ export default function EditOrderMenuScreen() {
                                       ? `В категории "${selectedCategory}" ${MESSAGES.EMPTY_CATEGORY}`
                                       : MESSAGES.EMPTY_MENU}
                             </Text>
-                            {searchQuery && (
+                            {!!searchQuery && (
                                 <TouchableOpacity
                                     onPress={clearSearch}
                                     style={styles.clearSearchButton}

@@ -255,9 +255,7 @@ export default function Index() {
                     <View style={styles.row}>
                         <View style={styles.half}>
                             <TimerCard
-                                timeElapsed={
-                                    shiftStatus?.elapsedTime || "00:00:00"
-                                }
+                                startTime={shiftStatus?.startTime || ""}
                             />
                         </View>
                         <View style={styles.half}>

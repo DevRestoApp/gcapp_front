@@ -199,13 +199,13 @@ export default function ProfileScreen({
             <View style={styles.profileSection}>
                 <View style={styles.avatarContainer}>
                     <View style={styles.avatarBorder}>
-                        {profileData.avatar && (
+                        {profileData.avatar ? (
                             <Image
                                 source={{ uri: profileData.avatar }}
                                 style={styles.avatar}
                                 resizeMode="cover"
                             />
-                        )}
+                        ) : null}
                     </View>
                 </View>
 

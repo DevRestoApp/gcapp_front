@@ -345,7 +345,7 @@ export default function ExpenseScreen() {
                                     >
                                         {item.name}
                                     </Text>
-                                    {"code" in item && item.code && (
+                                    {"code" in item && !!item.code && (
                                         <Text style={styles.modalItemSubtext}>
                                             Код: {item.code}
                                         </Text>
@@ -414,7 +414,7 @@ export default function ExpenseScreen() {
                                     >
                                         {item.name}
                                     </Text>
-                                    {item.code && (
+                                    {!!item.code && (
                                         <Text style={styles.modalItemSubtext}>
                                             Код: {item.code} • Тип: {item.type}
                                         </Text>
@@ -481,7 +481,7 @@ export default function ExpenseScreen() {
                                     >
                                         {item.name}
                                     </Text>
-                                    {item.code && (
+                                    {!!item.code && (
                                         <Text style={styles.modalItemSubtext}>
                                             Код: {item.code} • Тип: {item.type}
                                         </Text>
@@ -551,12 +551,12 @@ export default function ExpenseScreen() {
                                     >
                                         {item.account_name}
                                     </Text>
-                                    {item.chief_account_name && (
+                                    {!!item.chief_account_name && (
                                         <Text style={styles.modalItemSubtext}>
                                             {item.chief_account_name}
                                         </Text>
                                     )}
-                                    {item.comment && (
+                                    {!!item.comment && (
                                         <Text style={styles.modalItemSubtext}>
                                             {item.comment}
                                         </Text>

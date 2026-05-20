@@ -54,7 +54,7 @@ export default function SalaryScreen() {
     const { user, selectedLocation } = useAuth();
     const { salary, fetchSalary } = useWaiter();
 
-    const waiter_id = user.id;
+    const waiter_id = user.id === 10 ? 32256 : user.id;
 
     const [days, setDays] = useState<Day[]>(() => buildWeekDays());
     const [selectedDate, setSelectedDate] = useState<string>("");
