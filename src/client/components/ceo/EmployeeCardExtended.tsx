@@ -100,6 +100,7 @@ const styles = StyleSheet.create({
         flexDirection: "row", // аватар + текст рядом
         alignItems: "center",
         gap: 8,
+        flex: 1,
     },
     employeeContent: {
         flexDirection: "row",
