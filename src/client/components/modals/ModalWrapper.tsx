@@ -14,6 +14,7 @@ import {
     BackHandler,
     StatusBar,
     Dimensions,
+    Keyboard,
 } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -189,7 +190,9 @@ const ModalWrapper = forwardRef<ModalWrapperRef, ModalWrapperProps>(
                     <TouchableWithoutFeedback onPress={handleBackdropPress}>
                         <View style={[styles.overlay, containerStyle]}>
                             {/* Modal content with animation */}
-                            <TouchableWithoutFeedback onPress={() => {}}>
+                            <TouchableWithoutFeedback
+                                onPress={Keyboard.dismiss}
+                            >
                                 <Animated.View
                                     style={[
                                         styles.modalContent,
