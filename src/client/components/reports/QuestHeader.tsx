@@ -4,6 +4,7 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     Modal,
     FlatList,
     TextInput,
@@ -124,15 +125,13 @@ export function QuestHeader({
             animationType="fade"
             onRequestClose={onClose}
         >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={onClose}
-            >
-                <View
-                    style={styles.modalContent}
-                    onStartShouldSetResponder={search ? () => true : undefined}
-                >
+            <View style={styles.modalOverlay}>
+                {/* Backdrop tap — absoluteFill sits behind the content */}
+                <TouchableWithoutFeedback onPress={onClose}>
+                    <View style={StyleSheet.absoluteFill} />
+                </TouchableWithoutFeedback>
+
+                <View style={styles.modalContent}>
                     {search && (
                         <View style={styles.searchContainer}>
                             <View style={styles.searchInputWrapper}>
@@ -159,6 +158,7 @@ export function QuestHeader({
                     <FlatList
                         data={items}
                         keyExtractor={(item) => item.value}
+                        keyboardShouldPersistTaps="handled"
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
@@ -191,7 +191,7 @@ export function QuestHeader({
                         )}
                     />
                 </View>
-            </TouchableOpacity>
+            </View>
         </Modal>
     );
 
@@ -365,14 +365,16 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: "flex-start",
+        paddingTop: 80,
+        paddingHorizontal: 16,
     },
     modalContent: {
         backgroundColor: "#1C1C1E",
         borderRadius: 20,
-        width: "80%",
-        maxHeight: "50%",
+        width: "100%",
+        maxHeight: "60%",
+        minHeight: 200,
         overflow: "hidden",
     },
     searchContainer: {
