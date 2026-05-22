@@ -16,7 +16,6 @@ import { ReportTable } from "@/src/client/components/reports/table";
 import { cardStyles } from "@/src/client/styles/ui/components/card.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 
-// ✅ Import from the context file, NOT from _layout
 import { useReports } from "@/src/contexts/ReportDataProvider";
 
 export default function ExpensesReports() {
