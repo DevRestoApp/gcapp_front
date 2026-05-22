@@ -27,7 +27,7 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { logout, user } = useAuth();
+    const { logout, user, setSelectedLocation } = useAuth();
 
     const handleMenuItemPress = useCallback((item: MenuItemType) => {
         switch (item) {
@@ -43,7 +43,8 @@ export default function ProfileScreen() {
     }, [router]);
 
     const handleChangeRole = useCallback(() => {
-        router.push("/");
+        setSelectedLocation(null);
+        router.replace("/");
     }, [router]);
 
     return (
