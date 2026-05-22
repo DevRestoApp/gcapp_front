@@ -249,6 +249,7 @@ export default function ChangePasswordScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {loading ? (
                     <Loading text="Загрузка данных" />

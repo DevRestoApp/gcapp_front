@@ -422,22 +422,12 @@ export default function EditOrderMenuScreen() {
                     <Text style={styles.headerCancelText}>Отмена</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Редактировать заказ</Text>
-                <TouchableOpacity
-                    onPress={handleSave}
-                    style={styles.headerDone}
-                    disabled={isSaving}
-                >
-                    {isSaving ? (
-                        <ActivityIndicator size="small" color="#4CAF50" />
-                    ) : (
-                        <Text style={styles.headerDoneText}>Готово</Text>
-                    )}
-                </TouchableOpacity>
             </View>
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Search */}
                 <View style={styles.searchWrapper}>

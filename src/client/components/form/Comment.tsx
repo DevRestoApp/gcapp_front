@@ -66,6 +66,8 @@ const commentStyles = StyleSheet.create({
         backgroundColor: "rgba(35, 35, 36, 1)",
         paddingHorizontal: 12,
         paddingVertical: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     input: {
         flex: 1,

@@ -95,7 +95,7 @@ export default function ManagerLayout() {
 
                     {/* Hidden Screens - Not shown in tab bar */}
                     <Tabs.Screen
-                        name="penalties/index"
+                        name="penalties"
                         options={{
                             href: null,
                             title: "Штрафы",
@@ -103,18 +103,10 @@ export default function ManagerLayout() {
                     />
 
                     <Tabs.Screen
-                        name="motivation/index"
+                        name="motivation"
                         options={{
                             href: null,
                             title: "Мотивация",
-                        }}
-                    />
-
-                    <Tabs.Screen
-                        name="motivation/[id]"
-                        options={{
-                            href: null,
-                            title: "Детали мотивации",
                         }}
                     />
                     <Tabs.Screen name="employees" options={{ href: null }} />

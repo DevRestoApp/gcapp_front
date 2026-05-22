@@ -332,6 +332,7 @@ export default function MenuScreen() {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Search */}
                 <View style={styles.searchWrapper}>

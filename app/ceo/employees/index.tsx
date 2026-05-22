@@ -112,6 +112,7 @@ export default function EmployeesScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Header */}
                 <View style={styles.header}>
