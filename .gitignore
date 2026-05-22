@@ -36,11 +36,14 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# expo template example
 app-example
-.env
 
-# android
+# native builds
 /android
+/ios
 
+# credentials
 .credentials.json
 credentials.json
+google-service-account.json
