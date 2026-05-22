@@ -77,7 +77,7 @@ export default function DishItem({
                 <Text style={styles.title} numberOfLines={2}>
                     {name}
                 </Text>
-                {quantity > 0 && (
+                {quantity > 0 && !showQuantity && (
                     <View style={styles.quantityBadge}>
                         <Text style={styles.quantityBadgeText}>{quantity}</Text>
                     </View>

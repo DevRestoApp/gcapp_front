@@ -90,6 +90,7 @@ export default function Warehouse() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Section Title */}
                 <Text style={styles.sectionTitle}>Склад</Text>

@@ -460,7 +460,7 @@ export default function StorageForm() {
                                     handleFormChange("account_id", value)
                                 }
                                 placeholder="Выберите счет"
-                                enableSearch={true}
+                                showSearchInput={true}
                             />
                         </FormField>
 

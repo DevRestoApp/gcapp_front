@@ -1,10 +1,4 @@
-import React, {
-    useState,
-    useCallback,
-    useRef,
-    useMemo,
-    useEffect,
-} from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
     View,
     Text,
@@ -12,7 +6,6 @@ import {
     ScrollView,
     StyleSheet,
     StatusBar,
-    Alert,
     TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,9 +17,6 @@ import QuestCard, {
     QuestEmployees,
 } from "@/src/client/components/ceo/QuestCard";
 import TaskCard, { Task } from "@/src/client/components/waiter/TaskCard";
-import AddQuestModal, {
-    AddQuestModalRef,
-} from "@/src/client/components/modals/AddQuestModal";
 import Loading from "@/src/client/components/Loading";
 import SegmentedControl from "@/src/client/components/Tabs";
 
@@ -44,10 +34,6 @@ export default function QuestManagementScreen() {
         employees,
         shifts,
         loading,
-        refetch,
-        createQuestAction,
-        createTaskWrapper,
-        locations,
         setDate: setInputDate,
         fetchTasksWrapper,
         fetchQuestsData,
@@ -76,11 +62,12 @@ export default function QuestManagementScreen() {
         { label: "Задачи", value: "task" },
     ];
 
-    const addQuestModalRef = useRef<AddQuestModalRef>(null);
-
     useEffect(() => {
         if (openModal === "true") {
-            setTimeout(() => addQuestModalRef.current?.open(activeTab), 300);
+            router.push({
+                pathname: "/ceo/motivation/add",
+                params: { tab: activeTab },
+            });
         }
     }, [openModal]);
 
@@ -151,66 +138,6 @@ export default function QuestManagementScreen() {
         }
         return result;
     }, [safeTasks, selectedEmployee, selectedCompleted]);
-
-    const handleAddQuest = useCallback(
-        async (data: {
-            title: string;
-            description: string;
-            amount: number;
-            reward: number;
-            unit: string;
-            durationDate: any;
-        }) => {
-            if (!createQuestAction) {
-                Alert.alert("Ошибка", "Функция создания квеста недоступна");
-                return;
-            }
-            try {
-                createQuestAction({
-                    title: data.title,
-                    description: data.description,
-                    reward: data.reward,
-                    target: data.amount,
-                    unit: data.unit,
-                    totalEmployees: safeEmployees.length,
-                    completedEmployees: 0,
-                    employeeNames: [],
-                    date: selectedDate,
-                    durationDate: data.durationDate,
-                });
-                await refetch();
-            } catch (error) {
-                console.error("Failed to create quest:", error);
-                Alert.alert("Ошибка", "Не удалось создать квест");
-            }
-        },
-        [selectedDate, safeEmployees.length, createQuestAction, refetch],
-    );
-
-    const handleAddTask = useCallback(
-        async (data: {
-            title: string;
-            description: string;
-            user_id: number;
-            organization_id: number;
-            due_date: string;
-        }) => {
-            try {
-                await createTaskWrapper({
-                    title: data.title,
-                    description: data.description,
-                    employee_id: data.user_id,
-                    organization_id: data.organization_id,
-                    due_date: data.due_date,
-                });
-                await refetch();
-            } catch (error) {
-                console.error("Failed to create task:", error);
-                Alert.alert("Ошибка", "Не удалось создать задачу");
-            }
-        },
-        [createTaskWrapper, refetch],
-    );
 
     const renderQuestItem = useCallback(
         ({ item }: { item: QuestEmployees }) => (
@@ -394,21 +321,17 @@ export default function QuestManagementScreen() {
             )}
 
             <TouchableOpacity
-                onPress={() => addQuestModalRef.current?.open(activeTab)}
+                onPress={() =>
+                    router.push({
+                        pathname: "/ceo/motivation/add",
+                        params: { tab: activeTab },
+                    })
+                }
                 style={ButtonStyles.addButtonManager}
                 activeOpacity={0.7}
             >
                 <Entypo name="plus" size={24} color="black" />
             </TouchableOpacity>
-
-            <AddQuestModal
-                ref={addQuestModalRef}
-                onAddQuest={handleAddQuest}
-                onAddTask={handleAddTask}
-                onCancel={() => {}}
-                employees={employees}
-                locations={locations}
-            />
         </SafeAreaView>
     );
 }

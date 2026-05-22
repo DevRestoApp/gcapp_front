@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import Calendar from "@/src/client/components/Calendar";
@@ -216,7 +217,9 @@ export default function Index() {
 
     if (isLoading && !shiftStatus) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Смена</Text>
                 </View>
@@ -225,7 +228,7 @@ export default function Index() {
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Загрузка...</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -234,7 +237,7 @@ export default function Index() {
     // ========================================================================
 
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
@@ -255,9 +258,7 @@ export default function Index() {
                     <View style={styles.row}>
                         <View style={styles.half}>
                             <TimerCard
-                                timeElapsed={
-                                    shiftStatus?.elapsedTime || "00:00:00"
-                                }
+                                startTime={shiftStatus?.startTime || ""}
                             />
                         </View>
                         <View style={styles.half}>
@@ -336,7 +337,7 @@ export default function Index() {
                     </View>
                 </ScrollView>
             )}
-        </View>
+        </SafeAreaView>
     );
 }
 

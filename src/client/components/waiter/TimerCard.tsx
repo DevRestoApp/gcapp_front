@@ -1,11 +1,72 @@
+import { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 interface TimerCardProps {
-    timeElapsed: string;
+    startTime: string;
 }
 
-export default function TimerCard({ timeElapsed }: TimerCardProps) {
+const parseStartTime = (startTime: string): Date | null => {
+    if (!startTime) return null;
+
+    // "HH:MM" format — API returns UTC time
+    const hhmm = startTime.match(/^(\d{1,2}):(\d{2})$/);
+    if (hhmm) {
+        const now = new Date();
+        const utcDate = new Date(
+            Date.UTC(
+                now.getUTCFullYear(),
+                now.getUTCMonth(),
+                now.getUTCDate(),
+                Number(hhmm[1]),
+                Number(hhmm[2]),
+                0,
+            ),
+        );
+        // If the UTC start time is in the future, the shift started yesterday
+        if (utcDate.getTime() > Date.now()) {
+            utcDate.setUTCDate(utcDate.getUTCDate() - 1);
+        }
+        return utcDate;
+    }
+
+    // ISO or other parseable format
+    const parsed = new Date(startTime);
+    return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatElapsed = (ms: number): string => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds]
+        .map((n) => String(n).padStart(2, "0"))
+        .join(":");
+};
+
+export default function TimerCard({ startTime }: TimerCardProps) {
+    const [elapsed, setElapsed] = useState("00:00:00");
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        const start = parseStartTime(startTime);
+        if (!start) {
+            setElapsed("00:00:00");
+            return;
+        }
+
+        const tick = () =>
+            setElapsed(formatElapsed(Date.now() - start.getTime()));
+
+        tick();
+        intervalRef.current = setInterval(tick, 1000);
+
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [startTime]);
+
     return (
         <View style={styles.card}>
             {/* Clock Icon */}
@@ -19,7 +80,7 @@ export default function TimerCard({ timeElapsed }: TimerCardProps) {
             {/* Content */}
             <View style={styles.content}>
                 <Text style={styles.label}>Прошло времени</Text>
-                <Text style={styles.time}>{timeElapsed}</Text>
+                <Text style={styles.time}>{elapsed}</Text>
             </View>
         </View>
     );

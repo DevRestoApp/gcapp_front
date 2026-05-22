@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     ScrollView,
     StatusBar,
     StyleSheet,
+    TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,6 +25,7 @@ export default function EmployeesScreen() {
     const { employees, shifts, loading, error, refetch } = useCeo();
 
     const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+    const [searchQuery, setSearchQuery] = useState("");
     const tabs = [
         {
             value: "open",
@@ -37,10 +39,19 @@ export default function EmployeesScreen() {
 
     const { setSelectedEmployee } = useEmployee();
 
-    const filteredEmployees =
-        activeTab === "open"
-            ? employees.filter((emp) => emp.isActive)
-            : employees;
+    const filteredEmployees = useMemo(() => {
+        let result =
+            activeTab === "open"
+                ? employees.filter((emp) => emp.isActive)
+                : employees;
+        if (searchQuery.trim()) {
+            const query = searchQuery.trim().toLowerCase();
+            result = result.filter((emp) =>
+                emp.name.toLowerCase().includes(query),
+            );
+        }
+        return result;
+    }, [employees, activeTab, searchQuery]);
 
     const mappedEmployees = filteredEmployees?.map((employees) => {
         return {
@@ -101,6 +112,7 @@ export default function EmployeesScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Header */}
                 <View style={styles.header}>
@@ -133,6 +145,26 @@ export default function EmployeesScreen() {
                     }}
                 />
 
+                <View style={styles.searchContainer}>
+                    <View style={styles.searchInputWrapper}>
+                        <TextInput
+                            style={styles.searchInput}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            placeholder="Поиск..."
+                            placeholderTextColor="#797A80"
+                        />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity
+                                onPress={() => setSearchQuery("")}
+                                style={styles.clearButton}
+                            >
+                                <Text style={styles.clearButtonText}>×</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+
                 {/* Employees Section */}
                 <View style={styles.employeesSection}>
                     <Text style={styles.sectionTitle}>
@@ -140,9 +172,17 @@ export default function EmployeesScreen() {
                     </Text>
 
                     <View style={styles.employeesList}>
-                        {mappedEmployees.map((emp) => (
-                            <RenderEmployeeCard key={emp.id} {...emp} />
-                        ))}
+                        {mappedEmployees.length > 0 ? (
+                            mappedEmployees.map((emp) => (
+                                <RenderEmployeeCard key={emp.id} {...emp} />
+                            ))
+                        ) : (
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>
+                                    Сотрудники не найдены
+                                </Text>
+                            </View>
+                        )}
                     </View>
                 </View>
             </ScrollView>
@@ -219,6 +259,40 @@ const styles = StyleSheet.create({
     },
     segmentTextActive: {
         color: "#FFFFFF",
+    },
+    searchContainer: {
+        paddingHorizontal: 16,
+        marginBottom: 12,
+    },
+    searchInputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        paddingHorizontal: 16,
+    },
+    searchInput: {
+        flex: 1,
+        height: 44,
+        color: "#FFFFFF",
+        fontSize: 16,
+    },
+    clearButton: {
+        paddingLeft: 8,
+    },
+    clearButtonText: {
+        color: "#797A80",
+        fontSize: 20,
+    },
+    emptyContainer: {
+        padding: 40,
+        alignItems: "center",
+    },
+    emptyText: {
+        color: "#797A80",
+        fontSize: 16,
+        textAlign: "center",
     },
     employeesSection: {
         paddingHorizontal: 16,

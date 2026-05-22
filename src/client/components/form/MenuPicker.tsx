@@ -263,7 +263,7 @@ export default function MenuPicker({
                     <Text style={styles.dishName} numberOfLines={2}>
                         {dish.name}
                     </Text>
-                    {dish.description && (
+                    {!!dish.description && (
                         <Text style={styles.dishDescription} numberOfLines={2}>
                             {dish.description}
                         </Text>
@@ -290,7 +290,7 @@ export default function MenuPicker({
                       ? `В категории "${selectedCategory}" пока нет блюд`
                       : "Меню пусто"}
             </Text>
-            {searchQuery && (
+            {!!searchQuery && (
                 <TouchableOpacity
                     onPress={handleClearSearch}
                     style={styles.clearSearchButton}

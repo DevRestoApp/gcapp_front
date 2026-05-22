@@ -15,6 +15,7 @@ import {
     Modal,
     FlatList,
     Alert,
+    BackHandler,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -184,6 +185,16 @@ export default function RolePicker({
         };
         loadOrganizations();
     }, [selectedRole]);
+
+    useEffect(() => {
+        if (screen !== "rolePicker") return;
+
+        const handler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            () => true,
+        );
+        return () => handler.remove();
+    }, [screen]);
 
     // ========================================================================
     // Computed

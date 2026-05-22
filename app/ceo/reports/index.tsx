@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import Loading from "@/src/client/components/Loading";
 
@@ -76,7 +77,9 @@ export default function AnalyticsScreen() {
     // Loading state
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Аналитика"
                     dateFrom={filters.date_from}
@@ -89,14 +92,16 @@ export default function AnalyticsScreen() {
                     onLocationChange={setLocation}
                 />
                 <Loading />
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Error state
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Аналитика"
                     dateFrom={filters.date_from}
@@ -111,12 +116,12 @@ export default function AnalyticsScreen() {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeaderPeriod
                 title="Аналитика"
                 dateFrom={filters.date_from}
@@ -337,7 +342,7 @@ export default function AnalyticsScreen() {
 
                 <View style={{ height: 16 }} />
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 

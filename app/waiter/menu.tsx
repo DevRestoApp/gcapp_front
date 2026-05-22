@@ -332,6 +332,7 @@ export default function MenuScreen() {
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Search */}
                 <View style={styles.searchWrapper}>
@@ -459,7 +460,7 @@ export default function MenuScreen() {
                                       ? `В категории "${selectedCategory}" ${MESSAGES.EMPTY_CATEGORY}`
                                       : MESSAGES.EMPTY_MENU}
                             </Text>
-                            {searchQuery && (
+                            {!!searchQuery && (
                                 <TouchableOpacity
                                     onPress={clearSearch}
                                     style={styles.clearSearchButton}

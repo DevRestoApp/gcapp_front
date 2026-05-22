@@ -35,7 +35,7 @@
             "ios": {
                 "autoIncrement": true,
                 "image": "latest",
-                "credentialsSource": "local"
+                "credentialsSource": "remote"
             }
         }
     },
@@ -43,7 +43,7 @@
         "production": {
             "ios": {
                 "appleId": "qoqosyk@icloud.com",
-                "ascAppId": "6761542982",
+                "ascAppId": "6763617009",
                 "appleTeamId": "DKW4W7R992"
             },
             "android": {

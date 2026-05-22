@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     StyleSheet,
     StatusBar,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     Modal,
     FlatList,
     TextInput,
@@ -43,6 +44,15 @@ export default function ChangePasswordScreen() {
     const [newPassword, setNewPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const searchedEmployees = useMemo(() => {
+        if (!searchQuery.trim()) return filteredEmployees;
+        const query = searchQuery.trim().toLowerCase();
+        return filteredEmployees.filter((emp) =>
+            emp.name.toLowerCase().includes(query),
+        );
+    }, [filteredEmployees, searchQuery]);
 
     useEffect(() => {
         fetchEmployeesDataWrapper(queryInputs);
@@ -66,6 +76,7 @@ export default function ChangePasswordScreen() {
     const handleEmployeeSelect = (employee: Employee) => {
         setSelectedEmployee(employee);
         setShowEmployeeModal(false);
+        setSearchQuery("");
     };
 
     const handleSubmit = async () => {
@@ -133,27 +144,54 @@ export default function ChangePasswordScreen() {
         </View>
     );
 
+    const closeEmployeeModal = () => {
+        setShowEmployeeModal(false);
+        setSearchQuery("");
+    };
+
     const renderEmployeeModal = () => (
         <Modal
             visible={showEmployeeModal}
             transparent
             animationType="fade"
-            onRequestClose={() => setShowEmployeeModal(false)}
+            onRequestClose={closeEmployeeModal}
         >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={() => setShowEmployeeModal(false)}
-            >
+            <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback onPress={closeEmployeeModal}>
+                    <View style={StyleSheet.absoluteFill} />
+                </TouchableWithoutFeedback>
+
                 <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>
                             Выберите сотрудника
                         </Text>
                     </View>
+                    <View style={styles.searchContainer}>
+                        <View style={styles.searchInputWrapper}>
+                            <TextInput
+                                style={styles.searchInput}
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                placeholder="Поиск..."
+                                placeholderTextColor="#797A80"
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity
+                                    onPress={() => setSearchQuery("")}
+                                    style={styles.clearButton}
+                                >
+                                    <Text style={styles.clearButtonText}>
+                                        ×
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </View>
                     <FlatList
-                        data={filteredEmployees}
+                        data={searchedEmployees}
                         keyExtractor={(item) => item.id.toString()}
+                        keyboardShouldPersistTaps="handled"
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
@@ -195,7 +233,7 @@ export default function ChangePasswordScreen() {
                         }
                     />
                 </View>
-            </TouchableOpacity>
+            </View>
         </Modal>
     );
 
@@ -210,6 +248,7 @@ export default function ChangePasswordScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
             >
                 {loading ? (
                     <Loading text="Загрузка данных" />
@@ -308,14 +347,16 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: "flex-start",
+        paddingTop: 80,
+        paddingHorizontal: 16,
     },
     modalContent: {
         backgroundColor: "#1C1C1E",
         borderRadius: 20,
-        width: "85%",
+        width: "100%",
         maxHeight: "60%",
+        minHeight: 200,
         overflow: "hidden",
     },
     modalHeader: {
@@ -323,6 +364,31 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: "#2C2C2E",
+    },
+    searchContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    searchInputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        paddingHorizontal: 16,
+    },
+    searchInput: {
+        flex: 1,
+        height: 44,
+        color: "#FFFFFF",
+        fontSize: 16,
+    },
+    clearButton: {
+        paddingLeft: 8,
+    },
+    clearButtonText: {
+        color: "#797A80",
+        fontSize: 20,
     },
     modalTitle: {
         color: "#FFFFFF",
