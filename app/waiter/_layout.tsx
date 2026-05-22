@@ -1,7 +1,8 @@
-import React from "react";
-import { Tabs } from "expo-router";
+import React, { useEffect } from "react";
+import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { WaiterProvider } from "@/src/contexts/WaiterProvider";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 const TAB_BAR_STYLE = {
     backgroundColor: "#242424",
@@ -22,6 +23,19 @@ const SCREEN_OPTIONS = {
 };
 
 export default function WaiterLayout() {
+    const { selectedLocation } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (selectedLocation === null || selectedLocation === undefined) {
+            router.replace("/");
+        }
+    }, [selectedLocation]);
+
+    if (selectedLocation === null || selectedLocation === undefined) {
+        return null;
+    }
+
     return (
         <WaiterProvider>
             <Tabs screenOptions={SCREEN_OPTIONS}>

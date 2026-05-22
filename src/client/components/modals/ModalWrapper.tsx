@@ -14,6 +14,7 @@ import {
     BackHandler,
     StatusBar,
     Dimensions,
+    Keyboard,
 } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -186,22 +187,23 @@ const ModalWrapper = forwardRef<ModalWrapperRef, ModalWrapperProps>(
                     <Animated.View style={[styles.backdrop, backdropStyle]} />
 
                     {/* Overlay with touch handling */}
-                    <TouchableWithoutFeedback onPress={handleBackdropPress}>
-                        <View style={[styles.overlay, containerStyle]}>
-                            {/* Modal content with animation */}
-                            <TouchableWithoutFeedback onPress={() => {}}>
-                                <Animated.View
-                                    style={[
-                                        styles.modalContent,
-                                        getAnimationStyle(),
-                                        contentStyle,
-                                    ]}
-                                >
-                                    {children}
-                                </Animated.View>
-                            </TouchableWithoutFeedback>
-                        </View>
-                    </TouchableWithoutFeedback>
+                    <View style={[styles.overlay, containerStyle]}>
+                        {/* Backdrop tap area */}
+                        <TouchableWithoutFeedback onPress={handleBackdropPress}>
+                            <View style={StyleSheet.absoluteFill} />
+                        </TouchableWithoutFeedback>
+
+                        {/* Modal content */}
+                        <Animated.View
+                            style={[
+                                styles.modalContent,
+                                getAnimationStyle(),
+                                contentStyle,
+                            ]}
+                        >
+                            {children}
+                        </Animated.View>
+                    </View>
                 </Modal>
             </>
         );

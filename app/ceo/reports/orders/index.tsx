@@ -7,6 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -143,7 +144,7 @@ export default function OrderReports() {
 
     if (loading) {
         return (
-            <View
+            <SafeAreaView
                 style={{ ...styles.container, ...backgroundsStyles.generalBg }}
             >
                 <ReportHeaderPeriod
@@ -160,12 +161,14 @@ export default function OrderReports() {
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={{ ...styles.container, ...backgroundsStyles.generalBg }}>
+        <SafeAreaView
+            style={{ ...styles.container, ...backgroundsStyles.generalBg }}
+        >
             <ReportHeaderPeriod
                 title="Отчет по заказам"
                 dateFrom={filters.date_from}
@@ -188,7 +191,7 @@ export default function OrderReports() {
 
                 {renderAverages()}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 

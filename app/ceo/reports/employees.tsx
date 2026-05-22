@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     Text,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import EmployeeCardExtended from "@/src/client/components/ceo/EmployeeCardExtended";
@@ -47,7 +48,9 @@ export default function ExpensesReports() {
     // Loading state
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Отчёты по персоналу"
                     dateFrom={filters.date_from}
@@ -62,14 +65,16 @@ export default function ExpensesReports() {
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Error state
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Отчёты по персоналу"
                     dateFrom={filters.date_from}
@@ -84,7 +89,7 @@ export default function ExpensesReports() {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -119,7 +124,7 @@ export default function ExpensesReports() {
 
     // Main content
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeaderPeriod
                 title="Отчёты по персоналу"
                 dateFrom={filters.date_from}
@@ -143,7 +148,7 @@ export default function ExpensesReports() {
                     <RenderEmployeeCard key={emp.id} {...emp} />
                 ))}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 

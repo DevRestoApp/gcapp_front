@@ -194,10 +194,18 @@ export default function IndexScreen() {
                     )}
                     <TouchableOpacity
                         style={styles.addButton}
+                        onPress={() => router.push("/manager/penalties/add")}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.addButtonIcon}>+</Text>
+                        <Text style={styles.addButtonText}>Добавить</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.viewButton}
                         onPress={handlePenaltiesPress}
                         activeOpacity={0.8}
                     >
-                        <Text style={styles.addButtonText}>Добавить</Text>
+                        <Text style={styles.viewButtonText}>Посмотреть</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -240,12 +248,7 @@ export default function IndexScreen() {
                     />
                     <TouchableOpacity
                         style={styles.addButton}
-                        onPress={() =>
-                            router.push({
-                                pathname: "/manager/motivation",
-                                params: { openModal: "true" },
-                            })
-                        }
+                        onPress={() => router.push("/manager/motivation/add")}
                         activeOpacity={0.8}
                     >
                         <Text style={styles.addButtonIcon}>+</Text>

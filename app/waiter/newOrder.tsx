@@ -254,6 +254,18 @@ export default function NewOrder() {
         setShowTableModal(false);
     };
 
+    const handleQuantityChange = (dishId: string, quantity: number) => {
+        setSelectedDishes((prev) =>
+            quantity <= 0
+                ? prev.filter((d) => String(d.productId) !== dishId)
+                : prev.map((d) =>
+                      String(d.productId) === dishId
+                          ? { ...d, amount: quantity, sum: d.price * quantity }
+                          : d,
+                  ),
+        );
+    };
+
     const handleAddDish = () => {
         if (!selectedTableId) {
             Alert.alert("Ошибка", "Пожалуйста, выберите стол");
@@ -278,7 +290,7 @@ export default function NewOrder() {
             await createOrderWrapper({
                 organizationId: selectedLocation,
                 tableId: Number(selectedTable?.id),
-                waiterId: user?.id === 10 ? 322256 : user?.id,
+                waiterId: user?.id,
                 guests: 2,
                 items: selectedDishes.map((el) => ({
                     productId: el.productId,
@@ -358,6 +370,7 @@ export default function NewOrder() {
                             <DishesSection
                                 dishes={selectedDishes}
                                 onDishPress={() => null}
+                                onQuantityChange={handleQuantityChange}
                                 onAddMoreDishes={() =>
                                     router.push("/waiter/menu")
                                 }

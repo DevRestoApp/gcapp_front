@@ -7,6 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -213,7 +214,9 @@ export default function MoneyflowReports() {
     // Loading state
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Денежные отчеты"
                     dateFrom={filters.date_from}
@@ -229,14 +232,16 @@ export default function MoneyflowReports() {
                     <ActivityIndicator size="large" color="#3C82FD" />
                     <Text style={styles.loadingText}>Загрузка данных...</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Error state
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Денежные отчеты"
                     dateFrom={filters.date_from}
@@ -251,13 +256,13 @@ export default function MoneyflowReports() {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Main content
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeaderPeriod
                 title="Денежные отчеты"
                 dateFrom={filters.date_from}
@@ -278,7 +283,7 @@ export default function MoneyflowReports() {
             >
                 {renderGeneralCard()}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 

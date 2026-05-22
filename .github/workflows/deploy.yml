@@ -1,25 +1,25 @@
-   name: Pull & Build on Server
+name: Pull & Build on Server
 
-   on:
-     push:
-       branches: [main]
-     workflow_dispatch:
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
 
-   jobs:
-     build-and-pull:
-       runs-on: ubuntu-latest
-       steps:
-         - name: Deploy to server
-           uses: appleboy/ssh-action@v0.1.9
-           with:
-             host: ${{ secrets.DEPLOY_HOST }}
-             username: ${{ secrets.DEPLOY_USER }}
-             port: ${{ secrets.DEPLOY_PORT }}
-             key: ${{ secrets.DEPLOY_KEY }}
-             script: |
-               cd /srv/project/gcapp_front
-               git pull origin main --rebase --autostash
-               export EXPO_PUBLIC_API_URL=https://tsolution.kz/
-               export TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
-               export TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
-               npx expo export -c
+jobs:
+    build-and-pull:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Deploy to server
+              uses: appleboy/ssh-action@v0.1.9
+              with:
+                  host: ${{ secrets.DEPLOY_HOST }}
+                  username: ${{ secrets.DEPLOY_USER }}
+                  port: ${{ secrets.DEPLOY_PORT }}
+                  key: ${{ secrets.DEPLOY_KEY }}
+                  script: |
+                      cd /srv/project/gcapp_front
+                      git pull origin main --rebase --autostash
+                      export EXPO_PUBLIC_API_URL=https://tsolution.kz/
+                      export TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+                      export TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+                      npx expo export -c

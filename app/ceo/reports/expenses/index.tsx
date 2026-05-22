@@ -7,6 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ReportHeaderPeriod } from "@/src/client/components/reports/ReportHeaderPeriod";
 import ReportCard from "@/src/client/components/ceo/ReportCard";
@@ -199,7 +200,9 @@ export default function ExpensesReports() {
     // Loading state
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Изъятие и прибыль"
                     dateFrom={filters.date_from}
@@ -214,7 +217,7 @@ export default function ExpensesReports() {
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -225,7 +228,9 @@ export default function ExpensesReports() {
     // TODO добавить везде если ошипка
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 <ReportHeaderPeriod
                     title="Изъятие и прибыль"
                     dateFrom={filters.date_from}
@@ -240,13 +245,13 @@ export default function ExpensesReports() {
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     // Main content
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             <ReportHeaderPeriod
                 title="Изъятие и прибыль"
                 dateFrom={filters.date_from}
@@ -270,7 +275,7 @@ export default function ExpensesReports() {
                 {renderItemListRevenues(revenue_by_category)}
                 {renderTable(expenses_by_type, revenue_by_category)}
             </ScrollView>
-        </View>
+        </SafeAreaView>
     );
 }
 

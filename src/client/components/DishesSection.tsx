@@ -13,6 +13,7 @@ interface DishesSectionProps {
     dishes: DishItemCreateOrderType[];
     onDishPress: (dishId: string) => void;
     onAddMoreDishes: () => void;
+    onQuantityChange?: (dishId: string, quantity: number) => void;
     showAddMoreDishes?: boolean;
     isEditOrder?: boolean;
 }
@@ -44,6 +45,7 @@ export default function DishesSection({
     dishes,
     onDishPress,
     onAddMoreDishes,
+    onQuantityChange,
     showAddMoreDishes = true,
     isEditOrder = false,
 }: DishesSectionProps) {
@@ -79,7 +81,8 @@ export default function DishesSection({
                         price={formatPrice(dish.price)}
                         image={dish.image || ""}
                         variant="informative"
-                        showQuantity={false}
+                        showQuantity={!!onQuantityChange}
+                        onQuantityChange={onQuantityChange}
                         onPress={onDishPress}
                         maxLines={2}
                     />

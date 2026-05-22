@@ -34,7 +34,7 @@ export function FormContainer({
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>{title}</Text>
-                    {description && (
+                    {!!description && (
                         <Text style={styles.description}>{description}</Text>
                     )}
                 </View>

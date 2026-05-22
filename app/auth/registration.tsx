@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { register } from "@/src/server/auth";
@@ -28,7 +29,7 @@ export default function RegisterScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <TextInput
                 placeholder="Имя пользователя"
                 value={username}
@@ -50,7 +51,7 @@ export default function RegisterScreen() {
             />
             <Button title="Зарегистрироваться" onPress={handleRegister} />
             {message ? <Text>{message}</Text> : null}
-        </View>
+        </SafeAreaView>
     );
 }
 

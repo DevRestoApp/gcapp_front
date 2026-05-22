@@ -7,6 +7,7 @@ import {
     Text,
     TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -202,31 +203,35 @@ export default function ExpensesDetails() {
 
     if (loading) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 {renderHeader()}
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3C82FD" />
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     if (error) {
         return (
-            <View style={[styles.container, backgroundsStyles.generalBg]}>
+            <SafeAreaView
+                style={[styles.container, backgroundsStyles.generalBg]}
+            >
                 {renderHeader()}
                 <View style={styles.errorContainer}>
                     <Text style={styles.errorText}>{error}</Text>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
     return (
-        <View style={[styles.container, backgroundsStyles.generalBg]}>
+        <SafeAreaView style={[styles.container, backgroundsStyles.generalBg]}>
             {renderHeader()}
             {renderContent()}
-        </View>
+        </SafeAreaView>
     );
 }
 

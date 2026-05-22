@@ -4,8 +4,10 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     Modal,
     FlatList,
+    TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { textStyles } from "@/src/client/styles/ui/text.styles";
@@ -54,6 +56,7 @@ export function QuestHeader({
     const [showCalendar, setShowCalendar] = useState(false);
     const [showEmployeeModal, setShowEmployeeModal] = useState(false);
     const [showCompletedModal, setShowCompletedModal] = useState(false);
+    const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
 
     const EMPLOYEE_OPTIONS = useMemo(() => {
         return [
@@ -65,9 +68,18 @@ export function QuestHeader({
         ];
     }, [employees]);
 
+    const filteredEmployeeOptions = useMemo(() => {
+        if (!employeeSearchQuery.trim()) return EMPLOYEE_OPTIONS;
+        const query = employeeSearchQuery.trim().toLowerCase();
+        return EMPLOYEE_OPTIONS.filter((opt) =>
+            opt.label.toLowerCase().includes(query),
+        );
+    }, [EMPLOYEE_OPTIONS, employeeSearchQuery]);
+
     const handleEmployeeSelect = (value: string) => {
         onEmployeeChange?.(value);
         setShowEmployeeModal(false);
+        setEmployeeSearchQuery("");
     };
 
     const handleCompletedSelect = (value: string) => {
@@ -102,6 +114,10 @@ export function QuestHeader({
         items: ItemProps[],
         selectedItem: string,
         onSelect: (item: string) => void,
+        search?: {
+            query: string;
+            onChangeQuery: (q: string) => void;
+        },
     ) => (
         <Modal
             visible={visible}
@@ -109,15 +125,40 @@ export function QuestHeader({
             animationType="fade"
             onRequestClose={onClose}
         >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={onClose}
-            >
+            <View style={styles.modalOverlay}>
+                {/* Backdrop tap — absoluteFill sits behind the content */}
+                <TouchableWithoutFeedback onPress={onClose}>
+                    <View style={StyleSheet.absoluteFill} />
+                </TouchableWithoutFeedback>
+
                 <View style={styles.modalContent}>
+                    {search && (
+                        <View style={styles.searchContainer}>
+                            <View style={styles.searchInputWrapper}>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    value={search.query}
+                                    onChangeText={search.onChangeQuery}
+                                    placeholder="Поиск..."
+                                    placeholderTextColor="#797A80"
+                                />
+                                {search.query.length > 0 && (
+                                    <TouchableOpacity
+                                        onPress={() => search.onChangeQuery("")}
+                                        style={styles.clearButton}
+                                    >
+                                        <Text style={styles.clearButtonText}>
+                                            ×
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        </View>
+                    )}
                     <FlatList
                         data={items}
                         keyExtractor={(item) => item.value}
+                        keyboardShouldPersistTaps="handled"
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
@@ -150,7 +191,7 @@ export function QuestHeader({
                         )}
                     />
                 </View>
-            </TouchableOpacity>
+            </View>
         </Modal>
     );
 
@@ -240,10 +281,17 @@ export function QuestHeader({
 
             {renderModal(
                 showEmployeeModal,
-                () => setShowEmployeeModal(false),
-                EMPLOYEE_OPTIONS,
+                () => {
+                    setShowEmployeeModal(false);
+                    setEmployeeSearchQuery("");
+                },
+                filteredEmployeeOptions,
                 employee,
                 handleEmployeeSelect,
+                {
+                    query: employeeSearchQuery,
+                    onChangeQuery: setEmployeeSearchQuery,
+                },
             )}
 
             {renderModal(
@@ -317,15 +365,42 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: "flex-start",
+        paddingTop: 80,
+        paddingHorizontal: 16,
     },
     modalContent: {
         backgroundColor: "#1C1C1E",
         borderRadius: 20,
-        width: "80%",
-        maxHeight: "50%",
+        width: "100%",
+        maxHeight: "60%",
+        minHeight: 200,
         overflow: "hidden",
+    },
+    searchContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    searchInputWrapper: {
+        flexDirection: "row",
+        alignItems: "center",
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        paddingHorizontal: 16,
+    },
+    searchInput: {
+        flex: 1,
+        height: 44,
+        color: "#FFFFFF",
+        fontSize: 16,
+    },
+    clearButton: {
+        paddingLeft: 8,
+    },
+    clearButtonText: {
+        color: "#797A80",
+        fontSize: 20,
     },
     modalItem: {
         flexDirection: "row",

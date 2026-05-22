@@ -119,6 +119,7 @@ export default function PaymentScreen() {
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
                     {/* Payment Methods */}
                     <View style={styles.section}>

@@ -6,6 +6,7 @@ import {
     View,
     Text,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     Modal,
     StyleSheet,
     ScrollView,
@@ -16,6 +17,7 @@ import Svg, { Path } from "react-native-svg";
 interface Option {
     label: string;
     value: string;
+    subtitle?: string;
 }
 
 interface OptionPickerProps {
@@ -23,18 +25,29 @@ interface OptionPickerProps {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
+    showSearchInput?: boolean;
+    /** @deprecated Use showSearchInput instead */
     enableSearch?: boolean;
     searchPlaceholder?: string;
+    modalTitle?: string;
+    emptyText?: string;
 }
+
+export type { Option };
 
 export function OptionPicker({
     options,
     value,
     onChange,
     placeholder = "Выберите опцию",
-    enableSearch = false,
+    showSearchInput,
+    enableSearch,
     searchPlaceholder = "Поиск...",
+    modalTitle = "Выберите опцию",
+    emptyText = "По вашему запросу ничего не найдено",
 }: OptionPickerProps) {
+    const shouldShowSearch = showSearchInput ?? enableSearch ?? false;
+
     const [modalVisible, setModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -46,8 +59,11 @@ export function OptionPicker({
             return options;
         }
         const query = searchQuery.toLowerCase().trim();
-        return options.filter((option) =>
-            option.label.toLowerCase().includes(query),
+        return options.filter(
+            (option) =>
+                option.label.toLowerCase().includes(query) ||
+                (option.subtitle &&
+                    option.subtitle.toLowerCase().includes(query)),
         );
     }, [options, searchQuery]);
 
@@ -95,17 +111,22 @@ export function OptionPicker({
                 onRequestClose={handleModalClose}
             >
                 <View style={pickerStyles.modalOverlay}>
+                    {/* Backdrop tap — absoluteFill sits behind the content */}
+                    <TouchableWithoutFeedback onPress={handleModalClose}>
+                        <View style={StyleSheet.absoluteFill} />
+                    </TouchableWithoutFeedback>
+
                     <View style={pickerStyles.modalContent}>
                         <View style={pickerStyles.modalHeader}>
                             <Text style={pickerStyles.modalTitle}>
-                                Выберите опцию
+                                {modalTitle}
                             </Text>
                             <TouchableOpacity onPress={handleModalClose}>
                                 <Text style={pickerStyles.closeButton}>✕</Text>
                             </TouchableOpacity>
                         </View>
 
-                        {enableSearch && options.length > 5 && (
+                        {shouldShowSearch && (
                             <View style={pickerStyles.searchWrapper}>
                                 <TextInput
                                     value={searchQuery}
@@ -146,7 +167,10 @@ export function OptionPicker({
                                 </Text>
                             )}
 
-                        <ScrollView style={pickerStyles.optionsList}>
+                        <ScrollView
+                            style={pickerStyles.optionsList}
+                            keyboardShouldPersistTaps="handled"
+                        >
                             {filteredOptions.length > 0 ? (
                                 filteredOptions.map((option) => (
                                     <TouchableOpacity
@@ -170,25 +194,39 @@ export function OptionPicker({
                                         >
                                             {option.label}
                                         </Text>
+                                        {option.subtitle && (
+                                            <Text
+                                                style={
+                                                    pickerStyles.optionSubtitle
+                                                }
+                                            >
+                                                {option.subtitle}
+                                            </Text>
+                                        )}
                                     </TouchableOpacity>
                                 ))
                             ) : (
                                 <View style={pickerStyles.emptyState}>
                                     <Text style={pickerStyles.emptyStateText}>
-                                        По вашему запросу ничего не найдено
+                                        {emptyText}
                                     </Text>
-                                    <TouchableOpacity
-                                        onPress={handleClearSearch}
-                                        style={pickerStyles.clearSearchButton}
-                                    >
-                                        <Text
-                                            style={
-                                                pickerStyles.clearSearchButtonText
-                                            }
-                                        >
-                                            Очистить поиск
-                                        </Text>
-                                    </TouchableOpacity>
+                                    {shouldShowSearch &&
+                                        searchQuery.trim() !== "" && (
+                                            <TouchableOpacity
+                                                onPress={handleClearSearch}
+                                                style={
+                                                    pickerStyles.clearSearchButton
+                                                }
+                                            >
+                                                <Text
+                                                    style={
+                                                        pickerStyles.clearSearchButtonText
+                                                    }
+                                                >
+                                                    Очистить поиск
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
                                 </View>
                             )}
                         </ScrollView>
@@ -303,6 +341,12 @@ const pickerStyles = StyleSheet.create({
     },
     optionTextSelected: {
         fontWeight: "600",
+    },
+    optionSubtitle: {
+        color: "#797A80",
+        fontSize: 14,
+        lineHeight: 18,
+        marginTop: 2,
     },
     emptyState: {
         paddingVertical: 40,
