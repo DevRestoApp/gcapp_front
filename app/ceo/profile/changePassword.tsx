@@ -6,6 +6,7 @@ import {
     StyleSheet,
     StatusBar,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     Modal,
     FlatList,
     TextInput,
@@ -155,15 +156,12 @@ export default function ChangePasswordScreen() {
             animationType="fade"
             onRequestClose={closeEmployeeModal}
         >
-            <TouchableOpacity
-                style={styles.modalOverlay}
-                activeOpacity={1}
-                onPress={closeEmployeeModal}
-            >
-                <View
-                    style={styles.modalContent}
-                    onStartShouldSetResponder={() => true}
-                >
+            <View style={styles.modalOverlay}>
+                <TouchableWithoutFeedback onPress={closeEmployeeModal}>
+                    <View style={StyleSheet.absoluteFill} />
+                </TouchableWithoutFeedback>
+
+                <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>
                             Выберите сотрудника
@@ -193,6 +191,7 @@ export default function ChangePasswordScreen() {
                     <FlatList
                         data={searchedEmployees}
                         keyExtractor={(item) => item.id.toString()}
+                        keyboardShouldPersistTaps="handled"
                         renderItem={({ item }) => (
                             <TouchableOpacity
                                 style={[
@@ -234,7 +233,7 @@ export default function ChangePasswordScreen() {
                         }
                     />
                 </View>
-            </TouchableOpacity>
+            </View>
         </Modal>
     );
 
@@ -348,14 +347,16 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: "flex-start",
+        paddingTop: 80,
+        paddingHorizontal: 16,
     },
     modalContent: {
         backgroundColor: "#1C1C1E",
         borderRadius: 20,
-        width: "85%",
+        width: "100%",
         maxHeight: "60%",
+        minHeight: 200,
         overflow: "hidden",
     },
     modalHeader: {
