@@ -117,12 +117,6 @@ export default function ManagerLayout() {
                         }}
                     />
                     <Tabs.Screen
-                        name="expenses/[id]"
-                        options={{
-                            href: null,
-                        }}
-                    />
-                    <Tabs.Screen
                         name="storage"
                         options={{
                             href: null,
