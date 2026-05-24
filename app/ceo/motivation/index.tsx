@@ -250,10 +250,6 @@ export default function QuestManagementScreen() {
                     {activeTab === "quest" ? (
                         <>
                             <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>
-                                    Квесты
-                                    {selectedDate ? ` на ${selectedDate}` : ""}
-                                </Text>
                                 <Text style={styles.sectionSubtitle}>
                                     {filteredQuests.length}{" "}
                                     {filteredQuests.length === 1
@@ -284,10 +280,6 @@ export default function QuestManagementScreen() {
                     ) : (
                         <>
                             <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>
-                                    Задачи
-                                    {selectedDate ? ` на ${selectedDate}` : ""}
-                                </Text>
                                 <Text style={styles.sectionSubtitle}>
                                     {filteredTasks.length}{" "}
                                     {filteredTasks.length === 1
