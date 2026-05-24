@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Entypo } from "@expo/vector-icons";
 
 import { QuestHeader } from "@/src/client/components/reports/QuestHeader";
 import QuestCard, {
@@ -22,7 +21,7 @@ import SegmentedControl from "@/src/client/components/Tabs";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
+import { FloatingAddButton } from "@/src/client/components/FloatingAddButton";
 import { useManager } from "@/src/contexts/ManagerProvider";
 
 export default function QuestManagementScreen() {
@@ -320,18 +319,14 @@ export default function QuestManagementScreen() {
                 </ScrollView>
             )}
 
-            <TouchableOpacity
+            <FloatingAddButton
                 onPress={() =>
                     router.push({
                         pathname: "/manager/motivation/add",
                         params: { tab: activeTab },
                     })
                 }
-                style={ButtonStyles.addButtonManager}
-                activeOpacity={0.7}
-            >
-                <Entypo name="plus" size={24} color="black" />
-            </TouchableOpacity>
+            />
         </SafeAreaView>
     );
 }

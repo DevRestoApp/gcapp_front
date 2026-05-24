@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
     View,
     Text,
@@ -8,8 +8,14 @@ import {
     StyleSheet,
     TextInput,
     Alert,
+    Modal,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+    SafeAreaView,
+    useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
@@ -55,6 +61,7 @@ export default function AddMotivationScreen() {
     } = useManager();
 
     const safeEmployees = employees || [];
+    const insets = useSafeAreaInsets();
 
     const [activeTab, setActiveTab] = useState<"quest" | "task">(
         (tab as "quest" | "task") || "quest",
@@ -93,6 +100,7 @@ export default function AddMotivationScreen() {
 
     // UI state
     const [showEmployeePicker, setShowEmployeePicker] = useState(false);
+    const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
     const [showLocationPicker, setShowLocationPicker] = useState(false);
     const [showMenuPicker, setShowMenuPicker] = useState(false);
     const [showCalendar, setShowCalendar] = useState(false);
@@ -119,6 +127,16 @@ export default function AddMotivationScreen() {
             prev.filter((emp) => String(emp.id) !== String(employeeId)),
         );
     }, []);
+
+    const filteredEmployees = useMemo(() => {
+        if (!employeeSearchQuery.trim()) return safeEmployees;
+        const query = employeeSearchQuery.toLowerCase().trim();
+        return safeEmployees.filter(
+            (emp) =>
+                emp.name.toLowerCase().includes(query) ||
+                (emp.role && emp.role.toLowerCase().includes(query)),
+        );
+    }, [safeEmployees, employeeSearchQuery]);
 
     const handleLocationSelect = useCallback((location: Location) => {
         setSelectedLocation(location);
@@ -312,7 +330,7 @@ export default function AddMotivationScreen() {
                 </Text>
             </View>
 
-            {/* Employees — multi-select with checkboxes (kept as-is) */}
+            {/* Employees — multi-select with search modal */}
             {safeEmployees.length > 0 && (
                 <View style={styles.inputSection}>
                     <Text style={styles.inputLabel}>
@@ -321,9 +339,8 @@ export default function AddMotivationScreen() {
                     <TouchableOpacity
                         style={styles.pickerButton}
                         onPress={() => {
-                            setShowEmployeePicker(!showEmployeePicker);
-                            setShowLocationPicker(false);
-                            setShowCalendar(false);
+                            setShowEmployeePicker(true);
+                            setEmployeeSearchQuery("");
                         }}
                         activeOpacity={0.7}
                     >
@@ -338,74 +355,9 @@ export default function AddMotivationScreen() {
                                 ? `Выбрано: ${selectedEmployees.length}`
                                 : "Выберите сотрудников"}
                         </Text>
-                        <Text style={styles.pickerArrow}>
-                            {showEmployeePicker ? "▲" : "▼"}
-                        </Text>
+                        <Text style={styles.pickerArrow}>▼</Text>
                     </TouchableOpacity>
                     {renderSelectedEmployees()}
-                    {showEmployeePicker && (
-                        <View style={styles.pickerList}>
-                            <ScrollView
-                                style={styles.pickerScrollView}
-                                showsVerticalScrollIndicator={false}
-                                nestedScrollEnabled
-                            >
-                                {safeEmployees.map((employee) => {
-                                    const isSelected = selectedEmployees.some(
-                                        (emp) => emp.id === employee.id,
-                                    );
-                                    return (
-                                        <TouchableOpacity
-                                            key={employee.id}
-                                            style={[
-                                                styles.pickerItem,
-                                                isSelected &&
-                                                    styles.pickerItemSelected,
-                                            ]}
-                                            onPress={() =>
-                                                handleEmployeeToggle(employee)
-                                            }
-                                            activeOpacity={0.7}
-                                        >
-                                            <View
-                                                style={styles.pickerItemContent}
-                                            >
-                                                <View style={styles.checkbox}>
-                                                    {isSelected && (
-                                                        <View
-                                                            style={
-                                                                styles.checkboxChecked
-                                                            }
-                                                        />
-                                                    )}
-                                                </View>
-                                                <View
-                                                    style={
-                                                        styles.pickerItemTextContainer
-                                                    }
-                                                >
-                                                    <Text
-                                                        style={
-                                                            styles.pickerItemName
-                                                        }
-                                                    >
-                                                        {employee.name}
-                                                    </Text>
-                                                    <Text
-                                                        style={
-                                                            styles.pickerItemSubtext
-                                                        }
-                                                    >
-                                                        {employee.role}
-                                                    </Text>
-                                                </View>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
-                        </View>
-                    )}
                 </View>
             )}
 
@@ -775,6 +727,136 @@ export default function AddMotivationScreen() {
                 </View>
             </ScrollView>
 
+            <Modal
+                visible={showEmployeePicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {
+                    setShowEmployeePicker(false);
+                    setEmployeeSearchQuery("");
+                }}
+            >
+                <KeyboardAvoidingView
+                    style={styles.employeeModalOverlay}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                    <View
+                        style={[
+                            styles.employeeModalContent,
+                            { paddingTop: insets.top },
+                        ]}
+                    >
+                        <View style={styles.employeeModalHeader}>
+                            <Text style={styles.employeeModalTitle}>
+                                Выберите сотрудников
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setShowEmployeePicker(false);
+                                    setEmployeeSearchQuery("");
+                                }}
+                            >
+                                <Text style={styles.employeeModalClose}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.employeeSearchWrapper}>
+                            <TextInput
+                                value={employeeSearchQuery}
+                                onChangeText={setEmployeeSearchQuery}
+                                placeholder="Поиск сотрудника..."
+                                placeholderTextColor="#797A80"
+                                style={styles.employeeSearchInput}
+                                returnKeyType="search"
+                                autoFocus={true}
+                            />
+                            {employeeSearchQuery.length > 0 && (
+                                <TouchableOpacity
+                                    onPress={() => setEmployeeSearchQuery("")}
+                                    style={styles.employeeSearchClear}
+                                    hitSlop={{
+                                        top: 10,
+                                        bottom: 10,
+                                        left: 10,
+                                        right: 10,
+                                    }}
+                                >
+                                    <Text
+                                        style={styles.employeeSearchClearText}
+                                    >
+                                        ×
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        <ScrollView
+                            style={styles.employeeModalList}
+                            keyboardShouldPersistTaps="handled"
+                        >
+                            {filteredEmployees.map((employee) => {
+                                const isSelected = selectedEmployees.some(
+                                    (emp) => emp.id === employee.id,
+                                );
+                                return (
+                                    <TouchableOpacity
+                                        key={employee.id}
+                                        style={[
+                                            styles.pickerItem,
+                                            isSelected &&
+                                                styles.pickerItemSelected,
+                                        ]}
+                                        onPress={() =>
+                                            handleEmployeeToggle(employee)
+                                        }
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.pickerItemContent}>
+                                            <View style={styles.checkbox}>
+                                                {isSelected && (
+                                                    <View
+                                                        style={
+                                                            styles.checkboxChecked
+                                                        }
+                                                    />
+                                                )}
+                                            </View>
+                                            <View
+                                                style={
+                                                    styles.pickerItemTextContainer
+                                                }
+                                            >
+                                                <Text
+                                                    style={
+                                                        styles.pickerItemName
+                                                    }
+                                                >
+                                                    {employee.name}
+                                                </Text>
+                                                <Text
+                                                    style={
+                                                        styles.pickerItemSubtext
+                                                    }
+                                                >
+                                                    {employee.role}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                            {filteredEmployees.length === 0 && (
+                                <View style={styles.employeeEmptyState}>
+                                    <Text style={styles.employeeEmptyText}>
+                                        Сотрудники не най��ены
+                                    </Text>
+                                </View>
+                            )}
+                        </ScrollView>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
             <MenuPicker
                 visible={showMenuPicker}
                 onClose={() => setShowMenuPicker(false)}
@@ -950,6 +1032,79 @@ const styles = StyleSheet.create({
     },
     selectedItemInfo: { gap: 4, flex: 1 },
     selectedItemPrice: { color: "#797A80", fontSize: 14 },
+
+    // Employee modal styles
+    employeeModalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
+        justifyContent: "flex-start",
+    },
+    employeeModalContent: {
+        backgroundColor: "#232324",
+        flex: 1,
+        width: "100%",
+    },
+    employeeModalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(43, 43, 44, 1)",
+    },
+    employeeModalTitle: {
+        color: "#FFFFFF",
+        fontSize: 18,
+        fontWeight: "600",
+    },
+    employeeModalClose: {
+        color: "#FFFFFF",
+        fontSize: 24,
+    },
+    employeeSearchWrapper: {
+        position: "relative",
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    employeeSearchInput: {
+        height: 44,
+        borderRadius: 22,
+        paddingHorizontal: 16,
+        paddingRight: 50,
+        backgroundColor: "rgba(43, 43, 44, 1)",
+        color: "#FFFFFF",
+        fontSize: 16,
+    },
+    employeeSearchClear: {
+        position: "absolute",
+        right: 26,
+        top: 26,
+        width: 24,
+        height: 24,
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: 12,
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+    },
+    employeeSearchClearText: {
+        color: "#797A80",
+        fontSize: 18,
+        fontWeight: "bold",
+    },
+    employeeModalList: {
+        padding: 16,
+    },
+    employeeEmptyState: {
+        paddingVertical: 40,
+        alignItems: "center",
+    },
+    employeeEmptyText: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 16,
+        textAlign: "center",
+    },
+
     actions: { flexDirection: "row", gap: 12 },
     cancelButton: {
         flex: 1,
