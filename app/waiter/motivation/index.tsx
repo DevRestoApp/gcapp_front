@@ -209,7 +209,6 @@ export default function MotivationScreen() {
 
                     {activeTab === "quest" ? (
                         <>
-                            <Text style={styles.sectionTitle}>Квесты</Text>
                             <FlatList
                                 data={quests}
                                 renderItem={renderQuestItem}
@@ -221,7 +220,6 @@ export default function MotivationScreen() {
                         </>
                     ) : (
                         <>
-                            <Text style={styles.sectionTitle}>Задачи</Text>
                             <FlatList
                                 data={tasks}
                                 renderItem={renderTaskItem}

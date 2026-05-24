@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import EmployeeCard from "@/src/client/components/ceo/EmployeeCard";
+import { FloatingAddButton } from "@/src/client/components/FloatingAddButton";
 
 import { useManager } from "@/src/contexts/ManagerProvider";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
@@ -62,26 +63,7 @@ export default function PenaltiesScreen() {
                     <Text style={styles.headerTitle}>
                         Штрафы ({shifts.finesCount})
                     </Text>
-                    <TouchableOpacity
-                        onPress={() => router.push("/manager/penalties/add")}
-                        style={styles.plusButton}
-                        activeOpacity={0.7}
-                    >
-                        <Svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                        >
-                            <Path
-                                d="M12 5V19M5 12H19"
-                                stroke="white"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </Svg>
-                    </TouchableOpacity>
+                    <View style={styles.headerSpacer} />
                 </View>
 
                 {/* Segmented Control */}
@@ -156,6 +138,10 @@ export default function PenaltiesScreen() {
                     </View>
                 </View>
             </ScrollView>
+
+            <FloatingAddButton
+                onPress={() => router.push("/manager/penalties/add")}
+            />
         </SafeAreaView>
     );
 }
@@ -191,11 +177,9 @@ const styles = StyleSheet.create({
         lineHeight: 28,
         letterSpacing: -0.24,
     },
-    plusButton: {
+    headerSpacer: {
         width: 28,
         height: 28,
-        alignItems: "center",
-        justifyContent: "center",
     },
     segmentedControlContainer: {
         paddingHorizontal: 16,

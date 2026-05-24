@@ -11,7 +11,10 @@ import {
     StyleSheet,
     ScrollView,
     TextInput,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
 interface Option {
@@ -47,6 +50,7 @@ export function OptionPicker({
     emptyText = "По вашему запросу ничего не найдено",
 }: OptionPickerProps) {
     const shouldShowSearch = showSearchInput ?? enableSearch ?? false;
+    const insets = useSafeAreaInsets();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -107,16 +111,24 @@ export function OptionPicker({
             <Modal
                 visible={modalVisible}
                 transparent
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={handleModalClose}
             >
-                <View style={pickerStyles.modalOverlay}>
+                <KeyboardAvoidingView
+                    style={pickerStyles.modalOverlay}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
                     {/* Backdrop tap — absoluteFill sits behind the content */}
                     <TouchableWithoutFeedback onPress={handleModalClose}>
                         <View style={StyleSheet.absoluteFill} />
                     </TouchableWithoutFeedback>
 
-                    <View style={pickerStyles.modalContent}>
+                    <View
+                        style={[
+                            pickerStyles.modalContent,
+                            { paddingTop: insets.top },
+                        ]}
+                    >
                         <View style={pickerStyles.modalHeader}>
                             <Text style={pickerStyles.modalTitle}>
                                 {modalTitle}
@@ -135,6 +147,7 @@ export function OptionPicker({
                                     placeholderTextColor="#797A80"
                                     style={pickerStyles.searchInput}
                                     returnKeyType="search"
+                                    autoFocus={true}
                                 />
                                 {searchQuery.length > 0 && (
                                     <TouchableOpacity
@@ -231,7 +244,7 @@ export function OptionPicker({
                             )}
                         </ScrollView>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </>
     );
@@ -258,14 +271,13 @@ const pickerStyles = StyleSheet.create({
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        justifyContent: "flex-end",
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
+        justifyContent: "flex-start",
     },
     modalContent: {
         backgroundColor: "#232324",
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        maxHeight: "80%",
+        flex: 1,
+        width: "100%",
     },
     modalHeader: {
         flexDirection: "row",

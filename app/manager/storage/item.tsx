@@ -18,7 +18,7 @@ import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds
 import { useStorage } from "@/src/contexts/StorageProvider";
 
 import SegmentedControl from "@/src/client/components/Tabs";
-import Entypo from "@expo/vector-icons/Entypo";
+
 import DocumentCard, {
     DetailRow,
     CommentRow,
@@ -35,8 +35,7 @@ import {
 
 import { ReportHeader } from "@/src/client/components/reports/header";
 import Loading from "@/src/client/components/Loading";
-import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
-import { sizes } from "@/src/utils/utils";
+import { FloatingAddButton } from "@/src/client/components/FloatingAddButton";
 import { HeaderSimple } from "@/src/client/components/reports/headerSimple";
 
 export default function StorageScreen() {
@@ -57,13 +56,9 @@ export default function StorageScreen() {
 
     const renderAddButton = () => {
         return (
-            <TouchableOpacity
+            <FloatingAddButton
                 onPress={() => router.push(`/manager/storage/addItem`)}
-                style={ButtonStyles.addButtonManager}
-                activeOpacity={0.7}
-            >
-                <Entypo name="plus" size={sizes.m} color="black" />
-            </TouchableOpacity>
+            />
         );
     };
 

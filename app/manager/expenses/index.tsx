@@ -13,11 +13,10 @@ import { useRouter } from "expo-router";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
-import { sizes } from "@/src/utils/utils";
+import { FloatingAddButton } from "@/src/client/components/FloatingAddButton";
 
 import SegmentedControl from "@/src/client/components/Tabs";
-import Entypo from "@expo/vector-icons/Entypo";
+
 import { OrderHistoryCard } from "@/src/client/components/reports/OrderHistoryItem";
 import { icons } from "@/src/client/icons/icons";
 import { useManager } from "@/src/contexts/ManagerProvider";
@@ -132,13 +131,9 @@ export default function ExpensesScreen() {
 
     const renderAddButton = () => {
         return (
-            <TouchableOpacity
+            <FloatingAddButton
                 onPress={() => router.push(`/manager/expenses/${activeTab}`)}
-                style={ButtonStyles.addButtonManager}
-                activeOpacity={0.7}
-            >
-                <Entypo name="plus" size={sizes.m} color="black" />
-            </TouchableOpacity>
+            />
         );
     };
 
