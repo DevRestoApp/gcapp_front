@@ -25,6 +25,7 @@ const { width: screenWidth } = Dimensions.get("window");
 interface DishDetailModalProps {
     dish: Dish;
     initialQuantity?: number;
+    minQuantity?: number;
     initialComment?: string;
     /** quantity + comment — caller writes to WaiterProvider */
     onAddToOrder?: (quantity: number, comment?: string) => void;
@@ -58,6 +59,7 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
         {
             dish,
             initialQuantity = 0,
+            minQuantity = 0,
             initialComment = "",
             onAddToOrder,
             onClose,
@@ -93,9 +95,9 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
         }, [onClose]);
 
         const handleDecrease = useCallback(() => {
-            if (quantity <= 0) return;
+            if (quantity <= minQuantity) return;
             setQuantity((q) => q - 1);
-        }, [quantity]);
+        }, [quantity, minQuantity]);
 
         const handleIncrease = useCallback(() => {
             setQuantity((q) => q + 1);
@@ -185,10 +187,11 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                         <View style={styles.quantityBox}>
                             <TouchableOpacity
                                 onPress={handleDecrease}
-                                disabled={quantity === 0}
+                                disabled={quantity <= minQuantity}
                                 style={[
                                     styles.qtyButton,
-                                    quantity === 0 && styles.qtyButtonDisabled,
+                                    quantity <= minQuantity &&
+                                        styles.qtyButtonDisabled,
                                 ]}
                                 hitSlop={{
                                     top: 5,
@@ -201,7 +204,7 @@ const DishDetailModal = forwardRef<DishDetailModalRef, DishDetailModalProps>(
                                 <Text
                                     style={[
                                         styles.qtyText,
-                                        quantity === 0 &&
+                                        quantity <= minQuantity &&
                                             styles.qtyTextDisabled,
                                     ]}
                                 >

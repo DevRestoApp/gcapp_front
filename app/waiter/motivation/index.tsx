@@ -7,14 +7,15 @@ import {
     StatusBar,
     Alert,
     ScrollView,
+    TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
 import QuestCard, { Quest } from "@/src/client/components/waiter/QuestCard";
 import TaskCard, { Task } from "@/src/client/components/waiter/TaskCard";
+import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 import Loading from "@/src/client/components/Loading";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
@@ -29,8 +30,8 @@ export default function MotivationScreen() {
     const { user, selectedLocation } = useAuth();
     const waiterId = user?.id;
 
-    const [days, setDays] = useState<Day[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
+    const [showCalendar, setShowCalendar] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const tabs = [
@@ -62,20 +63,7 @@ export default function MotivationScreen() {
     );
 
     useEffect(() => {
-        const today = new Date();
-        const weekDays: Day[] = Array.from({ length: 7 }, (_, i) => {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-            return {
-                date: date.getDate().toString(),
-                day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-                active: i === 6,
-            };
-        });
-
-        setDays(weekDays);
-
-        const todayStr = today.toLocaleDateString("ru-RU", {
+        const todayStr = new Date().toLocaleDateString("ru-RU", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -84,24 +72,10 @@ export default function MotivationScreen() {
         loadData(todayStr);
     }, []);
 
-    const handleDayPress = useCallback(
-        (index: number) => {
-            setDays((prev) =>
-                prev.map((day, i) => ({ ...day, active: i === index })),
-            );
-
-            const today = new Date();
-            const selectedDay = new Date(today);
-            selectedDay.setDate(today.getDate() - (6 - index));
-
-            const dateStr = selectedDay.toLocaleDateString("ru-RU", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-            });
-
-            setSelectedDate(dateStr);
-            loadData(dateStr);
+    const handleDateSelect = useCallback(
+        (date: string) => {
+            setSelectedDate(date);
+            loadData(date);
         },
         [loadData],
     );
@@ -184,7 +158,28 @@ export default function MotivationScreen() {
                 <Text style={styles.headerTitle}>Мотивация</Text>
             </View>
 
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <View style={styles.filtersContainer}>
+                <TouchableOpacity
+                    style={styles.filterButton}
+                    onPress={() => setShowCalendar(true)}
+                >
+                    <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="#FFFFFF"
+                    />
+                    <Text style={styles.filterText}>
+                        {selectedDate || "Выбрать..."}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            <ReportCalendar
+                visible={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                onDateSelect={handleDateSelect}
+                initialDate={selectedDate}
+            />
 
             {loading ? (
                 <View style={loadingStyles.loadingContainer}>
@@ -250,6 +245,25 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.24,
+    },
+    filtersContainer: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    filterButton: {
+        flexDirection: "row",
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+        gap: 4,
+        borderRadius: 16,
+        backgroundColor: "#1C1C1E",
+    },
+    filterText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
     },
     scrollView: {
         flex: 1,
