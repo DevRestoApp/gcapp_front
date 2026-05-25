@@ -22,65 +22,6 @@ import { useAuth } from "@/src/contexts/AuthContext";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
-import { WaiterSalaryType } from "@/src/server/types/waiter";
-
-// ============================================================================
-// Mock — поставь USE_MOCK = false чтобы вернуть реальные данные
-// ============================================================================
-
-const USE_MOCK = true;
-
-const MOCK_SALARY: WaiterSalaryType = {
-    date: "25.05.2026",
-    tablesCompleted: 12,
-    sales_number: 487500,
-    salary: 24375,
-    salaryPercentage: 5,
-    bonuses: 8000,
-    questBonus: 5000,
-    questDescription: "Продать 15 десертов",
-    penalties: 2000,
-    totalEarnings: 35375,
-    breakdown: {
-        baseSalary: 24375,
-        percentage: 5,
-        bonuses: [
-            {
-                type: "upsell",
-                amount: 5000,
-                description: "Допродажа напитков",
-            },
-        ],
-        penalties: [
-            {
-                reason: "Опоздание на смену",
-                amount: 2000,
-                date: "25.05.2026",
-            },
-        ],
-        questRewards: [
-            {
-                questId: "q1",
-                questName: "Десертный марафон",
-                reward: 5000,
-            },
-        ],
-    },
-    quests: [
-        {
-            id: "q1",
-            title: "Десертный марафон",
-            description: "Продай 15 десертов за смену и получи бонус",
-            reward: 5000,
-            current: 15,
-            target: 15,
-            unit: "шт",
-            completed: true,
-            progress: 100,
-            expiresAt: "2026-05-25T23:59:59",
-        },
-    ],
-};
 
 // ============================================================================
 // Helpers
@@ -99,9 +40,7 @@ const formatDate = (date: Date): string =>
 
 export default function SalaryScreen() {
     const { user, selectedLocation } = useAuth();
-    const { salary: realSalary, fetchSalary } = useWaiter();
-
-    const salary = USE_MOCK ? MOCK_SALARY : realSalary;
+    const { salary, fetchSalary } = useWaiter();
 
     const waiter_id = user.id === 10 ? 32256 : user.id;
 
@@ -113,7 +52,6 @@ export default function SalaryScreen() {
 
     const loadData = useCallback(
         async (date: string) => {
-            if (USE_MOCK) return;
             setLoading(true);
             try {
                 await fetchSalary(waiter_id, {
@@ -151,28 +89,6 @@ export default function SalaryScreen() {
 
         return (
             <View style={styles.card}>
-                {/* Header Row */}
-                <View style={styles.cardHeader}>
-                    <View style={styles.cardHeaderLeft}>
-                        <View style={styles.iconContainer}>
-                            <Text style={styles.iconText}>✓</Text>
-                        </View>
-                        <View style={styles.cardHeaderInfo}>
-                            <Text style={styles.cardSubtitle}>
-                                Успешно завершен
-                            </Text>
-                            <Text style={styles.cardTitle}>
-                                {salary.tablesCompleted} столов
-                            </Text>
-                        </View>
-                    </View>
-                    <Text style={styles.cardAmount}>
-                        {salary.sales_number.toLocaleString()} тг
-                    </Text>
-                </View>
-
-                <View style={styles.divider} />
-
                 {/* Breakdown */}
                 <View style={styles.breakdown}>
                     <View style={styles.breakdownItem}>
@@ -185,6 +101,29 @@ export default function SalaryScreen() {
                         <View style={styles.badgeDefault}>
                             <Text style={styles.badgeDefaultText}>
                                 {salary.salary.toLocaleString()} тг
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.breakdownItem}>
+                        <View style={styles.breakdownLeft}>
+                            <Text style={styles.breakdownTitle}>Квест</Text>
+                            <Text style={styles.breakdownSubtitle}>
+                                {salary.questDescription}
+                            </Text>
+                        </View>
+                        <View style={styles.badgeInfo}>
+                            <Text style={styles.badgeInfoText}>
+                                {salary.questBonus.toLocaleString()} тг
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.breakdownItemSimple}>
+                        <Text style={styles.breakdownLabel}>Штрафы</Text>
+                        <View style={styles.badgeDanger}>
+                            <Text style={styles.badgeDangerText}>
+                                {salary.penalties.toLocaleString()} тг
                             </Text>
                         </View>
                     </View>
@@ -355,45 +294,6 @@ const styles = StyleSheet.create({
         padding: 12,
         gap: 16,
     },
-    cardHeader: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-    },
-    cardHeaderLeft: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        flex: 1,
-    },
-    iconContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: "rgba(32, 199, 116, 0.2)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    iconText: { fontSize: 24, color: "#20C774" },
-    cardHeaderInfo: { gap: 4, flex: 1 },
-    cardSubtitle: {
-        color: "rgba(255, 255, 255, 0.75)",
-        fontSize: 12,
-        lineHeight: 16,
-    },
-    cardTitle: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "bold",
-        lineHeight: 24,
-    },
-    cardAmount: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "bold",
-        lineHeight: 24,
-    },
-
     divider: {
         height: 1,
         backgroundColor: "rgba(43, 43, 44, 1)",
