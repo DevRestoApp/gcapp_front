@@ -198,6 +198,9 @@ export default function EditOrderMenuScreen() {
     const modalRef = useRef<DishDetailModalRef>(null);
     const hasSaved = useRef(false);
 
+    // Оригинальные позиции заказа — нельзя убирать / уменьшать ниже этого кол-ва
+    const originalItemsRef = useRef<Map<number, number>>(new Map());
+
     // Очистить selectedDishes при размонтировании, если не сохранили (Отмена/back)
     useEffect(() => {
         return () => {
@@ -222,6 +225,13 @@ export default function EditOrderMenuScreen() {
                 comment: item.comment ?? undefined,
             }));
             setSelectedDishes(seeded);
+
+            // Запоминаем оригинальные кол-ва — ниже них уменьшать нельзя
+            const map = new Map<number, number>();
+            rawItems.forEach((item) =>
+                map.set(item.product_id, item.dish_amount_int),
+            );
+            originalItemsRef.current = map;
         } catch {
             console.warn("editOrderMenu: failed to parse orderItems param");
         }
@@ -323,7 +333,6 @@ export default function EditOrderMenuScreen() {
                     (d) => d.productId === selectedDish.id,
                 );
                 if (idx !== -1) {
-                    if (quantity === 0) return prev.filter((_, i) => i !== idx);
                     const updated = [...prev];
                     updated[idx] = newItem;
                     return updated;
@@ -538,8 +547,12 @@ export default function EditOrderMenuScreen() {
                                     description={dish.description || ""}
                                     price={formatPrice(dish.price)}
                                     image=""
-                                    variant="interactive" // ← было "informative"
+                                    variant="interactive"
                                     initialQuantity={quantityMap[dish.id] ?? 0}
+                                    minQuantity={
+                                        originalItemsRef.current.get(dish.id) ??
+                                        0
+                                    }
                                     showQuantity
                                     onQuantityChange={handleQuantityChange}
                                     onPress={() => handleDishPress(dish)}
@@ -604,6 +617,9 @@ export default function EditOrderMenuScreen() {
                     }}
                     onClose={handleModalClose}
                     initialQuantity={quantityMap[selectedDish.id] || 0}
+                    minQuantity={
+                        originalItemsRef.current.get(selectedDish.id) ?? 0
+                    }
                     initialComment={
                         selectedDishes.find(
                             (d) => d.productId === selectedDish.id,
