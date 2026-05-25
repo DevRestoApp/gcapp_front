@@ -8,6 +8,7 @@ interface DishItemProps {
     price: string;
     image?: string;
     initialQuantity?: number;
+    minQuantity?: number;
     onQuantityChange?: (id: string, quantity: number) => void;
     variant?: "interactive" | "informative";
     onPress?: (id: string) => void;
@@ -22,6 +23,7 @@ export default function DishItem({
     description,
     price,
     initialQuantity = 0,
+    minQuantity = 0,
     onQuantityChange,
     variant = "interactive",
     onPress,
@@ -45,11 +47,11 @@ export default function DishItem({
     const quantity = isControlled ? initialQuantity : localQuantity;
 
     const handleDecrease = useCallback(() => {
-        if (disabled || quantity <= 0) return;
+        if (disabled || quantity <= minQuantity) return;
         const next = quantity - 1;
         if (!isControlled) setLocalQuantity(next);
         onQuantityChange?.(id, next);
-    }, [disabled, quantity, isControlled, onQuantityChange, id]);
+    }, [disabled, quantity, minQuantity, isControlled, onQuantityChange, id]);
 
     const handleIncrease = useCallback(() => {
         if (disabled) return;
@@ -158,10 +160,11 @@ export default function DishItem({
             <View style={styles.quantityBox}>
                 <TouchableOpacity
                     onPress={handleDecrease}
-                    disabled={quantity === 0 || disabled}
+                    disabled={quantity <= minQuantity || disabled}
                     style={[
                         styles.button,
-                        (quantity === 0 || disabled) && styles.buttonDisabled,
+                        (quantity <= minQuantity || disabled) &&
+                            styles.buttonDisabled,
                     ]}
                     hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                     activeOpacity={0.7}
@@ -169,7 +172,7 @@ export default function DishItem({
                     <Text
                         style={[
                             styles.buttonText,
-                            (quantity === 0 || disabled) &&
+                            (quantity <= minQuantity || disabled) &&
                                 styles.buttonTextDisabled,
                         ]}
                     >

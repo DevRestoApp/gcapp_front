@@ -7,37 +7,84 @@ import {
     StatusBar,
     Alert,
     FlatList,
+    TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
-import Calendar from "@/src/client/components/Calendar";
-import { Day } from "@/src/client/types/waiter";
 import SalaryQuestCard, {
     SalaryQuest,
 } from "@/src/client/components/waiter/SalaryQuestCard";
+import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 import Loading from "@/src/client/components/Loading";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
 
 import { loadingStyles } from "@/src/client/styles/ui/loading.styles";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
+import { WaiterSalaryType } from "@/src/server/types/waiter";
+
+// ============================================================================
+// Mock — поставь USE_MOCK = false чтобы вернуть реальные данные
+// ============================================================================
+
+const USE_MOCK = true;
+
+const MOCK_SALARY: WaiterSalaryType = {
+    date: "25.05.2026",
+    tablesCompleted: 12,
+    sales_number: 487500,
+    salary: 24375,
+    salaryPercentage: 5,
+    bonuses: 8000,
+    questBonus: 5000,
+    questDescription: "Продать 15 десертов",
+    penalties: 2000,
+    totalEarnings: 35375,
+    breakdown: {
+        baseSalary: 24375,
+        percentage: 5,
+        bonuses: [
+            {
+                type: "upsell",
+                amount: 5000,
+                description: "Допродажа напитков",
+            },
+        ],
+        penalties: [
+            {
+                reason: "Опоздание на смену",
+                amount: 2000,
+                date: "25.05.2026",
+            },
+        ],
+        questRewards: [
+            {
+                questId: "q1",
+                questName: "Десертный марафон",
+                reward: 5000,
+            },
+        ],
+    },
+    quests: [
+        {
+            id: "q1",
+            title: "Десертный марафон",
+            description: "Продай 15 десертов за смену и получи бонус",
+            reward: 5000,
+            current: 15,
+            target: 15,
+            unit: "шт",
+            completed: true,
+            progress: 100,
+            expiresAt: "2026-05-25T23:59:59",
+        },
+    ],
+};
 
 // ============================================================================
 // Helpers
 // ============================================================================
-
-const buildWeekDays = (): Day[] => {
-    const today = new Date();
-    return Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() - (6 - i));
-        return {
-            date: date.getDate().toString(),
-            day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-            active: i === 6,
-        };
-    });
-};
 
 const formatDate = (date: Date): string =>
     date.toLocaleDateString("ru-RU", {
@@ -52,16 +99,21 @@ const formatDate = (date: Date): string =>
 
 export default function SalaryScreen() {
     const { user, selectedLocation } = useAuth();
-    const { salary, fetchSalary } = useWaiter();
+    const { salary: realSalary, fetchSalary } = useWaiter();
+
+    const salary = USE_MOCK ? MOCK_SALARY : realSalary;
 
     const waiter_id = user.id === 10 ? 32256 : user.id;
 
-    const [days, setDays] = useState<Day[]>(() => buildWeekDays());
-    const [selectedDate, setSelectedDate] = useState<string>("");
+    const [selectedDate, setSelectedDate] = useState<string>(() =>
+        formatDate(new Date()),
+    );
+    const [showCalendar, setShowCalendar] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const loadData = useCallback(
         async (date: string) => {
+            if (USE_MOCK) return;
             setLoading(true);
             try {
                 await fetchSalary(waiter_id, {
@@ -81,24 +133,13 @@ export default function SalaryScreen() {
     );
 
     useEffect(() => {
-        const todayStr = formatDate(new Date());
-        setSelectedDate(todayStr);
-        loadData(todayStr);
+        loadData(selectedDate);
     }, []);
 
-    const handleDayPress = useCallback(
-        (index: number) => {
-            setDays((prev) =>
-                prev.map((day, i) => ({ ...day, active: i === index })),
-            );
-
-            const today = new Date();
-            const pressed = new Date(today);
-            pressed.setDate(today.getDate() - (6 - index));
-
-            const dateStr = formatDate(pressed);
-            setSelectedDate(dateStr);
-            loadData(dateStr);
+    const handleDateSelect = useCallback(
+        (date: string) => {
+            setSelectedDate(date);
+            loadData(date);
         },
         [loadData],
     );
@@ -147,38 +188,6 @@ export default function SalaryScreen() {
                             </Text>
                         </View>
                     </View>
-
-                    <View style={styles.breakdownItemSimple}>
-                        <Text style={styles.breakdownLabel}>Бонусы</Text>
-                        <View style={styles.badgeSuccess}>
-                            <Text style={styles.badgeSuccessText}>
-                                {salary.bonuses.toLocaleString()} тг
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.breakdownItem}>
-                        <View style={styles.breakdownLeft}>
-                            <Text style={styles.breakdownTitle}>Квест</Text>
-                            <Text style={styles.breakdownSubtitle}>
-                                {salary.questDescription}
-                            </Text>
-                        </View>
-                        <View style={styles.badgeInfo}>
-                            <Text style={styles.badgeInfoText}>
-                                {salary.questBonus.toLocaleString()} тг
-                            </Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.breakdownItemSimple}>
-                        <Text style={styles.breakdownLabel}>Штрафы</Text>
-                        <View style={styles.badgeDanger}>
-                            <Text style={styles.badgeDangerText}>
-                                {salary.penalties.toLocaleString()} тг
-                            </Text>
-                        </View>
-                    </View>
                 </View>
 
                 <View style={styles.divider} />
@@ -220,7 +229,28 @@ export default function SalaryScreen() {
                     <Text style={styles.headerTitle}>Зарплата</Text>
                 </View>
 
-                <Calendar days={days} onDayPress={handleDayPress} />
+                <View style={styles.filtersContainer}>
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => setShowCalendar(true)}
+                    >
+                        <Ionicons
+                            name="calendar-outline"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                        <Text style={styles.filterText}>
+                            {selectedDate || "Выбрать..."}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ReportCalendar
+                    visible={showCalendar}
+                    onClose={() => setShowCalendar(false)}
+                    onDateSelect={handleDateSelect}
+                    initialDate={selectedDate}
+                />
 
                 <View style={styles.content}>
                     <Text style={styles.dateTitle}>{selectedDate}</Text>
@@ -285,6 +315,26 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.24,
+    },
+
+    filtersContainer: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    filterButton: {
+        flexDirection: "row",
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+        gap: 4,
+        borderRadius: 16,
+        backgroundColor: "#1C1C1E",
+    },
+    filterText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
     },
 
     content: {

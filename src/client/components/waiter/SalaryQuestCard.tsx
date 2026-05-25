@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     iconContainerCompleted: {
         backgroundColor: "rgba(13, 194, 104, 0.2)",
     },
-    iconText: { fontSize: 24 },
+    iconText: { fontSize: 24, color: "#20C774" },
     headerInfo: { gap: 4, flex: 1 },
     subtitle: {
         color: "#fff",

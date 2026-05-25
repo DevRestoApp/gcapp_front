@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
-import Calendar from "@/src/client/components/Calendar";
 import EarningsCard from "@/src/client/components/waiter/EarningsCard";
 import TimerCard from "@/src/client/components/waiter/TimerCard";
 import MotivationCard from "@/src/client/components/waiter/MotivationCard";
@@ -20,12 +20,12 @@ import ShiftTimeModal from "@/src/client/components/modals/ShiftTimeModal";
 import ShiftCloseModal, {
     ShiftCloseModalRef,
 } from "@/src/client/components/modals/ShiftCloseModal";
+import { ReportCalendar } from "@/src/client/components/reports/Calendar";
 
 import { useWaiter } from "@/src/contexts/WaiterProvider";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { ButtonStyles } from "@/src/client/styles/ui/buttons/Button.styles";
-import { Day } from "@/src/client/types/waiter";
 
 // ============================================================================
 // Helpers
@@ -38,17 +38,9 @@ const formatDateForAPI = (date: Date): string =>
         year: "numeric",
     });
 
-const buildWeekDays = (): Day[] => {
-    const today = new Date();
-    return Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() - (6 - i));
-        return {
-            date: date.getDate().toString(),
-            day: date.toLocaleDateString("ru-RU", { weekday: "short" }),
-            active: i === 6,
-        };
-    });
+const parseDateStr = (str: string): Date => {
+    const [day, month, year] = str.split(".");
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 };
 
 // ============================================================================
@@ -71,8 +63,11 @@ export default function Index() {
         setSelectedOrder,
     } = useWaiter();
 
-    const [days, setDays] = useState<Day[]>(() => buildWeekDays());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedDateStr, setSelectedDateStr] = useState<string>(() =>
+        formatDateForAPI(new Date()),
+    );
+    const [showCalendar, setShowCalendar] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isStartingShift, setIsStartingShift] = useState(false);
     const [isEndingShift, setIsEndingShift] = useState(false);
@@ -97,6 +92,7 @@ export default function Index() {
                 fetchOrders({
                     user_id: user.id,
                     organization_id: selectedLocation,
+                    date: formatDateForAPI(selectedDate),
                 }),
             ]);
         } catch (error) {
@@ -121,13 +117,9 @@ export default function Index() {
     // Handlers
     // ========================================================================
 
-    const handleDayPress = useCallback((index: number) => {
-        setDays((prev) => prev.map((d, i) => ({ ...d, active: i === index })));
-
-        const today = new Date();
-        const pressed = new Date(today);
-        pressed.setDate(today.getDate() - (6 - index));
-        setSelectedDate(pressed);
+    const handleDateSelect = useCallback((dateStr: string) => {
+        setSelectedDateStr(dateStr);
+        setSelectedDate(parseDateStr(dateStr));
     }, []);
 
     const handleShiftStart = useCallback(async () => {
@@ -223,7 +215,25 @@ export default function Index() {
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Смена</Text>
                 </View>
-                <Calendar days={days} onDayPress={handleDayPress} />
+                <View style={styles.filtersContainer}>
+                    <TouchableOpacity
+                        style={styles.filterButton}
+                        onPress={() => setShowCalendar(true)}
+                    >
+                        <Ionicons
+                            name="calendar-outline"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+                        <Text style={styles.filterText}>{selectedDateStr}</Text>
+                    </TouchableOpacity>
+                </View>
+                <ReportCalendar
+                    visible={showCalendar}
+                    onClose={() => setShowCalendar(false)}
+                    onDateSelect={handleDateSelect}
+                    initialDate={selectedDateStr}
+                />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Загрузка...</Text>
@@ -242,7 +252,26 @@ export default function Index() {
                 <Text style={styles.headerTitle}>Смена</Text>
             </View>
 
-            <Calendar days={days} onDayPress={handleDayPress} />
+            <View style={styles.filtersContainer}>
+                <TouchableOpacity
+                    style={styles.filterButton}
+                    onPress={() => setShowCalendar(true)}
+                >
+                    <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="#FFFFFF"
+                    />
+                    <Text style={styles.filterText}>{selectedDateStr}</Text>
+                </TouchableOpacity>
+            </View>
+
+            <ReportCalendar
+                visible={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                onDateSelect={handleDateSelect}
+                initialDate={selectedDateStr}
+            />
 
             {isActive ? (
                 <ScrollView
@@ -358,6 +387,25 @@ const styles = StyleSheet.create({
         fontSize: 32,
         fontWeight: "600",
         letterSpacing: -0.24,
+    },
+    filtersContainer: {
+        flexDirection: "row",
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+    },
+    filterButton: {
+        flexDirection: "row",
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        alignItems: "center",
+        gap: 4,
+        borderRadius: 16,
+        backgroundColor: "#1C1C1E",
+    },
+    filterText: {
+        color: "#FFFFFF",
+        fontSize: 16,
+        lineHeight: 20,
     },
 
     loadingContainer: {
