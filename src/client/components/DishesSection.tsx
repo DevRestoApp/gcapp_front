@@ -96,9 +96,7 @@ export default function DishesSection({
                     activeOpacity={0.8}
                 >
                     <Text style={styles.addDishButtonText}>
-                        {isEditOrder
-                            ? "Редактировать заказ"
-                            : "+ Добавить блюдо"}
+                        {isEditOrder ? "Добавить позиции" : "Добавить блюдо"}
                     </Text>
                 </TouchableOpacity>
             )}

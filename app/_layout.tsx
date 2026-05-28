@@ -23,8 +23,8 @@ function AuthWrapper() {
     }
 
     return (
-        <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" options={{ gestureEnabled: false }} />
+        <Stack screenOptions={{ headerShown: false, gestureEnabled: false }}>
+            <Stack.Screen name="index" />
         </Stack>
     );
 }

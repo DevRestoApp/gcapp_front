@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { BackHandler } from "react-native";
 import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { WaiterProvider } from "@/src/contexts/WaiterProvider";
@@ -31,6 +32,14 @@ export default function WaiterLayout() {
             router.replace("/");
         }
     }, [selectedLocation]);
+
+    useEffect(() => {
+        const handler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            () => true,
+        );
+        return () => handler.remove();
+    }, []);
 
     if (selectedLocation === null || selectedLocation === undefined) {
         return null;

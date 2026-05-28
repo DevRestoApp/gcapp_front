@@ -19,12 +19,12 @@ const getValidUrl = (url: string | undefined): string => {
 };
 
 const config: ExpoConfig = {
-    name: process.env.APP_NAME || "GCApp",
+    name: process.env.APP_NAME || "RestoAI",
     slug: "gcappprod",
     owner: "qoqosyk",
     scheme: "com.gcappprod.mobile",
-    version: "1.1.2",
-    runtimeVersion: "1.1.2",
+    version: "1.1.3",
+    runtimeVersion: "1.1.3",
     updates: {
         url: "https://u.expo.dev/1005e280-27da-4377-940f-5432cddf9411",
     },
