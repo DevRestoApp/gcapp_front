@@ -71,6 +71,7 @@ export default function Index() {
     const [isLoading, setIsLoading] = useState(false);
     const [isStartingShift, setIsStartingShift] = useState(false);
     const [isEndingShift, setIsEndingShift] = useState(false);
+    const [isRefreshingShift, setIsRefreshingShift] = useState(false);
 
     const shiftCloseModalRef = useRef<ShiftCloseModalRef>(null);
     const isActive = shiftStatus?.isActive ?? false;
@@ -137,9 +138,19 @@ export default function Index() {
         }
     }, [user?.id, selectedLocation, startShift, fetchData]);
 
-    const handleOpenCloseModal = useCallback(() => {
+    const handleOpenCloseModal = useCallback(async () => {
+        if (user?.id) {
+            setIsRefreshingShift(true);
+            try {
+                await fetchShiftStatus(user.id, {
+                    date: formatDateForAPI(selectedDate),
+                });
+            } finally {
+                setIsRefreshingShift(false);
+            }
+        }
         shiftCloseModalRef.current?.open();
-    }, []);
+    }, [user?.id, selectedDate, fetchShiftStatus]);
 
     const handleCloseShift = useCallback(
         async (data: {
@@ -278,12 +289,6 @@ export default function Index() {
                     style={styles.activeShiftContainer}
                     contentContainerStyle={styles.activeShiftContent}
                 >
-                    {isLoading && (
-                        <View style={styles.refreshIndicator}>
-                            <ActivityIndicator size="small" color="#fff" />
-                        </View>
-                    )}
-
                     <View style={styles.row}>
                         <View style={styles.half}>
                             <TimerCard
@@ -318,12 +323,13 @@ export default function Index() {
                             style={[
                                 ButtonStyles.buttonWhite,
                                 styles.endShiftButton,
-                                isEndingShift && styles.buttonDisabled,
+                                (isEndingShift || isRefreshingShift) &&
+                                    styles.buttonDisabled,
                             ]}
                             onPress={handleOpenCloseModal}
-                            disabled={isEndingShift}
+                            disabled={isEndingShift || isRefreshingShift}
                         >
-                            {isEndingShift ? (
+                            {isEndingShift || isRefreshingShift ? (
                                 <ActivityIndicator
                                     size="small"
                                     color="#2C2D2E"

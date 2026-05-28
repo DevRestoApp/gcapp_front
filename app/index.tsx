@@ -14,7 +14,6 @@ import {
     StatusBar,
     Modal,
     FlatList,
-    Alert,
     BackHandler,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -117,17 +116,18 @@ export default function RolePicker({
         fetchOrganizations,
         selectedLocation,
         setSelectedLocation,
+        logout,
     } = useAuth();
 
     const skipLocationCheck =
         skipLocationCheckProp || TEST_EMAILS.includes(user?.email ?? "");
 
-    const ALL_ROLES: Role[] = [
-        { id: "admin", title: "Админ", IconComponent: AdminIcon },
-        { id: "owner", title: "Владелец", IconComponent: CEOIcon },
-        { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
-    ];
     const availableRoles = useMemo(() => {
+        const ALL_ROLES: Role[] = [
+            { id: "admin", title: "Админ", IconComponent: AdminIcon },
+            { id: "owner", title: "Владелец", IconComponent: CEOIcon },
+            { id: "waiter", title: "Официант", IconComponent: WaiterIcon },
+        ];
         const role = user?.role;
         switch (role) {
             case "Официант":
@@ -140,9 +140,9 @@ export default function RolePicker({
             default:
                 return ALL_ROLES;
         }
-    }, [user?.role, ALL_ROLES]);
+    }, [user?.role]);
 
-    const [screen, setScreen] = useState<"enter" | "rolePicker">(
+    const [screen] = useState<"enter" | "rolePicker">(
         token && user ? "rolePicker" : "enter",
     );
 
@@ -184,7 +184,7 @@ export default function RolePicker({
             }
         };
         loadOrganizations();
-    }, [selectedRole]);
+    }, [selectedRole, fetchOrganizations]);
 
     useEffect(() => {
         if (screen !== "rolePicker") return;
@@ -304,14 +304,22 @@ export default function RolePicker({
             if (roleId !== "waiter") setSelectedLocation("");
             onRoleSelect?.(roleId);
         },
-        [onRoleSelect],
+        [onRoleSelect, setSelectedLocation],
     );
 
-    const handleLocationSelect = useCallback((locationId: number) => {
-        setSelectedLocation(locationId);
-        setLocationError(null);
-        setShowLocationModal(false);
-    }, []);
+    const handleBack = useCallback(async () => {
+        await logout();
+        router.replace("/auth");
+    }, [logout, router]);
+
+    const handleLocationSelect = useCallback(
+        (locationId: number) => {
+            setSelectedLocation(locationId);
+            setLocationError(null);
+            setShowLocationModal(false);
+        },
+        [setSelectedLocation],
+    );
 
     const handleLogin = useCallback(async () => {
         if (!selectedRole) return;
@@ -422,7 +430,12 @@ export default function RolePicker({
 
     const renderHeader = () => (
         <View style={styles.header}>
-            <Text style={styles.headerTitle}>Выберите роль</Text>
+            <View style={styles.headerRow}>
+                <TouchableOpacity onPress={handleBack} activeOpacity={0.7}>
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Выберите роль</Text>
+            </View>
             <Text style={styles.headerSubtitle}>
                 Чтобы продолжить выберите роль
             </Text>
@@ -697,6 +710,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 16,
         gap: 4,
+    },
+    headerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
     },
     headerTitle: {
         color: "#fff",

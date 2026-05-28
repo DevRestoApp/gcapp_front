@@ -94,9 +94,6 @@ export default function SalaryScreen() {
                     <View style={styles.breakdownItem}>
                         <View style={styles.breakdownLeft}>
                             <Text style={styles.breakdownTitle}>Зарплата</Text>
-                            <Text style={styles.breakdownSubtitle}>
-                                {salary.salaryPercentage}% общий кассы
-                            </Text>
                         </View>
                         <View style={styles.badgeDefault}>
                             <Text style={styles.badgeDefaultText}>

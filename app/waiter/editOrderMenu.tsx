@@ -430,7 +430,7 @@ export default function EditOrderMenuScreen() {
                 >
                     <Text style={styles.headerCancelText}>Отмена</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Редактировать заказ</Text>
+                <Text style={styles.headerTitle}>Добавить позиции</Text>
             </View>
 
             <ScrollView

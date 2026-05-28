@@ -191,8 +191,6 @@ export default function MotivationScreen() {
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                 >
-                    <Text style={styles.dateTitle}>{selectedDate}</Text>
-
                     <SegmentedControl
                         tabs={tabs}
                         activeTab={activeTab}
