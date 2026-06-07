@@ -35,6 +35,7 @@ export default function CancelScreen() {
     const { user, selectedLocation } = useAuth();
 
     const orderId = Number(params.orderId);
+    const date = params.date as string | undefined;
 
     const [selectedReason, setSelectedReason] = useState<string>(
         CANCEL_REASONS[0],
@@ -52,6 +53,7 @@ export default function CancelScreen() {
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,
+                date,
             });
             router.push("/waiter");
         } catch {

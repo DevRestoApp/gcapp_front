@@ -185,10 +185,11 @@ export default function Index() {
                 params: {
                     orderId: String(itemId),
                     orderData: JSON.stringify(item),
+                    date: formatDateForAPI(selectedDate),
                 },
             });
         },
-        [setSelectedOrderId, setSelectedOrder, router],
+        [setSelectedOrderId, setSelectedOrder, router, selectedDate],
     );
 
     // ========================================================================
@@ -315,6 +316,7 @@ export default function Index() {
                             isLoading={isLoading}
                             onOrderClick={handleOrderClick}
                             showStatus={true}
+                            date={formatDateForAPI(selectedDate)}
                         />
                     )}
 

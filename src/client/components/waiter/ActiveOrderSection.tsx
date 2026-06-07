@@ -45,6 +45,7 @@ interface ActiveOrdersSectionProps {
     showStatus?: boolean;
     showAddOrderButton?: boolean;
     disableDefaultOrderClickPush?: boolean;
+    date?: string;
 }
 
 export default function ActiveOrdersSection({
@@ -57,6 +58,7 @@ export default function ActiveOrdersSection({
     showStatus = false,
     showAddOrderButton = true,
     disableDefaultOrderClickPush = false,
+    date,
 }: ActiveOrdersSectionProps) {
     const router = useRouter();
 
@@ -112,6 +114,7 @@ export default function ActiveOrdersSection({
                     params: {
                         orderId: orderId,
                         orderData: JSON.stringify(rawOrder),
+                        date,
                     },
                 });
             }

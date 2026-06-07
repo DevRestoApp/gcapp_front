@@ -158,6 +158,13 @@ function SelectionModal<T>({
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
+const formatDateForAPI = (date: Date): string =>
+    date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+
 export default function NewOrder() {
     const router = useRouter();
     const {
@@ -190,6 +197,7 @@ export default function NewOrder() {
     const [tablesLoading, setTablesLoading] = useState(false);
     const [showRoomModal, setShowRoomModal] = useState(false);
     const [showTableModal, setShowTableModal] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     // Fetch rooms on mount
     useEffect(() => {
@@ -286,6 +294,7 @@ export default function NewOrder() {
     };
 
     const handleCreateOrder = async () => {
+        setIsCreating(true);
         try {
             await createOrderWrapper({
                 organizationId: selectedLocation,
@@ -300,15 +309,21 @@ export default function NewOrder() {
                     comment: el.comment,
                 })),
             });
-
             setSelectedDishes([]);
+        } catch (e) {
+            console.error(`Error creating order: ${e.message} \n ${e.stack}`);
+            setIsCreating(false);
+            return;
+        }
 
+        try {
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,
+                date: formatDateForAPI(new Date()),
             });
         } catch (e) {
-            console.error(`Error creating order: ${e.message} \n ${e.stack}`);
+            console.error(`Error fetching orders: ${e}`);
         } finally {
             router.push("/waiter");
         }
@@ -409,12 +424,17 @@ export default function NewOrder() {
 
                     {canCreateOrder && (
                         <TouchableOpacity
-                            style={[ButtonStyles.buttonWhite, styles.addButton]}
+                            style={[
+                                ButtonStyles.buttonWhite,
+                                styles.addButton,
+                                isCreating && styles.buttonDisabled,
+                            ]}
                             onPress={handleCreateOrder}
+                            disabled={isCreating}
                             activeOpacity={0.7}
                         >
                             <Text style={ButtonStyles.buttonText}>
-                                Создать заказ
+                                {isCreating ? "Создание..." : "Создать заказ"}
                             </Text>
                         </TouchableOpacity>
                     )}
@@ -548,4 +568,5 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     addButton: { width: "100%" },
+    buttonDisabled: { opacity: 0.5 },
 });

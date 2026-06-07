@@ -70,7 +70,7 @@ export default function OrderSummary({
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryTotalLabel}>Общая сумма:</Text>
                     <Text style={styles.summaryTotalValue}>
-                        {formatPrice(totalAmount)}
+                        {formatPrice(Math.round(totalAmount * 1.1))}
                     </Text>
                 </View>
             </View>

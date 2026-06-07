@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
     View,
@@ -9,11 +9,12 @@ import {
     TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 
 import OrderSelection from "@/src/client/components/waiter/OrderSelection";
 import { backgroundsStyles } from "@/src/client/styles/ui/components/backgrounds.styles";
 import { useWaiter } from "@/src/contexts/WaiterProvider";
-import Loading from "@/src/client/components/Loading";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // ============================================================================
 // Types
@@ -86,12 +87,32 @@ export default function OrderScreen() {
     const params = useLocalSearchParams<{
         orderId?: string;
         orderData?: string;
+        date?: string;
     }>();
 
-    const { selectedOrder } = useWaiter();
+    const { selectedOrder, fetchOrders, orders } = useWaiter();
+    const { user, selectedLocation } = useAuth();
 
-    // Берём актуальный заказ из списка orders если есть, иначе из params
+    // Рефетч orders при фокусе (возврат из editOrderMenu, cancel, payment)
+    useFocusEffect(
+        useCallback(() => {
+            if (!user?.id) return;
+            fetchOrders({
+                user_id: user.id,
+                organization_id: selectedLocation,
+                date: params.date,
+            }).catch(console.error);
+        }, [user?.id, selectedLocation, params.date, fetchOrders]),
+    );
+
+    // Берём актуальный заказ: сначала из свежего контекста orders, потом из params
     const apiOrder = useMemo<ApiOrder | null>(() => {
+        if (params.orderId && orders) {
+            const fromContext = (orders as ApiOrder[]).find(
+                (o) => o.id === Number(params.orderId),
+            );
+            if (fromContext) return fromContext;
+        }
         if (params.orderId && params.orderData) {
             try {
                 return JSON.parse(params.orderData);
@@ -100,7 +121,7 @@ export default function OrderScreen() {
             }
         }
         return selectedOrder ?? null;
-    }, [params.orderData, selectedOrder]);
+    }, [params.orderId, params.orderData, orders, selectedOrder]);
 
     const currentOrder = useMemo(() => {
         return apiOrder ? parseApiOrder(apiOrder) : null;
@@ -118,6 +139,7 @@ export default function OrderScreen() {
             params: {
                 orderId: String(params.orderId),
                 orderItems: JSON.stringify(apiOrder.items),
+                date: params.date,
             },
         });
     }, [apiOrder, params.orderId, router]);
@@ -125,7 +147,7 @@ export default function OrderScreen() {
     const handleCancelOrder = useCallback(() => {
         router.push({
             pathname: "/waiter/cancel",
-            params: { orderId: String(params.orderId) },
+            params: { orderId: String(params.orderId), date: params.date },
         });
     }, [router, params.orderId]);
 
@@ -139,6 +161,7 @@ export default function OrderScreen() {
             params: {
                 orderId: String(params.orderId),
                 totalBill: currentOrder?.totalBill,
+                date: params.date,
             },
         });
     }, [hasItems, params.orderId, router, currentOrder]);
