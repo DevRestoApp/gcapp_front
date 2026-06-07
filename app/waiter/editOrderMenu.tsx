@@ -168,9 +168,10 @@ const useMenuFilters = (dishes: MenuItem[], selectedCategory: string) => {
 export default function EditOrderMenuScreen() {
     const router = useRouter();
     // orderId и orderItems приходят явно — никакого mode флага
-    const { orderId, orderItems } = useLocalSearchParams<{
+    const { orderId, orderItems, date } = useLocalSearchParams<{
         orderId: string;
         orderItems: string;
+        date: string;
     }>();
 
     const {
@@ -366,6 +367,7 @@ export default function EditOrderMenuScreen() {
             await fetchOrders({
                 user_id: user?.id,
                 organization_id: selectedLocation,
+                date,
             });
 
             setSelectedDishes([]);
@@ -382,6 +384,7 @@ export default function EditOrderMenuScreen() {
         fetchOrders,
         user?.id,
         selectedLocation,
+        date,
         setSelectedDishes,
         router,
     ]);

@@ -25,6 +25,7 @@ export default function PaymentScreen() {
 
     const order_id = Number(params.orderId);
     const totalBill = Number(params.totalBill) || 0;
+    const date = params.date as string | undefined;
 
     const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
     const [paymentTypesLoading, setPaymentTypesLoading] = useState(true);
@@ -70,6 +71,7 @@ export default function PaymentScreen() {
             await fetchOrders({
                 user_id: user.id,
                 organization_id: selectedLocation,
+                date,
             });
             router.push("/waiter");
         } catch {
@@ -85,6 +87,7 @@ export default function PaymentScreen() {
         fetchOrders,
         user.id,
         selectedLocation,
+        date,
         router,
     ]);
 
@@ -200,7 +203,8 @@ export default function PaymentScreen() {
                 <View style={styles.bottomSection}>
                     <View style={styles.bottomContent}>
                         <Text style={styles.totalText}>
-                            Общий счет: {totalBill.toLocaleString()} тг
+                            Общий счет:{" "}
+                            {Math.round(totalBill * 1.1).toLocaleString()} тг
                         </Text>
                         <TouchableOpacity
                             style={[
