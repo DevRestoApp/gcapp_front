@@ -4,6 +4,7 @@ import {
     Text,
     StyleSheet,
     ScrollView,
+    RefreshControl,
     Pressable,
     TouchableOpacity,
     ActivityIndicator,
@@ -72,6 +73,7 @@ export default function Index() {
     const [isStartingShift, setIsStartingShift] = useState(false);
     const [isEndingShift, setIsEndingShift] = useState(false);
     const [isRefreshingShift, setIsRefreshingShift] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const shiftCloseModalRef = useRef<ShiftCloseModalRef>(null);
     const isActive = shiftStatus?.isActive ?? false;
@@ -112,6 +114,15 @@ export default function Index() {
 
     useEffect(() => {
         fetchData();
+    }, [fetchData]);
+
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchData();
+        } finally {
+            setIsRefreshing(false);
+        }
     }, [fetchData]);
 
     // ========================================================================
@@ -289,6 +300,13 @@ export default function Index() {
                 <ScrollView
                     style={styles.activeShiftContainer}
                     contentContainerStyle={styles.activeShiftContent}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            tintColor="#fff"
+                        />
+                    }
                 >
                     <View style={styles.row}>
                         <View style={styles.half}>
@@ -358,6 +376,13 @@ export default function Index() {
                 <ScrollView
                     style={styles.main}
                     contentContainerStyle={styles.inactiveShiftContent}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                            tintColor="#fff"
+                        />
+                    }
                 >
                     <Text style={styles.greetingSmall}>
                         Добрый день, {user?.name || "Адилет"}!
