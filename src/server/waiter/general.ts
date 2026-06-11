@@ -65,7 +65,7 @@ export async function getOrders(filters: WaiterOrdersInputType) {
 export async function createOrder(input: CreateOrdersInputType) {
     const params = checkFilters(input);
 
-    const res = await api.post("/orders", params);
+    const res = await api.post("/orders", params, { timeout: 45000 });
 
     return res.data;
 }
@@ -73,14 +73,18 @@ export async function createOrder(input: CreateOrdersInputType) {
 export async function payOrder(order_id: number, input: any) {
     const params = checkFilters(input);
 
-    const res = await api.post(`/orders/${order_id}/pay`, params);
+    const res = await api.post(`/orders/${order_id}/pay`, params, {
+        timeout: 45000,
+    });
 
     return res.data;
 }
 export async function cancelOrder(order_id: number, reason: string) {
     const params = checkFilters({ reason });
 
-    const res = await api.post(`/orders/${order_id}/cancel`, params);
+    const res = await api.post(`/orders/${order_id}/cancel`, params, {
+        timeout: 45000,
+    });
 
     return res.data;
 }

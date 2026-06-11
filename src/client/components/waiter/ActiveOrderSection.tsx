@@ -85,7 +85,7 @@ export default function ActiveOrdersSection({
                 description = "Заказ создан";
             }
 
-            const amount = `${(order.sum_order ?? 0).toLocaleString("ru-RU")} тг`;
+            const amount = `${Math.round((order.sum_order ?? 0) * 1.1).toLocaleString("ru-RU")} тг`;
 
             return {
                 id: order.id.toString(),

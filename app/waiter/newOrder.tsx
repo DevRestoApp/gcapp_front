@@ -325,6 +325,7 @@ export default function NewOrder() {
         } catch (e) {
             console.error(`Error fetching orders: ${e}`);
         } finally {
+            setIsCreating(false);
             router.push("/waiter");
         }
     };

@@ -23,8 +23,8 @@ const config: ExpoConfig = {
     slug: "gcappprod",
     owner: "qoqosyk",
     scheme: "com.gcappprod.mobile",
-    version: "1.1.4",
-    runtimeVersion: "1.1.4",
+    version: "1.1.5",
+    runtimeVersion: "1.1.5",
     updates: {
         url: "https://u.expo.dev/1005e280-27da-4377-940f-5432cddf9411",
     },
